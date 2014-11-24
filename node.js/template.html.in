@@ -1,0 +1,35 @@
+<!DOCTYPE html><html>
+<head>
+<title>CLUCK Node.js Server</title>
+</head>
+
+<body>
+
+  <style>
+   html, body {
+      height: 100%;
+   }
+   div.menu {
+      float:left;
+      width:20%;
+      height:100%;
+    }
+    div.mainContent {
+      float: left;
+      margin: 5px;
+      width:70%;
+      height:100%;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <div class="menu">
+   <a href="/procstat">Cat /proc/stat</a><br>
+   <a href="/iostat">Run IOStat</a><br>
+   <a href="/fileserver/">Web Server</a><br>
+   <a href="/runcommand">Run Console Commands</a>
+  </div>
+  <div class="mainContent">
+    <iframe 
