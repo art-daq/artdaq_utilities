@@ -47,6 +47,7 @@ namespace artdaq {
       stopMetrics();
     }
 
+    virtual std::string getLibName() { return "ganglia"; }
     virtual void stopMetrics()
     {
       for(auto dv : doubleAccumulator_)
