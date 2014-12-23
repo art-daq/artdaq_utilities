@@ -1,7 +1,7 @@
 // iostat.js : Run IOStat command
 // Author: Eric Flumerfelt, FNAL RSI
-// Last Modified: October 29, 2014
-// Modified By: Eric Flumerfelt
+// Last Modified: December 23, 2014
+//   Compatibility updates to work with serverbase.js v0.4
 //
 
 // Node.js framework "includes"

@@ -1,7 +1,7 @@
 // procstat.js : Cat /proc/stat
 // Author: Eric Flumerfelt, FNAL RSI
-// Last Modified: October 29, 2014
-// Modified By: Eric Flumerfelt
+// Last Modified: December 23, 2014
+//   Compatibility updates to work with serverbase.js v0.4
 //
 // procstat.js simply reads the /proc/stat file, and returns the data
 

@@ -5,7 +5,14 @@
     <meta charset="utf-8" />
     <title></title>
     <script src="/base/jquery.min.js"></script>
-<script src="./client.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script>
+        $(document).ready(function () {
+            AjaxPost(function (data) {
+                document.getElementById("iostat").innerHTML = "<p>" + data.Value1 + "</p>";
+            });
+        });
+    </script>
 </head>
 
 <body>

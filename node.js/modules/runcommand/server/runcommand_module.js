@@ -1,7 +1,7 @@
 // runcommand.js
 // Author: Eric Flumerfelt, FNAL/RSI
-// Last Modified: October 30, 2014
-// Modified By: Eric Flumerfelt
+// Last Modified: December 23, 2014
+//    Complete re-write of code necessary to work with serverbase.js v0.4
 //
 // runcommand runs a system command and returns the output through GET
 // operations to /runcommand/refresh. It also prompts the user for input

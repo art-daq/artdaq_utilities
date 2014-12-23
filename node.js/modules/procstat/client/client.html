@@ -5,7 +5,14 @@
     <meta charset="utf-8" />
     <title></title>
     <script src="/base/jquery.min.js"></script>
-<script src="./client.js"></script>
+    <script src="/base/AjaxPosttAndGet.js"></script>
+    <script>
+        $(document).ready(function () {
+            AjaxGet("/procstat/", function (data) {
+                document.getElementById("procstat").innerHTML = data.Value1;
+            });
+        });
+    </script>
 </head>
 
 <body>
