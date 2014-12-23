@@ -116,7 +116,10 @@ if (cluster.isMaster) {
                     });
                     if (readOnly) {
                         try {
-                            module_holder[moduleName]["RO_" + functionName](POST);
+                            var data = module_holder[moduleName]["RO_" + functionName](POST);
+                            if (data != null) {
+                                res.end(JSON.stringify(data));
+                            }
                         } catch (err) {
                             if (err instanceof TypeError) {
                                 console.log("Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName);
@@ -125,11 +128,17 @@ if (cluster.isMaster) {
                         }
                     } else {
                         try {
-                            module_holder[moduleName]["RW_" + functionName](POST);
+                            var data = module_holder[moduleName]["RW_" + functionName](POST);
+                            if (data != null) {
+                                res.end(JSON.stringify(data));
+                            }
                         } catch (err) {
                             if (err instanceof TypeError) {
                                 //RW_ version not available, try read-only version:
-                                module_holder[moduleName]["RO_" + functionName](POST);
+                                var data = module_holder[moduleName]["RO_" + functionName](POST);
+                                if (data != null) {
+                                    res.end(JSON.stringify(data));
+                                }
                             }
                         }
                     }
@@ -161,6 +170,7 @@ if (cluster.isMaster) {
                 console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
             } else if (module_holder[moduleName] != null) {
                 console.log("Module " + moduleName + ", function GET_" + functionName);
+                
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
                     //res.write(JSON.stringify(data));
@@ -169,7 +179,10 @@ if (cluster.isMaster) {
                 module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
                     res.end(JSON.stringify(dataTemp + data));
                 });
-                module_holder[moduleName]["GET_" + functionName]();
+                var data = module_holder[moduleName]["GET_" + functionName]();
+                if (data != null) {
+                    res.end(JSON.stringify(data));
+                }
             } else {
                 console.log("Sending client.html");
                 // Write out the frame code
