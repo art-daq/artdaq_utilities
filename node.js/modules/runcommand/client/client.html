@@ -5,17 +5,26 @@
     <meta charset="utf-8" />
     <title></title>
     <script src="/base/jquery.min.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
     <script src="./client.js"></script>
 </head>
 
 <body>
     <div id="commandForm">
-        <form name="input" action="/runcommand/refresh" method="post">
-            Command: <input type="text" name="comm"><input type="submit" value="Submit">
+        <form>
+            Command: <input type="text" id="comm"><input type="button" value="Submit" onclick="runButtonClicked()">
         </form>
     </div>
     <div id="cancelForm">
-
+        <form>
+            <input type="button" value="Cancel" onclick="cancelButtonClicked()">
+        </form>
     </div>
+    <div id="stdInForm">
+        <form>
+            StdIn: <input type="text" id="input"><input type="button" value="Send" onclick="stdInButtonClicked()">
+        </form>
+    </div>
+    <div id="output"></div>
 </body>
 </html>

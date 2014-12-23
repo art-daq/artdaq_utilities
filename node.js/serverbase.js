@@ -1,10 +1,13 @@
-// serverbase.js : Node HTTPS Server
+// serverbase.js : v0.4 : Node HTTPS Server
 // Author: Eric Flumerfelt, FNAL RSI
-// Last Modified: December 22, 2014
+// Last Modified: December 23, 2014
 // Modified By: Eric Flumerfelt
 //
 // serverbase sets up a basic HTTPS server and directs requests
 // to one of its submodules. 
+//
+// Implementation Notes: modules should assign their emitter to the module_holder[<modulename>] object
+// modules will emit 'data' and 'end' signals and implement the function MasterInitFunction()
 
 var cluster = require('cluster');
 var numCPUs = require("os").cpus().length;
@@ -147,7 +150,7 @@ if (cluster.isMaster) {
                 res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
                 console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
             } else if (module_holder[moduleName] != null) {
-                console.log("Module " + moduleName + ", function GET_" + functionName);
+                //console.log("Module " + moduleName + ", function GET_" + functionName);
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
                     //res.write(JSON.stringify(data));

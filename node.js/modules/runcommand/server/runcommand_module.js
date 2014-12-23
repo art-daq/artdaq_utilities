@@ -13,6 +13,7 @@
 
 // Node.js "includes"
 var fs = require('fs');
+var path_module = require('path');
 var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
 
@@ -20,131 +21,100 @@ var emitter = require('events').EventEmitter;
 var runcommand = new emitter();
 // A string buffer for the command's output, HTML'd
 var buf = "";
-// Is the command complete?
-runcommand.done = false;
-    // A copy of the string buffer, to check for differences
-var oldbuf = "";
-// How many times have we refreshed and seen the same buffer?
-var count = 0;
+runcommand.done = true;
 
 // Which commands am I allowed to run?
-var safeCommands = [ "ls", "cat", "echo", __dirname ];
+var clientCommands = fs.readdirSync(path_module.join(__dirname, "..", "client"));
+var safeCommands = ["ls", "cat", "echo", "iostat"];
+for (var name in clientCommands) {
+    if (clientCommands[name].search(".sh") > 0) {
+        safeCommands.push(clientCommands[name]);
+    }
+}
 
 runcommand.MasterInitFunction = function () { };
 
-// Return HTML code for a Cancel button
-function writeCancelForm()
-{
-  return "<form name=\"abort\" action=\"/runcommand/abort\" method=\"get\"><input type=\"submit\" value=\"Cancel\"></form>"
-}
-
-// Return HMTL code for a "StdIn: <input box> <submit button> form
-function writeStdInForm()
-{
-  return "<form name=\"stdin\" action=\"/runcommand/refresh\" method=\"post\">StdIn: <input type=\"text\" name=\"input\"><input type=\"submit\" value=\"Send\"></form>"
-}
-
-// Return HTML code for a Refresh button
-function writeRefreshForm()
-{
-  return "<form name=\"refresh\" action=\"/runcommand/refresh\" method=\"get\"><input type=\"submit\" value=\"Refresh\"></form>"
-}
-
-// If the buffer has changed, write a refresh meta-header with a 
-// 1-second interval. If it hasn't for more than two checks, write the
-// stdin form and change the refresh interval to 10 seconds (so that the
-// user has time to type a response).
-function writeRefreshTag ()
-{
-  if( oldbuf == buf && count > 1 ) {
-    count = 0;
-    return "<head><META HTTP-EQUIV=\"refresh\" CONTENT=\"10\"></head><body>" + writeStdInForm();
-  }
-  else
-  {
-    count++;
-    oldbuf = buf;
-    return "<head><META HTTP-EQUIV=\"refresh\" CONTENT=\"1\"></head><body>"
-  }
-
-}
-
-// Put it all together: write out the buffer and appropriate form elements
-runcommand.getBuf = function() {
-  var header, footer
-
-  // Write this stuff if the command is still running
-  if (!runcommand.done) {
-    header = "<html>" + writeRefreshTag() + writeCancelForm() + writeRefreshForm();
-    footer = "</body></html>"
-  }
-  // Write this stuff if the command is done
-  else {
-    header = "<html><body>";
-    footer =  runcommand.writeCommandForm() + "</body></html>"
-  }
-
-  return header + buf + footer;
-}
-
-// Kill the command
-runcommand.kill = function (commd)
-{
-  commd.kill();
-  buf += "COMMAND KILLED!"
-}
 
 // Entry point for the module. Check the passed command and run it if 
 // it's in the safe list
-runcommand.run = function (comm) {
+runcommand.RW_Run = function (POST) {
     // Log the recieved command
-  console.log("Command: "+ comm);
-
-  // Make an array of the space-delimited arguments. Pull out the first one
-  // (the command to be run)
-  var commArr = comm.split(' ');
-  var command = commArr[0];
-  commArr.shift();
-
-  // If the command is in the safe list, and actually exists:
-  if(contains(safeCommands, command) && ( fs.existsSync(command) || fs.existsSync("/bin/" + command) || fs.existsSync("/usr/bin/" + command)) && !contains(commArr,"`"))
-  {
-      // Start the command
-    var commd = spawn(command,commArr);
-    // Save a reference to the command (for stdin and kill)
-    runcommand.lastComm = commd;
-    // Reset the buffer
-    buf = ""
-	// Reset the done flag
-    runcommand.done = false;
-
-    // When the command prints to stdout, this callback is called
-    commd.stdout.on('data',function (data) {
-	    // HTML-ize the output
-      buf += ("<p style=\"color:black\">" + data + "</p>").replace(/(\r|\n)/g,"<br>")
-    });
-
-    // When the command prints to stderr, this callback is called
-    commd.stderr.on('data', function (data) {
-	    // HTML-ize and color red the output
-      buf += ("<p style=\"color:red\">" + data + "</p>").replace(/(\r|\n)/g,"<br>");
-  });
-
-    // When the command is complete, this callback is called
-    commd.on('close',function (code) {
-	    // Print the command's return code
-      buf += "<p>Return code: " + code + "</p><br><br>"
-	  // Set the done flag
-      runcommand.done = true;
-    });
-  }
-  else {
-      // Tell the user that what they typed was no good
-    buf = "<p>Invalid Command: " + comm + "</p>";
-    // We're done, write out the new command prompt
-    runcommand.done = true;
-  }
+    console.log("Command: " + POST.comm);
+    
+    // Make an array of the space-delimited arguments. Pull out the first one
+    // (the command to be run)
+    var commArr = POST.comm.split(' ');
+    var command = commArr[0];
+    commArr.shift();
+    
+    console.log("Command: " + command + ", Arguments: " + commArr);
+    var safeCommandArgs = true;
+    for (var name in commArr) {
+        if (commArr[name].indexOf('`') >= 0) {
+            safeCommandArgs = false;
+        }
+    }
+        
+    // If the command is in the safe list, and actually exists:
+    if (safeCommandArgs && safeCommands.indexOf(command) >= 0 && (fs.existsSync(path_module.join(__dirname, "..", "client") +"/"+  command) || fs.existsSync("/bin/" + command) || fs.existsSync("/usr/bin/" + command))) {
+        // Start the command
+        if (fs.existsSync(path_module.join(__dirname, "..", "client") +"/"+ command)) {
+            command = path_module.join(__dirname, "..", "client") +"/"+ command;
+        }
+        var commd = spawn(command, commArr);
+        // Save a reference to the command (for stdin and kill)
+        runcommand.lastComm = commd;
+        runcommand.done = false;
+        // Reset the buffer
+        buf = ""
+        
+        // When the command prints to stdout, this callback is called
+        commd.stdout.on('data', function (data) {
+            // HTML-ize the output
+            buf += ("<p style=\"color:black\">" + data + "</p>").replace(/(\r|\n)/g, "<br>")
+        });
+        
+        // When the command prints to stderr, this callback is called
+        commd.stderr.on('data', function (data) {
+            // HTML-ize and color red the output
+            buf += ("<p style=\"color:red\">" + data + "</p>").replace(/(\r|\n)/g, "<br>");
+        });
+                
+        // When the command is complete, this callback is called
+        commd.on('exit', function (code) {
+            // Print the command's return code
+            buf += "<p>Return code: " + code + "</p><br><br>"
+            runcommand.done = true;
+        });
+    }
+    else {
+        console.log("Invalid Command Entered: " + command);
+        // Tell the user that what they typed was no good
+        buf = "<p>Invalid Command: " + POST.comm + "</p>";
+    }
+    
+    runcommand.GET_();
 }
+
+runcommand.RW_Abort = function (POST) {
+    if (!runcommand.done) {
+        buf += "<p style='color:red'>Command Killed</p>";
+    }
+    runcommand.lastComm.kill();
+    runcommand.GET_();
+};
+
+runcommand.RW_Input = function (POST) {
+    if (POST.input != null && !runcommand.done) {
+        runcommand.lastComm.stdin.write(POST.input + "\n");
+    }
+    runcommand.GET_();
+};
+
+runcommand.GET_ = function () {
+    runcommand.emit('end', buf);
+    buf = "";
+};
 
 module.exports = function (module_holder) {
     module_holder["runcommand"] = runcommand;
