@@ -1,193 +1,208 @@
-// serverbase.js : Node HTTP Server
+// serverbase.js : Node HTTPS Server
 // Author: Eric Flumerfelt, FNAL RSI
-// Last Modified: October 30, 2014
+// Last Modified: December 22, 2014
 // Modified By: Eric Flumerfelt
 //
-// serverbase sets up a basic HTTP server and directs requests
-// to one of its submodules. Sub-modules may be added by inserting
-// appropriate code in the "GET" request section of the code below.
+// serverbase sets up a basic HTTPS server and directs requests
+// to one of its submodules. 
 
-// Node.js framework "includes"
-var http = require('http');
-var url = require('url');
-var fs = require('fs');
-var qs = require('querystring');
 var cluster = require('cluster');
 var numCPUs = require("os").cpus().length;
+var fs = require('fs');
+var path_module = require('path');
+var module_holder = {};
 
 // Sub-Module files
-var procstat = require('./procstat.js'); // Runs "cat /proc/stat"
-var fileserver = require('./fileserver.js'); // Redirects to https server on host, if any
-var iostat = require('./iostat.js'); // Runs "iostat"
-var runcommand = require('./runcommand.js'); // Prompts user for command, checks it against a "safe" list and runs it if it's there
-
-// Write out the HTML fragment for the frame and menu
-function writeFrameHTML()
-{
-    // When adding a submodule, don't forget to edit this file!
-  return fs.readFileSync("template.html.in");
+// From: http://stackoverflow.com/questions/10914751/loading-node-js-modules-dynamically-based-on-route
+function LoadModules(path) {
+    var stat = fs.lstatSync(path);
+    if (stat.isDirectory()) {
+        // we have a directory: do a tree walk
+        var files = fs.readdirSync(path);
+        var f, l = files.length;
+        for (var i = 0; i < l; i++) {
+            f = path_module.join(path, files[i]);
+            LoadModules(f);
+        }
+    } else if (path.search("_module.js") > 0) {
+        // we have a file: load it
+        require(path)(module_holder);
+        console.log("Initialized Submodule " + path);
+    }
 }
-
-// Close out the HTML after the module has run
-function writeHTMLClose()
-{
-    return "'></div></body></html>"
-}
+var DIR = path_module.join(__dirname, "modules");
+LoadModules(DIR);
 
 // Node.js by default is single-threaded. Start multiple servers sharing
 // the same port so that an error doesn't bring the whole system down
 if (cluster.isMaster) {
+    for (var name in module_holder) {
+        module_holder[name].MasterInitFunction();
+    }
+    
     // Start workers for each CPU on the host
-  for (var i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
-
-  // If one dies, start a new one!
-  cluster.on("exit", function(worker, code, signal) {
-    cluster.fork();
-  });
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+    
+    // If one dies, start a new one!
+    cluster.on("exit", function (worker, code, signal) {
+        cluster.fork();
+    });
 } else {
-    // Make an http server
-  var server = http.createServer(function (req, res) {
-
-    // req is the HTTP request, res is the response the server will send
-    // pathname is the URL after the http://host:port/ clause
-    var pathname = url.parse(req.url, true).pathname;
- 
-    // Log to console...
-    console.log("Recieved " + req.method + " for " + pathname);
-  
-    // If we're recieving a POST to /runcommand (As defined in the module),
-    // handle that here
-    if(req.method == "POST" && pathname.search("runcommand") > 0 ) {
-       var body = "";
-       // res.end('post');
-       //console.log('Request found with POST method');     
-
-       // Callback for request data (may come in async)
-        req.on('data', function (data) {
-            body += data;
-        });
-
-        // When the request is finished, run this callback:
-        req.on('end', function () {
-		// Get the content of the POST request 
-            var POST = qs.parse(body);
+    
+    // Node.js framework "includes"
+    var https = require('https');
+    var http = require('http');
+    var url = require('url');
+    var qs = require('querystring');
+    
+    function serve(req, res, readOnly, username) {
+        // req is the HTTP request, res is the response the server will send
+        // pathname is the URL after the http://host:port/ clause
+        var pathname = url.parse(req.url, true).pathname;
+        if (pathname[0] === '/') {
+            pathname = pathname.substr(1);
+        }
+        
+        var moduleName = pathname.substr(0, pathname.indexOf('/'));
+        var functionName = pathname.substr(pathname.indexOf('/') + 1);
+        //console.log("req.client debug info: " + req.client + ", pathname: " + pathname);
+        
+        res.setHeader("Content-Type", "application/json");
+        res.statusCode = 200;
+        // Log to console...
+        //console.log("Recieved " + req.method + " for " + pathname);
+        //console.log("Proceeding...");
+        
+        // If we're recieving a POST to /runcommand (As defined in the module),
+        // handle that here
+        if (req.method === "POST") {
+            console.log("In POST handler, PID: " + process.pid);
+            var body = "";
             
-            // If the POST contains a "comm" value, this is the command the
-	    // user typed in the "Command: " box
-            if(POST.comm != null) {
-		// runcommand module checks if the command is valid
-              runcommand.run(POST.comm);
+            // Callback for request data (may come in async)
+            req.on('data', function (data) {
+                body += data;
+            });
+            
+            req.on('end', function () {
+                // Get the content of the POST request 
+                var POST = qs.parse(body);
+                POST.who = username;
+                
+                if (module_holder[moduleName] != null) {
+                    console.log("Module " + moduleName + ", function " + functionName + " accessType " + (readOnly ? "RO" : "RW"));
+                    var dataTemp = "";
+                    module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
+                        //res.write(JSON.stringify(data));
+                        dataTemp += data;
+                    });
+                    module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
+                        res.end(JSON.stringify(dataTemp + data));
+                    });
+                    if (readOnly) {
+                        try {
+                            module_holder[moduleName]["RO_" + functionName](POST);
+                        } catch (err) {
+                            if (err instanceof TypeError) {
+                                console.log("Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName);
+                                res.end(JSON.stringify(null));
+                            }
+                        }
+                    } else {
+                        try {
+                            module_holder[moduleName]["RW_" + functionName](POST);
+                        } catch (err) {
+                            if (err instanceof TypeError) {
+                                //RW_ version not available, try read-only version:
+                                module_holder[moduleName]["RO_" + functionName](POST);
+                            }
+                        }
+                    }
+                } else {
+                    console.log("Unknown POST URL: " + pathname);
+                    res.writeHeader(404, { 'Content-Type': 'text/html' });
+                    res.end("Error");
+                }
+            });
+        }
+        //We got a GET request!
+        if (req.method === "GET") {
+            //console.log("In GET handler, PID: " + process.pid);
+            if (pathname.search(".js") > 0) {
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
+                res.setHeader("Content-Type", "text/javascript");
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
+            } else if (pathname.search("css") > 0) {
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
+                res.setHeader("Content-Type", "text/css");
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
+            } else if (pathname.search(".html") > 0) {
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
+                // Write out the frame code
+                res.setHeader("Content-Type", "text/html");
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
+            } else if (module_holder[moduleName] != null) {
+                console.log("Module " + moduleName + ", function GET_" + functionName);
+                var dataTemp = "";
+                module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
+                    //res.write(JSON.stringify(data));
+                    dataTemp += data;
+                });
+                module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
+                    res.end(JSON.stringify(dataTemp + data));
+                });
+                module_holder[moduleName]["GET_" + functionName]();
+            } else {
+                console.log("Sending client.html");
+                // Write out the frame code
+                res.setHeader("Content-Type", "text/html");
+                res.end(fs.readFileSync("./client.html"), 'utf-8');
+                console.log("Done sending client.html");
             }
-
-            // If there is something in the "StdIn: " box, and the command 
-            // hasn't already finished, send that input to the command's 
-            // stdin stream:
-            if(POST.input != null && !runcommand.done) {
-              runcommand.lastComm.stdin.write(POST.input + "\n");
+        }
+    }
+    
+    console.log("Setting up options");
+    var options = {
+        key: fs.readFileSync('./certs/server.key'),
+        cert: fs.readFileSync('./certs/server.crt'),
+        ca: fs.readFileSync('./certs/ca.crt'),
+        requestCert: true,
+        rejectUnauthorized: false
+    };
+    var k5login = " " + fs.readFileSync(process.env.HOME + "/.k5login");
+    console.log("Done setting up options");
+    
+    // Make an http server
+    var server = https.createServer(options, function (req, res) {
+        var readOnly = true;
+        var clientCertificate = req.connection.getPeerCertificate();
+        var username = "HTTPS User";
+        if (req.client.authorized) {
+            username = clientCertificate.subject.CN[0];
+            var useremail = clientCertificate.subject.CN[1].substr(4);
+            var userFNAL = useremail + "@FNAL.GOV";
+            var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
+            if (k5login.search(userFNAL) >= 0 || k5login.search(userWIN) >= 0) {
+                readOnly = false;
             }
-
-            // Send the reply (if there was a recognized POST operation above,
-	    //  getBuf() will reflect the changes).
-            res.end(runcommand.getBuf());
-        });
-  }
-
-    //We got a GET request!
-  if(req.method == "GET") {
-    // The response will always be 'text/html'. 
-    // Stuff inside the iframe may be different...
-    res.writeHeader({'Content-Type': 'text/html'});
-
-    // Run procstat module
-    if(pathname == "/procstat")
-    {
-	// Setup the callback to write the output to the response
-      procstat.on('procfile', function(data) {
-	      res.write(data);
-        res.end(writeHTMLClose());
-      });
-
-      // Log which module we're running
-      console.log("Running procstat module");
-      // Write out the frame header
-      res.write(writeFrameHTML() + "srcdoc='");
-      // Run the module
-      procstat.readfile();
+        }
+        serve(req, res, readOnly, username);
+    });
+    var insecureServer = http.createServer(function (req, res) {
+        serve(req, res, true, "HTTP User");
+    });
+    
+    var baseport = 8080;
+    if (__dirname.search("dev") >= 0) {
+        baseport = 9090;
     }
-    // Run iostat module
-    else if (pathname == "/iostat")
-    {
-	// IOStat module has a 'data' event and an 'iostat' event when it's done
-      iostat.on('data', function(data) {
-	      // Write the data
-        res.write(("<p>" + data + "</p>").replace(/(\r|\n)/g,"<br>"));
-      });
-      
-      // Write out the return code and finish the response
-      iostat.on('iostat', function(code) {
-        res.write("<p>Return code: " + code + "</p>");
-        res.end(writeHTMLClose());
-      });
-
-      // Log which module we're running
-      console.log("Running iostat module");
-      // Write out the frame header
-      res.write(writeFrameHTML() + "srcdoc='");
-      // Run the module
-      iostat.iostat();
-    }
-    // GET requests to runcommand/refresh are simply asking for an update 
-    // for the iframe content. Send that.
-    else if (pathname.search("runcommand/refresh") >= 0)
-    {      
-      res.end(runcommand.getBuf());
-    }
-    // GET to runcommand/abort means the user wants to kill the program...
-    else if (pathname.search("runcommand/abort") >= 0)
-    {
-      runcommand.kill(runcommand.lastComm);
-      res.end(runcommand.getBuf());
-    }
-    // Run the runcommand module
-    else if (pathname.search("runcommand") >= 0 )
-    {
-	// Log what we're doing
-      console.log("Running runcommand module");
-      // Write out the frame header
-      res.write(writeFrameHTML() + "srcdoc='");
-      // Write the user prompt
-      res.write(runcommand.writeCommandForm());
-      // Finish the response
-      res.end(writeHTMLClose());
-    }
-    // Run the fileserver module
-    else if (pathname.search( "fileserver" ) >= 0) {
-	// Log what we're doing
-      console.log("Running fileserver module");
-      // Write out the frame header. Note that fileserver is a redirect, 
-      // so we're writing "src=" (the URL you want displayed) in the iframe 
-      // instead of "srcdoc=" (the HTTP code you want displayed).
-      res.write(writeFrameHTML() + "src='");
-      // Get the URL of the host's https webserver
-      res.write(fileserver(pathname, "/fileserver", req.headers["host"], "8080"));
-      // Finish the response
-      res.end(writeHTMLClose());
-    }
-    // Undefined or unknown path
-    else {
-	// Log what we're doing
-      console.log("Running base");
-      // Write out the frame code
-      res.write(writeFrameHTML() + "srcdoc='");
-      // A prompt!
-      res.write("<p>You must select an option from the menu</p>");
-      // Finish the response
-      res.end(writeHTMLClose());
-    }
-  }
-});
-  //Listen on port 8080
-server.listen(8080);
+    console.log("Listening on port " + baseport);
+    server.listen(baseport + 1);
+    insecureServer.listen(baseport);
 }

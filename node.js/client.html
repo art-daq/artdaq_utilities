@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Node.js Server</title>
+</head>
+<body>
+
+    <style>
+        html, body {
+           height: 95%;
+        }
+        div.menu {
+           float:left;
+           width:10%;
+           height:100%;
+         }
+         div.mainContent {
+           float: left;
+           width:89%;
+           height:100%;
+         }
+         iframe {
+           width: 100%;
+           height: 100%;
+         }
+    </style>
+    <div class="menu">
+        <a href="/" onclick="document.getElementById('frame').src = '/procstat/client.html';return false">Read /proc/stat</a><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/iostat/client.html';return false">Run iostat</a><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/runcommand/client.html';return false">Run Shell Commands</a><br>
+    </div>
+    <div class="mainContent">
+        <iframe id="frame" src="/runcommand/client.html"></iframe>
+    </div>
+</body>
+</html>
+
+
