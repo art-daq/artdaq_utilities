@@ -16,9 +16,7 @@
         success: function (objData) {
             // At this point, we have data coming back
             // from the server.
-            fnCallback({
-                Value1: objData
-            });
+            fnCallback(objData);
         },
         // An error handler for the request.
         error: function (xhr, textStatus, errorCode) {
@@ -51,9 +49,7 @@ function AjaxPost(postUrl, postData, fnCallback) {
         success: function (objData) {
             // At this point, we have data coming back
             // from the server.
-            fnCallback({
-                Value1: objData
-            });
+            fnCallback(objData);
         },
         // An error handler for the request.
         error: function (xhr, textStatus, errorCode) {

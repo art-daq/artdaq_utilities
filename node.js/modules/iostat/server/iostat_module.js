@@ -17,12 +17,12 @@ iostatem.GET_ = function () {
 
   // Emit data events whenever stdout or stderr are written
     iostat.stdout.on('data', function (data) {
-    iostatem.emit('data',data.toString().replace(/(\n|\r)/g, "<br>").replace(/\t/g,"    ") + "<br>");
+    iostatem.emit('data',data.toString() + "\n");
   });
 
   // Emit data events whenever stdout or stderr are written
     iostat.stderr.on('data', function (data) {
-    iostatem.emit('data',data.toString().replace(/(\n|\r)/g,"<br>").replace(/\t/g, "    ") + "<br>");
+    iostatem.emit('data',data.toString() + "\n");
   });
 
   // When the program is done, return the status code

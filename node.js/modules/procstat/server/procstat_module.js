@@ -17,7 +17,7 @@ procstat.GET_ = function () {
   fs.readFile('/proc/stat', function read(err, data) {
     if(err) throw err;
     // HTML-ize and send the data
-    procstat.emit('end',("<p>" + data + "</p>").replace(/(\r|\n)/g, "<br>"));
+    procstat.emit('end',data);
   });
 }
 

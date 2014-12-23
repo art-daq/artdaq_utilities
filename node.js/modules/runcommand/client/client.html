@@ -7,24 +7,27 @@
     <script src="/base/jquery.min.js"></script>
     <script src="/base/AjaxPostAndGet.js"></script>
     <script src="./client.js"></script>
+<style>
+    textarea {
+        width: 95%;
+        height: 150px;
+    }
+</style>
 </head>
 
 <body>
     <div id="commandForm">
         <form>
-            Command: <input type="text" id="comm"><input type="button" value="Submit" onclick="runButtonClicked()">
+            Command: <input type="text" id="comm"><input type="button" value="Submit" onclick="runButtonClicked()"><input type="button" class="whileRunning" value="Cancel" onclick="cancelButtonClicked()">
+
+            <p class="whileRunning">StdIn: <input type="text" class="whileRunning" id="input"><input type="button" value="Send" class="whileRunning" onclick="stdInButtonClicked()"></p>
         </form>
     </div>
-    <div id="cancelForm">
-        <form>
-            <input type="button" value="Cancel" onclick="cancelButtonClicked()">
-        </form>
-    </div>
-    <div id="stdInForm">
-        <form>
-            StdIn: <input type="text" id="input"><input type="button" value="Send" onclick="stdInButtonClicked()">
-        </form>
-    </div>
-    <div id="output"></div>
+    <h2>StdOut</h2>
+    <textarea id="stdOut"></textarea>
+    <h2>StdErr</h2>
+    <textarea id="stdErr" style="color:red;"></textarea>
+    <h2>Exit Code</h2>
+    <input type="text" id="exitCode">
 </body>
 </html>

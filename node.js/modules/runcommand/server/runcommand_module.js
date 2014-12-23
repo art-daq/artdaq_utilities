@@ -20,8 +20,10 @@ var emitter = require('events').EventEmitter;
 // So that we can send events back to serverbase
 var runcommand = new emitter();
 // A string buffer for the command's output, HTML'd
-var buf = "";
-runcommand.done = true;
+var OutBuf = "";
+var ErrBuf = "";
+var code = "0";
+runcommand.running = false;
 
 // Which commands am I allowed to run?
 var clientCommands = fs.readdirSync(path_module.join(__dirname, "..", "client"));
@@ -64,56 +66,59 @@ runcommand.RW_Run = function (POST) {
         var commd = spawn(command, commArr);
         // Save a reference to the command (for stdin and kill)
         runcommand.lastComm = commd;
-        runcommand.done = false;
-        // Reset the buffer
-        buf = ""
+        runcommand.running = true;
+        // Reset the buffers
+        OutBuf = "";
+        ErrBuf = "";
+        code = 0;
         
         // When the command prints to stdout, this callback is called
         commd.stdout.on('data', function (data) {
             // HTML-ize the output
-            buf += ("<p style=\"color:black\">" + data + "</p>").replace(/(\r|\n)/g, "<br>")
+            OutBuf += data;
         });
         
         // When the command prints to stderr, this callback is called
         commd.stderr.on('data', function (data) {
             // HTML-ize and color red the output
-            buf += ("<p style=\"color:red\">" + data + "</p>").replace(/(\r|\n)/g, "<br>");
+            ErrBuf += data;
         });
                 
         // When the command is complete, this callback is called
-        commd.on('exit', function (code) {
+        commd.on('exit', function (retcode) {
             // Print the command's return code
-            buf += "<p>Return code: " + code + "</p><br><br>"
-            runcommand.done = true;
+            code = retcode;
+            runcommand.running = false;
         });
     }
     else {
         console.log("Invalid Command Entered: " + command);
         // Tell the user that what they typed was no good
-        buf = "<p>Invalid Command: " + POST.comm + "</p>";
+        ErrBuf = "Invalid Command: " + POST.comm;
     }
     
     runcommand.GET_();
 }
 
 runcommand.RW_Abort = function (POST) {
-    if (!runcommand.done) {
-        buf += "<p style='color:red'>Command Killed</p>";
+    if (runcommand.running) {
+        ErrBuf += "Command Killed";
     }
     runcommand.lastComm.kill();
     runcommand.GET_();
 };
 
 runcommand.RW_Input = function (POST) {
-    if (POST.input != null && !runcommand.done) {
+    if (POST.input != null && runcommand.running) {
         runcommand.lastComm.stdin.write(POST.input + "\n");
     }
     runcommand.GET_();
 };
 
 runcommand.GET_ = function () {
-    runcommand.emit('end', buf);
-    buf = "";
+    runcommand.emit('end', JSON.stringify({ out: OutBuf, err: ErrBuf, exitCode:code, running: runcommand.running }));
+    OutBuf = "";
+    ErrBuf = "";
 };
 
 module.exports = function (module_holder) {

@@ -15,6 +15,15 @@ var fs = require('fs');
 var path_module = require('path');
 var module_holder = {};
 
+var util = require('util');
+var log_file = fs.createWriteStream(__dirname + '/server.log', { flags : 'a' });
+var log_stdout = process.stdout;
+
+console.log = function (d) { //
+    log_file.write(util.format(d) + '\n');
+    log_stdout.write(util.format(d) + '\n');
+};
+
 // Sub-Module files
 // From: http://stackoverflow.com/questions/10914751/loading-node-js-modules-dynamically-based-on-route
 function LoadModules(path) {
@@ -42,6 +51,7 @@ if (cluster.isMaster) {
     for (var name in module_holder) {
         module_holder[name].MasterInitFunction();
     }
+    fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
     
     // Start workers for each CPU on the host
     for (var i = 0; i < numCPUs; i++) {
@@ -150,7 +160,7 @@ if (cluster.isMaster) {
                 res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
                 console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
             } else if (module_holder[moduleName] != null) {
-                //console.log("Module " + moduleName + ", function GET_" + functionName);
+                console.log("Module " + moduleName + ", function GET_" + functionName);
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
                     //res.write(JSON.stringify(data));
