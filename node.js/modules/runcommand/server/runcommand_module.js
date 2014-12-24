@@ -27,7 +27,7 @@ runcommand.running = false;
 
 // Which commands am I allowed to run?
 var clientCommands = fs.readdirSync(path_module.join(__dirname, "..", "client"));
-var safeCommands = ["echo", "iostat"];
+var safeCommands = ["top","echo", "iostat"];
 for (var name in clientCommands) {
     if (clientCommands[name].search(".sh") > 0) {
         safeCommands.push(clientCommands[name]);

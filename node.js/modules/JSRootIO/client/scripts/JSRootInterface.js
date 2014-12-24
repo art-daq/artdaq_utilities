@@ -7,7 +7,7 @@
 // source_dir is the variable defining where to take the scripts and the list tree icons
 // To use the local ones (e.g. when checking out the files in a web server), just let it
 // empty: var source_dir = "";
-var source_dir = "https://utkhep.phys.utk.edu/JSRootIO/";
+var source_dir = "";
 var gFile;
 var obj_list = new Array();
 var obj_index = 0;
