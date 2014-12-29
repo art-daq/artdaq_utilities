@@ -151,48 +151,50 @@ if (cluster.isMaster) {
         }
         //We got a GET request!
         if (req.method === "GET" || req.method === "HEAD") {
-            console.log("In "+req.method+" handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+            console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
             console.log(req.headers);
-             if(functionName.indexOf(".") > 0) {
+            if (functionName.indexOf(".") > 0) {
                 console.log("Client File Access Requested");
-                var ext = functionName.substr(functionName.indexOf(".")  + 1);
+                var ext = functionName.substr(functionName.indexOf(".") + 1);
                 res.setHeader("Content-Type", "text/plain");
                 console.log("Extension: " + ext);
-                switch(ext) {
-                case "css":
-		    res.setHeader("Content-Type", "text/css");
-                    break;
-                case "js":
-                    res.setHeader("Content-Type", "text/javascript");
-                    break;
-                case "html":
-                    res.setHeader("Content-Type", "text/html");
-                    break;
-                case "htm":
-                    res.setHeader("Content-Type", "text/html");
-                    break;
-                case "root":
-                    res.setHeader("Content-Type", "application/root+root.exe");
-                    break;
-                case "gif":
-                    res.setHeader("Content-Type", "image/gif");
-                    break;
+                switch (ext) {
+                    case "css":
+                        res.setHeader("Content-Type", "text/css");
+                        break;
+                    case "js":
+                        res.setHeader("Content-Type", "text/javascript");
+                        break;
+                    case "html":
+                        res.setHeader("Content-Type", "text/html");
+                        break;
+                    case "htm":
+                        res.setHeader("Content-Type", "text/html");
+                        break;
+                    case "root":
+                        res.setHeader("Content-Type", "application/root+root.exe");
+                        break;
+                    case "gif":
+                        res.setHeader("Content-Type", "image/gif");
+                        break;
                 }
                 
                 var filename = "./modules/" + moduleName + "/client/" + functionName;
-                if(fs.existsSync(filename)) {
+                if (fs.existsSync(filename)) {
                     res.setHeader("Content-Length", fs.statSync(filename)["size"]);
-                    if(req.headers.range != null) {
+                    if (req.headers.range != null) {
                         var range = req.headers.range;
                         var fd = fs.openSync(filename, 'r');
-			var offset = parseInt(range.substr(range.indexOf('=') + 1,range.indexOf('-') - (range.indexOf('=') + 1)));
-			var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
+                        var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
+                        var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
                         console.log("Reading (" + offset + ", " + endOffset + ")");
-                        var readStream = fs.createReadStream(filename, {start: parseInt(offset), end: parseInt(endOffset)});
+
+                        res.setHeader("Content-Length", (endOffset - offset + 1).toString());
+                        var readStream = fs.createReadStream(filename, { start: parseInt(offset), end: parseInt(endOffset) });
                         readStream.pipe(res);
-		    } else {
+                    } else {
                         res.end(fs.readFileSync(filename));
-		    }
+                    }
                     console.log("Done sending file");
                 }
             } else if (module_holder[moduleName] != null) {
