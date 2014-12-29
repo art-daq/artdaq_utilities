@@ -11,12 +11,12 @@
         }
         div.menu {
            float:left;
-           width:10%;
+           width:15%;
            height:100%;
          }
          div.mainContent {
            float: left;
-           width:89%;
+           width:84%;
            height:100%;
          }
          iframe {
@@ -25,10 +25,11 @@
          }
     </style>
     <div class="menu">
-        <a href="/" onclick="document.getElementById('frame').src = '/procstat/client.html';return false">Read /proc/stat</a><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/iostat/client.html';return false">Run iostat</a><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/runcommand/client.html';return false">Run Shell Commands</a><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">View Server Log</a>
+        <a href="/" onclick="document.getElementById('frame').src = '/procstat/client.html';return false">Read /proc/stat</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/iostat/client.html';return false">Run iostat</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/runcommand/client.html';return false">Run Shell Commands</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">View Server Log</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/JSRootIO/index.htm';return false">ROOT File Viewer</a>
     </div>
     <div class="mainContent">
         <iframe id="frame" src="/runcommand/client.html"></iframe>

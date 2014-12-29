@@ -152,12 +152,12 @@ if (cluster.isMaster) {
         //We got a GET request!
         if (req.method === "GET" || req.method === "HEAD") {
             console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
-            console.log(req.headers);
+            //console.log(req.headers);
             if (functionName.indexOf(".") > 0) {
                 console.log("Client File Access Requested");
                 var ext = functionName.substr(functionName.indexOf(".") + 1);
                 res.setHeader("Content-Type", "text/plain");
-                console.log("Extension: " + ext);
+                //console.log("Extension: " + ext);
                 switch (ext) {
                     case "css":
                         res.setHeader("Content-Type", "text/css");
@@ -187,7 +187,7 @@ if (cluster.isMaster) {
                         var fd = fs.openSync(filename, 'r');
                         var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
                         var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
-                        console.log("Reading (" + offset + ", " + endOffset + ")");
+                        //console.log("Reading (" + offset + ", " + endOffset + ")");
 
                         res.setHeader("Content-Length", (endOffset - offset + 1).toString());
                         var readStream = fs.createReadStream(filename, { start: parseInt(offset), end: parseInt(endOffset) });
