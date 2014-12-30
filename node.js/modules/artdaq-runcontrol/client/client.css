@@ -1,0 +1,35 @@
+div{
+    text-align:center;
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+span{
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+}
+.green {
+    background:#98bf21;
+    position:relative;
+}
+.red {
+    background:#bf2121;
+    position:relative;
+}
+.blue {
+    background:#2198bf;
+    position:relative;
+}
+.visible {
+    height:100px;
+    width:100px;
+    opacity:1;
+    line-height:100px;
+}
+.hidden {
+    height:0px;
+    width:100px;
+    opacity:0;
+}
