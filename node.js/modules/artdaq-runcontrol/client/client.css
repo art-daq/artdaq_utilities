@@ -1,35 +1,77 @@
-div{
-    text-align:center;
+#leftSide {
+    float: left;
+    width: 10%;
+}
+
+#rightSide {
+    float: left;
+    width: 85%;
+    margin: 1em 1em 1em 1em;
+}
+
+#bottom {
+    float: left;
+    width: 100%;
+}
+
+textarea {
+    width:24%;
+    height:400px;
+}
+
+div.animated {
+    text-align: center;
     -webkit-transition: all 0.5s ease;
     -moz-transition: all 0.5s ease;
     -o-transition: all 0.5s ease;
     transition: all 0.5s ease;
+    position: relative;
+    width: 100%;
+    border:0 8px 0 10px;
 }
-span{
-  display: inline-block;
-  vertical-align: middle;
-  line-height: normal;
+
+span {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
 }
+
 .green {
-    background:#98bf21;
-    position:relative;
+    background: #98bf21;
 }
-.red {
-    background:#bf2121;
-    position:relative;
+
+.red{
+    background: #bf2121;
 }
+
 .blue {
-    background:#2198bf;
-    position:relative;
+    background: #2198bf;
 }
+
+.yellow {
+    background: #ffd800;
+}
+
 .visible {
-    height:100px;
-    width:100px;
-    opacity:1;
-    line-height:100px;
+    height: 100px;
+    opacity: 1;
+    line-height: 100px;
 }
+
+.legend {
+    text-align: center;
+    height: 50px;
+    width: 50%;
+    float:left;
+    opacity: 1;
+    line-height:50px;
+}
+
 .hidden {
-    height:0px;
-    width:100px;
-    opacity:0;
+    height: 0;
+    opacity: 0;
+}
+
+.error {
+    color: red;
 }

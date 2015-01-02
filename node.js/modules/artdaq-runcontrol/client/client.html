@@ -1,20 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ARTDAQ Run Control Test</title>
-  <style>@import url(client.css);</style>
-  <script src="/base/jquery.min.js"></script>
-  <script src="client.js"></script>
+    <title>ARTDAQ Run Control Test</title>
+    <style>
+        @import url(client.css);
+    </style>
+    <script src="/base/jquery.min.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script src="client.js"></script>
 </head>
 <body>
-<div id="shutdown" class="green"></div>
-
-<div id="started"></div>
-
-<div id="initialized"></div>
-
-<div id="runStarted"></div>
-
-<div id="runPaused"></div>
+    <div id="leftSide">
+        <div id="shutdown" class="animated green"></div>
+        <div id="started" class="animated"></div>
+        <div id="initialized" class="animated"></div>
+        <div id="runStarted" class="animated"></div>
+        <div id="runPaused" class="animated"></div><br /><br />
+        Legend:<br />
+        <div id="legendCurrent" class="legend blue"><span>Current State</span></div>
+        <div id="legendIP" class="legend yellow"><span>State Changing</span></div>
+        <div id="legendSelectable" class="legend green"><span>Selectable State</span></div>
+        <div id="legendRed" class="legend red"><span>Unavailable State</span></div>
+    </div>
+    <div id="rightSide">
+        <form>
+            <fieldset>
+                <legend>ARTDAQ Parameters</legend>
+                <table>
+                    <tr>
+                        <td>Data Directory:</td>
+                        <td><input type="text" id="dataDir" value="/tmp"></td>
+                    </tr>
+                    <tr>
+                        <td>Verbose Output:</td>
+                        <td><input type="checkbox" id="verbosity"></td>
+                    </tr>
+                    <tr>
+                        <td>File Events:</td>
+                        <td><input type="number" id="fileEvents" value="0"></td>
+                        <td>(0 is infinite)</td>
+                    </tr>
+                    <tr>
+                        <td>File Size:</td>
+                        <td><input type="number" id="fileSize" value="8000">MB</td>
+                    </tr>
+                    <tr>
+                        <td>File Duration:</td>
+                        <td><input type="number" id="fileTime" value="0"> minutes</td>
+                    </tr>
+                </table>
+            </fieldset>
+            <fieldset>
+                <legend>Run Parameters</legend>
+                <table>
+                    <tr>
+                        <td>Run Number:</td>
+                        <td><input type="number" id="runNumber" value="1000"></td>
+                    </tr>
+                    <tr>
+                        <td>Run Events:</td>
+                        <td><input type="number" id="runEvents" value="0"></td>
+                        <td>(Set to non-zero to end run at specified number of events)</td>
+                    </tr>
+                    <tr>
+                        <td>Run Duration:</td>
+                        <td><input type="number" id="runTime" value="0"> minutes</td>
+                        <td>(Set to non-zero to end run after specified duration)</td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+    <br>
+    <div id="bottom">
+        <textarea id="systemOut"></textarea>
+        <textarea id="systemErr" class="error"></textarea>
+        <textarea id="commOut"></textarea>
+        <textarea id="commErr" class="error"></textarea>
+    </div>
 </body>
 </html>

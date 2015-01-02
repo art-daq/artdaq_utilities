@@ -36,7 +36,8 @@ function LoadModules(path) {
             f = path_module.join(path, files[i]);
             LoadModules(f);
         }
-    } else if (path.search("_module.js") > 0) {
+    } else if (path.search("_module.js") > 0 && path.search("js~") < 0) {
+        console.log("Loading Submodule " + path);
         // we have a file: load it
         require(path)(module_holder);
         console.log("Initialized Submodule " + path);
@@ -55,8 +56,10 @@ if (cluster.isMaster) {
     
     // Start workers for each CPU on the host
     for (var i = 0; i < numCPUs; i++) {
-        cluster.fork();
+        //cluster.fork();
     }
+    // Or start just one...
+    cluster.fork();
     
     // If one dies, start a new one!
     cluster.on("exit", function (worker, code, signal) {
@@ -151,7 +154,7 @@ if (cluster.isMaster) {
         }
         //We got a GET request!
         if (req.method === "GET" || req.method === "HEAD") {
-            console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+            //console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
             //console.log(req.headers);
             if (functionName.indexOf(".") > 0) {
                 console.log("Client File Access Requested");
@@ -198,7 +201,7 @@ if (cluster.isMaster) {
                     console.log("Done sending file");
                 }
             } else if (module_holder[moduleName] != null) {
-                console.log("Module " + moduleName + ", function GET_" + functionName);
+                //console.log("Module " + moduleName + ", function GET_" + functionName);
                 
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
