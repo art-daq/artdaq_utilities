@@ -83,8 +83,19 @@ if (cluster.isMaster) {
         
         var moduleName = pathname.substr(0, pathname.indexOf('/'));
         var functionName = pathname.substr(pathname.indexOf('/') + 1);
-        //console.log("req.client debug info: " + req.client + ", pathname: " + pathname);
         
+        var dnsDone = false;
+        var peerName = require('dns').reverse(req.connection.remoteAddress, function (err, domains) {
+            dnsDone = true;
+            if (!err) {
+                console.log("Recieved " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+                return domains[0];
+            } else {
+                console.log("Recieved " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+                return "";
+            }
+        });
+
         res.setHeader("Content-Type", "application/json");
         res.statusCode = 200;
         // Log to console...
@@ -94,7 +105,6 @@ if (cluster.isMaster) {
         // If we're recieving a POST to /runcommand (As defined in the module),
         // handle that here
         if (req.method === "POST") {
-            console.log("In POST handler, PID: " + process.pid);
             var body = "";
             
             // Callback for request data (may come in async)
@@ -154,7 +164,6 @@ if (cluster.isMaster) {
         }
         //We got a GET request!
         if (req.method === "GET" || req.method === "HEAD") {
-            console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
             //console.log(req.headers);
             if (functionName.indexOf(".") > 0) {
                 console.log("Client File Access Requested");
@@ -191,7 +200,7 @@ if (cluster.isMaster) {
                         var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
                         var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
                         console.log("Reading (" + offset + ", " + endOffset + ")");
-
+                        
                         res.setHeader("Content-Length", (endOffset - offset + 1).toString());
                         var readStream = fs.createReadStream(filename, { start: parseInt(offset), end: parseInt(endOffset) });
                         readStream.pipe(res);
@@ -200,11 +209,11 @@ if (cluster.isMaster) {
                     }
                     console.log("Done sending file");
                 } else {
-                     res.setHeader("Content-Type", "text/plain");
-                     res.end("File Not Found.");
+                    res.setHeader("Content-Type", "text/plain");
+                    res.end("File Not Found.");
                 }
             } else if (module_holder[moduleName] != null) {
-                console.log("Module " + moduleName + ", function GET_" + functionName);
+                //console.log("Module " + moduleName + ", function GET_" + functionName);
                 
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
