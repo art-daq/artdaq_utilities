@@ -93,18 +93,17 @@ namespace artdaq {
       double deltaT = _timeSinceLastSend(thisSendTime, name);
       if(deltaT >= 15)
 	{
-	  double sendValueD = 0;
+	  double sendValue = 0;
           double accumValue = 0;
 	  for(auto val : intAccumulator_[name])
 	  {
             accumValue += val;
-            sendValueD += val / (double)intAccumulator_[name].size();
+            sendValue += val / (double)intAccumulator_[name].size();
 	  }
-          int sendValue = (int)sendValueD;	  
 
           //mf::LogInfo("GangliaMetric") << "Sending int value to Ganglia: " << sendValue;
-	  send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
-		   "int32", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
+          send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
+                       "double", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
           if(makeRateMetrics_)
     	  {
             send_gmetric(configFile_.c_str(),(name + "_RATE").c_str(), std::to_string(accumValue / deltaT).c_str(),
@@ -132,8 +131,8 @@ namespace artdaq {
 	  }
 	  
           //mf::LogInfo("GangliaMetric") << "Sending double value to Ganglia: " << sendValue;
-	  send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
-		   "double", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
+          send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
+                       "double", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
           if(makeRateMetrics_)
     	  {
             send_gmetric(configFile_.c_str(),(name + "_RATE").c_str(), std::to_string(accumValue / deltaT).c_str(),
@@ -161,8 +160,8 @@ namespace artdaq {
 	  }
 	  
           //mf::LogInfo("GangliaMetric") << "Sending float value to Ganglia: " << sendValue;
-	  send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
-		   "float", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
+          send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
+                       "float", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
           if(makeRateMetrics_)
     	  {
             send_gmetric(configFile_.c_str(),(name + "_RATE").c_str(), std::to_string(accumValue / deltaT).c_str(),
@@ -182,18 +181,17 @@ namespace artdaq {
       double deltaT = _timeSinceLastSend(thisSendTime, name);
       if(deltaT >= 15)
 	{
-	  double sendValueD = 0;
+	  double sendValue = 0;
           double accumValue = 0;
 	  for(auto val : uintAccumulator_[name])
 	  {
             accumValue += val;
-            sendValueD += val / (double)uintAccumulator_[name].size();
+            sendValue += val / (double)uintAccumulator_[name].size();
 	  }
-          uint32_t sendValue = (uint32_t)sendValueD;
 	  
           //mf::LogInfo("GangliaMetric") << "Sending uint uvalue to Ganglia: " << sendValue;
-	  send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
-		   "uint32", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
+          send_gmetric(configFile_.c_str(),name.c_str(), std::to_string(sendValue).c_str(),
+                       "double", unit.c_str(), "both", 15,0,group_.c_str(),cluster_.c_str(),"","");
           if(makeRateMetrics_)
     	  {
             send_gmetric(configFile_.c_str(),(name + "_RATE").c_str(), std::to_string(accumValue / deltaT).c_str(),
