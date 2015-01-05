@@ -127,7 +127,7 @@ function initSystem() {
 function startRun() {
     if ($("#runStarted").is(".green")) {
         if ($("#runPaused").is(".blue")) {
-            AjaxPost("/artdaq-runcontrol/Resume", { data: 0 }, update);
+            AjaxPost("/artdaq-runcontrol/Resume", { runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
         } else {
             AjaxPost("/artdaq-runcontrol/Run", { runNumber: $("#runNumber").val(), runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
         }
@@ -138,6 +138,10 @@ function pauseRun() {
     if ($("#runPaused").is(".green")) {
         AjaxPost("/artdaq-runcontrol/Pause", { data: 0 }, update);
     }
+}
+
+function kill() {
+    AjaxPost("/artdaq-runcontrol/KILL", {data: 0 }, update);
 }
 
 $(document).ready(function () {
@@ -156,6 +160,9 @@ $(document).ready(function () {
     $("#runPaused").click(function () {
         pauseRun();
     });
+    $("#killSwitch").click(function() {
+	    kill();
+	});
     $("#monitoringEnabled").change(function () {
 	    if($("#monitoringEnabled").is(":checked")) {
 		updateGUI();

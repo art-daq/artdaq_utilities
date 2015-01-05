@@ -90,7 +90,7 @@ function startSystem() {
 
 function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(initialize(dataDir, verbose, fileSize, fileEvents, fileTime));
+        setTimeout(function() {initialize(dataDir, verbose, fileSize, fileEvents, fileTime);});
     }
     else {
         systemStatus.dataDir = dataDir;
@@ -113,8 +113,10 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
         
         var fileTimeCMD = [];
         if (fileTime > 0) { fileTimeCMD = ["--file-duration", fileTime.toString()]; }
-        
-        var args = ["-m", "on"].concat(verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
+
+        var onmonDir = __dirname + "/../client/";        
+
+        var args = ["-m", "on","-M"].concat(onmonDir, verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
         startCommand(args)
         systemStatus.state = "Initialized";
     }
@@ -122,7 +124,7 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
 
 function startRun(number, runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(startRun(number, runEvents, runTime), 500);
+        setTimeout(function() {startRun(number, runEvents, runTime);}, 500);
     }
     else {
         systemStatus.runNumber = number;
@@ -138,7 +140,7 @@ function startRun(number, runEvents, runTime) {
 
 function pauseRun() {
     if (systemStatus.commandRunning) {
-        setTimeout(pauseRun(), 500);
+        setTimeout(function() {pauseRun();}, 500);
     }
     else {
         var args = ["pause"];
@@ -149,7 +151,7 @@ function pauseRun() {
 
 function resumeRun(runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(resumeRun(runEvents, runTime), 500);
+        setTimeout(function(){resumeRun(runEvents, runTime);}, 500);
     }
     else {
         var args = ["resume"];
@@ -163,7 +165,7 @@ function resumeRun(runEvents, runTime) {
 
 function endRun(runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(endRun(runEvents, runTime), 500);
+        setTimeout(function() {endRun(runEvents, runTime);}, 500);
     }
     else {
         var events = [],
@@ -196,7 +198,7 @@ function  killSystem() {
 
 function shutdownSystem() {
     if (systemStatus.commandRunning) {
-        setTimeout(shutdownSystem(), 500);
+        setTimeout(function() {shutdownSystem();}, 500);
     }
     else {
         var args = ["shutdown"];
@@ -216,9 +218,12 @@ arc.GET_ = function () {
             monitorFileSize = statSize;
             systemStatus.WFPlotsUpdated = Date.now();
 	}
-        console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
+        //console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
     } else {
         systemStatus.WFPlotsUpdated = null;
+    }
+    if(systemStatus.stopPending && !systemStatus.commandRunning) {
+	systemStatus.state = "Initialized";
     }
     arc.emit('end', JSON.stringify(systemStatus));
     //systemStatus.systemErrorBuffer = "";
@@ -236,14 +241,14 @@ arc.RW_Start = function (POST) {
 
 arc.RW_Init = function (POST) {
     if (systemStatus.state === "Started") {
-        initialize(POST.dataDir, POST.verbose, POST.fileSize, POST.fileEvents, POST.fileTime);
+        initialize(POST.dataDir, POST.verbose, parseInt(POST.fileSize), parseInt(POST.fileEvents), parseInt(POST.fileTime));
     }
     arc.GET_();
 };
 
 arc.RW_Run = function (POST) {
     if (systemStatus.state === "Initialized") {
-        startRun(POST.runNumber, POST.runEvents, POST.runTime);
+        startRun(POST.runNumber, parseInt(POST.runEvents), parseInt(POST.runTime));
     }
     arc.GET_();
 };
@@ -257,14 +262,14 @@ arc.RW_Pause = function (POST) {
 
 arc.RW_Resume = function (POST) {
     if (systemStatus.state === "Paused") {
-        resumeRun();
+        resumeRun(parseInt(POST.runEvents), parseInt(POST.runTime));
     }
     arc.GET_();
 };
 
 arc.RW_End = function (POST) {
     if (systemStatus.state === "Running" || systemStatus.state === "Paused") {
-        endRun(POST.events, POST.time);
+        endRun(parseInt(POST.events), parseInt(POST.time));
     }
     arc.GET_();
 };
@@ -274,6 +279,10 @@ arc.RW_Shutdown = function (POST) {
         shutdownSystem();
     }
     arc.GET_();
+};
+
+arc.RW_KILL = function (POST) {
+    process.exit(1);
 };
 
 module.exports = function (module_holder) {
