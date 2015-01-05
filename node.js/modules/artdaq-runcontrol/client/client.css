@@ -31,6 +31,7 @@ div.animated {
 }
 
 span {
+    cursor: default;
     display: inline-block;
     vertical-align: middle;
     line-height: normal;
@@ -42,6 +43,10 @@ span {
 
 .red{
     background: #bf2121;
+}
+
+.active {
+   background: #5CAB80;
 }
 
 .blue {

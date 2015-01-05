@@ -154,7 +154,7 @@ if (cluster.isMaster) {
         }
         //We got a GET request!
         if (req.method === "GET" || req.method === "HEAD") {
-            //console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+            console.log("In " + req.method + " handler, PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
             //console.log(req.headers);
             if (functionName.indexOf(".") > 0) {
                 console.log("Client File Access Requested");
@@ -190,7 +190,7 @@ if (cluster.isMaster) {
                         var fd = fs.openSync(filename, 'r');
                         var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
                         var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
-                        //console.log("Reading (" + offset + ", " + endOffset + ")");
+                        console.log("Reading (" + offset + ", " + endOffset + ")");
 
                         res.setHeader("Content-Length", (endOffset - offset + 1).toString());
                         var readStream = fs.createReadStream(filename, { start: parseInt(offset), end: parseInt(endOffset) });
@@ -199,9 +199,12 @@ if (cluster.isMaster) {
                         res.end(fs.readFileSync(filename));
                     }
                     console.log("Done sending file");
+                } else {
+                     res.setHeader("Content-Type", "text/plain");
+                     res.end("File Not Found.");
                 }
             } else if (module_holder[moduleName] != null) {
-                //console.log("Module " + moduleName + ", function GET_" + functionName);
+                console.log("Module " + moduleName + ", function GET_" + functionName);
                 
                 var dataTemp = "";
                 module_holder[moduleName].removeAllListeners('data').on('data', function (data) {

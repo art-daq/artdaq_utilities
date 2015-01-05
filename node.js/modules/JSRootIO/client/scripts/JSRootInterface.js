@@ -1,258 +1,212 @@
 // JSRootInterface.js
 //
-// interface methods for Javascript ROOT Web Page.
+// default user interface for JavaScript ROOT Web Page.
 //
 
-// global variables
-// source_dir is the variable defining where to take the scripts and the list tree icons
-// To use the local ones (e.g. when checking out the files in a web server), just let it
-// empty: var source_dir = "";
-var source_dir = "";
-var gFile;
-var obj_list = new Array();
-var obj_index = 0;
-var last_index = 0;
-var function_list = new Array();
-var func_list = new Array();
-var frame_id = 0;
-var random_id = 0;
-
-function closeCollapsible(e, el) {
-   var sel = $(el)[0].textContent;
-   if (typeof(sel) == 'undefined') return;
-   sel.replace(' x', '');
-   sel.replace(';', '');
-   sel.replace(' ', '');
-   var i = obj_list.indexOf(sel)
-   if (i >= 0) obj_list.splice(i, 1);
-   $(el).next().andSelf().remove();
-   e.stopPropagation();
-};
-
-function addCollapsible(element) {
-   $(element)
-       .addClass("ui-accordion-header ui-helper-reset ui-state-default ui-corner-top ui-corner-bottom")
-       .hover(function() { $(this).toggleClass("ui-state-hover"); })
-       .prepend('<span class="ui-icon ui-icon-triangle-1-e"></span>')
-       .append('<button type="button" class="closeButton" title="close canvas" onclick="closeCollapsible(event, \''+element+'\')"><img src="'+source_dir+'/img/remove.gif"/></button>')
-       .click(function() {
-          $(this)
-             .toggleClass("ui-accordion-header-active ui-state-active ui-state-default ui-corner-bottom")
-             .find("> .ui-icon").toggleClass("ui-icon-triangle-1-e ui-icon-triangle-1-s").end()
-             .next().toggleClass("ui-accordion-content-active").slideToggle(0);
-          return false;
-       })
-       .next()
-          .addClass("ui-accordion-content  ui-helper-reset ui-widget-content ui-corner-bottom")
-             .hide();
-   $(element)
-      .toggleClass("ui-accordion-header-active ui-state-active ui-state-default ui-corner-bottom")
-      .find("> .ui-icon").toggleClass("ui-icon-triangle-1-e ui-icon-triangle-1-s").end()
-      .next().toggleClass("ui-accordion-content-active").slideToggle(0);
-
-};
-
-function showElement(element) {
-   if ($(element).next().is(":hidden")) {
-      $(element)
-         .toggleClass("ui-accordion-header-active ui-state-active ui-state-default ui-corner-bottom")
-         .find("> .ui-icon").toggleClass("ui-icon-triangle-1-e ui-icon-triangle-1-s").end()
-         .next().toggleClass("ui-accordion-content-active").slideDown(0);
+function ResetUI() {
+   if (JSROOT.H('root') != null) {
+      JSROOT.H('root').clear();
+      JSROOT.DelHList('root');
    }
-   $(element)[0].scrollIntoView();
+   $('#browser').get(0).innerHTML = '';
 }
 
-function loadScript(url, callback) {
-   // dynamic script loader using callback
-   // (as loading scripts may be asynchronous)
-   var script = document.createElement("script")
-   script.type = "text/javascript";
-   if (script.readyState) { // Internet Explorer specific
-      script.onreadystatechange = function() {
-         if (script.readyState == "loaded" ||
-             script.readyState == "complete") {
-            script.onreadystatechange = null;
-            callback();
-         }
-      };
-   } else { // Other browsers
-      script.onload = function(){
-         callback();
-      };
-   }
-   var rnd = Math.floor(Math.random()*80000);
-   script.src = url;//+ "?r=" + rnd;
-   document.getElementsByTagName("head")[0].appendChild(script);
-};
+function guiLayout() {
+   var res = 'collapsible';
+   var selects = document.getElementById("layout");
+   if (selects)
+      res = selects.options[selects.selectedIndex].text;
+   return res;
+}
 
-function displayRootStatus(msg) {
-   $("#status").append(msg);
-};
+function setGuiLayout(value) {
+   var selects = document.getElementById("layout");
+   if (!selects) return;
 
-function displayListOfKeys(keys) {
-   JSROOTPainter.displayListOfKeys(keys, '#status');
-};
-
-function displayStreamerInfos(streamerInfo) {
-   var findElement = $('#report').find('#treeview');
-   if (findElement.length) {
-      var element = findElement[0].parentElement.previousSibling.id;
-      showElement('#'+element);
-   }
-   else {
-      var uid = "uid_accordion_"+(++last_index);
-      var entryInfo = "<h5 id=\""+uid+"\"><a> Streamer Infos </a>&nbsp; </h5><div>\n";
-      entryInfo += "<h6>Streamer Infos</h6><span id='treeview' class='dtree'></span></div>\n";
-      $("#report").append(entryInfo);
-      JSROOTPainter.displayStreamerInfos(streamerInfo, '#treeview');
-      addCollapsible('#'+uid);
-   }
-};
-
-function findObject(obj_name) {
-   for (var i in obj_list) {
-      if (obj_list[i] == obj_name) {
-         var findElement = $('#report').find('#histogram'+i);
-         if (findElement.length) {
-            var element = findElement[0].previousElementSibling.id;
-            showElement('#'+element);
-            return true;
-         }
-      }
-   }
-   return false;
-};
-
-function showObject(obj_name, cycle) {
-   gFile.ReadObject(obj_name, cycle);
-};
-
-function displayDirectory(directory, cycle, dir_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.addDirectoryKeys(directory.fKeys, '#status', dir_id);
-};
-
-function displayCollection(cont, cycle, c_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.addCollectionContents(cont, '#status', c_id);
-};
-
-function showDirectory(dir_name, cycle, dir_id) {
-   gFile.ReadDirectory(dir_name, cycle, dir_id);
-};
-
-function showCollection(name, cycle, id) {
-   gFile.ReadCollection(name, cycle, id);
-};
-
-function readTree(tree_name, cycle, node_id) {
-   gFile.ReadObject(tree_name, cycle, node_id);
-};
-
-function displayTree(tree, cycle, node_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.displayTree(tree, '#status', node_id);
-};
-
-function displayObject(obj, cycle, idx) {
-   if (!obj['_typename'].match(/\bJSROOTIO.TH1/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH2/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH3/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TGraph/) &&
-       !obj['_typename'].match(/\bRooHist/) &&
-       !obj['_typename'].match(/\RooCurve/) &&
-       obj['_typename'] != 'JSROOTIO.TCanvas' &&
-       obj['_typename'] != 'JSROOTIO.TF1' &&
-       obj['_typename'] != 'JSROOTIO.TProfile') {
-      if (typeof(checkUserTypes) != 'function' || checkUserTypes(obj) == false)
-         return;
-   }
-   var uid = "uid_accordion_"+(++last_index);
-   var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + ";" + cycle + "</a>&nbsp; </h5>\n";
-   entryInfo += "<div id='histogram" + idx + "'>\n";
-   $("#report").append(entryInfo);
-   JSROOTPainter.drawObject(obj, idx);
-   addCollapsible('#'+uid);
-};
-
-function displayMappedObject(obj_name, list_name, offset) {
-   var obj = null;
-   for (var i=0; i<gFile['fObjectMap'].length; ++i) {
-      if (gFile['fObjectMap'][i]['obj']['_name'] == obj_name) {
-         obj = gFile['fObjectMap'][i]['obj'];
+   for (var i in selects.options) {
+      var s = selects.options[i].text;
+      if (typeof s == 'undefined') continue;
+      if ((s == value) || (s.replace(/ /g,"") == value)) {
+         selects.selectedIndex = i;
          break;
       }
    }
-   if (obj == null) {
-      gFile.ReadCollectionElement(list_name, obj_name, 1, offset);
-      return;
+}
+
+function BuildNoBrowserGUI(online) {
+   var itemsarr = [];
+   var optionsarr = [];
+   var running_request = {};
+
+   var filename = null;
+   if (!online) {
+      filename = JSROOT.GetUrlOption("file");
+      var filesdir = JSROOT.GetUrlOption("path");
+      if (filesdir!=null) filename = filesdir + filename;
    }
-   if (!obj['_typename'].match(/\bJSROOTIO.TH1/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH2/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH3/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TGraph/) &&
-       !obj['_typename'].match(/\bRooHist/) &&
-       !obj['_typename'].match(/\RooCurve/) &&
-       obj['_typename'] != 'JSROOTIO.TCanvas' &&
-       obj['_typename'] != 'JSROOTIO.TF1' &&
-       obj['_typename'] != 'JSROOTIO.TProfile') {
-      if (typeof(checkUserTypes) != 'function' || checkUserTypes(obj) == false)
+
+   var itemname = JSROOT.GetUrlOption("item");
+   if (itemname) itemsarr.push(itemname);
+   var opt = JSROOT.GetUrlOption("opt");
+   if (opt) optionsarr.push(opt);
+
+   var items = JSROOT.GetUrlOption("items");
+   if (items != null) {
+      items = JSON.parse(items);
+      for (var i in items) itemsarr.push(items[i]);
+   }
+
+   var opts = JSROOT.GetUrlOption("opts");
+   if (opts!=null) {
+      opts = JSON.parse(opts);
+      for (var i in opts) optionsarr.push(opts[i]);
+   }
+
+
+   var layout = JSROOT.GetUrlOption("layout");
+   if (layout=="") layout = null;
+
+   var monitor = JSROOT.GetUrlOption("monitoring");
+   if (monitor == "") monitor = 3000; else
+   if (monitor != null) monitor = parseInt(monitor);
+
+   var divid = online ? "onlineGUI" : "simpleGUI";
+
+   $('#'+divid).empty();
+
+   $('html').css('height','100%');
+   $('body').css('min-height','100%').css('margin','0px').css("overflow", "hidden");
+
+   $('#'+divid).css("position", "absolute")
+               .css("left", "1px")
+               .css("top", "1px")
+               .css("bottom", "1px")
+               .css("right", "1px");
+
+   var objpainter = null;
+   var mdi = null;
+
+   function file_error(str) {
+      if ((objpainter == null) && (mdi==null))
+         $('#'+divid).append("<h4>" + str + "</h4>");
+   }
+
+   if ((filename == null) && !online) {
+      return file_error('filename not specified');
+   }
+
+   if (itemsarr.length == 0) {
+      return file_error('itemname not specified');
+   }
+
+   var title = online ? "Online"  : ("File: " + filename);
+   if (itemsarr.length == 1) title += " item: " + itemsarr[0];
+                        else title += " items: " + itemsarr.toString();
+   document.title = title;
+
+   function draw_object(indx, obj) {
+      document.body.style.cursor = 'wait';
+      if (obj==null)  {
+         file_error("object " + itemsarr[indx] + " not found");
+      } else
+      if (mdi) {
+         var frame = mdi.FindFrame(itemsarr[indx], true);
+         mdi.ActivateFrame(frame);
+         JSROOT.redraw($(frame).attr('id'), obj, optionsarr[indx]);
+      } else {
+         objpainter = JSROOT.redraw(divid, obj, optionsarr[indx]);
+      }
+      document.body.style.cursor = 'auto';
+      running_request[indx] = false;
+   }
+
+   function read_object(file, indx) {
+
+      if (itemsarr[indx]=="StreamerInfo")
+         draw_object(indx, file.fStreamerInfos);
+
+      file.ReadObject(itemsarr[indx], function(obj) {
+         draw_object(indx, obj);
+      });
+   }
+
+   function request_object(indx) {
+
+      if (running_request[indx]) return;
+
+      running_request[indx] = true;
+
+      var url = itemsarr[indx] + "/root.json.gz?compact=3";
+
+      var itemreq = JSROOT.NewHttpRequest(url, 'object', function(obj) {
+         if ((obj != null) &&  (itemsarr[indx] === "StreamerInfo")
+               && (obj['_typename'] === 'TList'))
+            obj['_typename'] = 'TStreamerInfoList';
+
+         draw_object(indx, obj);
+      });
+
+      itemreq.send(null);
+   }
+
+   function read_all_objects() {
+
+      if (online) {
+         for (var i in itemsarr)
+            request_object(i);
          return;
-   }
-   var uid = "uid_accordion_"+(++last_index);
-   var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + "</a>&nbsp; </h5>\n";
-   entryInfo += "<div id='histogram" + obj_index + "'>\n";
-   $("#report").append(entryInfo);
-   JSROOTPainter.drawObject(obj, obj_index);
-   addCollapsible('#'+uid);
-   obj_list.push(obj['fName']);
-   obj_index++;
-};
+      }
 
-function AssertPrerequisites(andThen) {
-   if (typeof JSROOTIO == "undefined") {
-      // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
-      loadScript(source_dir+'scripts/jquery.min.js', function() {
-      loadScript(source_dir+'scripts/jquery-ui.min.js', function() {
-      loadScript(source_dir+'scripts/d3.v2.min.js', function() {
-      loadScript(source_dir+'scripts/jquery.mousewheel.js', function() {
-      loadScript(source_dir+'scripts/dtree.js', function() {
-      loadScript(source_dir+'scripts/rawinflate.js', function() {
-      loadScript(source_dir+'scripts/JSRootCore.js', function() {
-      loadScript(source_dir+'scripts/three.min.js', function() {
-      loadScript(source_dir+'fonts/helvetiker_regular.typeface.js', function() {
-      loadScript(source_dir+'scripts/JSRootD3Painter.js', function() { 
-      loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
-         if (andThen) {
-            andThen();
+      for (var i in itemsarr)
+         if (running_request[i]) {
+            console.log("Request for item " + itemsarr[i] + " still running");
+            return;
          }
-         else {
-            var url = $("#urlToLoad").val();
-            if (url == "" || url == " ") return;
-            $("#status").html("file: " + url + "<br/>");
-            ResetUI();
-            gFile = new JSROOTIO.RootFile(url);
-            $('#report').append("</body></html>");
-            var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
-            $(version).prependTo("body");
-         }
-         $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
-      }) }) }) }) }) }) }) }) }) }) });
-      return true;
-   }
-   return false;
-};
 
-function ReadFile() {
+      new JSROOT.TFile(filename, function(file) {
+         if (file==null) return file_error("file " + filename + " cannot be opened");
+
+         for (var i in itemsarr) {
+            running_request[i] = true;
+            read_object(file, i);
+         }
+      });
+   }
+
+   if (itemsarr.length > 1) {
+      if ((layout==null) || (layout=='collapsible') || (layout == "")) {
+         var divx = 2; divy = 1;
+         while (divx*divy < itemsarr.length) {
+            if (divy<divx) divy++; else divx++;
+         }
+         layout = 'grid' + divx + 'x' + divy;
+      }
+
+      if (layout=='tabs')
+         mdi = new JSROOT.TabsDisplay(divid);
+      else
+         mdi = new JSROOT.GridDisplay(divid, layout);
+
+      // Than create empty frames for each item
+      for (var i in itemsarr)
+         mdi.CreateFrame(itemsarr[i]);
+   }
+
+   read_all_objects();
+
+   if (monitor>0)
+      setInterval(read_all_objects, monitor);
+
+   JSROOT.RegisterForResize(function() { if (objpainter) objpainter.CheckResize(); if (mdi) mdi.CheckResize(); });
+}
+
+function ReadFile(filename, checkitem) {
    var navigator_version = navigator.appVersion;
    if (typeof ActiveXObject == "function") { // Windows
       // detect obsolete browsers
       if ((navigator_version.indexOf("MSIE 8") != -1) ||
           (navigator_version.indexOf("MSIE 7") != -1))  {
-         alert("You need at least MS Internet Explorer version 9.0. Note you can also use any other web browser (excepted Opera)");
+         alert("You need at least MS Internet Explorer version 9.0. Note you can also use any other web browser");
          return;
       }
    }
@@ -261,90 +215,245 @@ function ReadFile() {
       if ((navigator_version.indexOf("Windows NT") == -1) &&
           (navigator_version.indexOf("Safari") != -1) &&
           (navigator_version.indexOf("Version/5.1.7") != -1)) {
-         alert("There are know issues with Safari 5.1.7 on MacOS X. It may become unresponsive or even hangs. You can use any other web browser (excepted Opera)");
+         alert("There are know issues with Safari 5.1.7 on MacOS X. It may become unresponsive or even hangs. You can use any other web browser");
          return;
       }
    }
-   if (AssertPrerequisites()) return;
-   // else simply open the file
-   var url = $("#urlToLoad").val();
-   if (url == "" || url == " ") return;
-   $("#status").html("file: " + url + "<br/>");
-   if (gFile) {
-      gFile.Delete();
-      delete gFile;
-   }
-   gFile = null;
-   alert(url);
-   gFile = new JSROOTIO.RootFile(url);
-   $('#report').append("</body></html>");
-};
 
-function ResetUI() {
-   obj_list.splice(0, obj_list.length);
-   func_list.splice(0, func_list.length);
-   obj_index = 0;
-   last_index = 0;
-   frame_id = 0;
-   random_id = 0;
-   if (gFile) {
-      gFile.Delete();
-      delete gFile;
+   if (filename==null) {
+      filename = $("#urlToLoad").val();
+      filename.trim();
+   } else {
+      $("#urlToLoad").val(filename);
    }
-   gFile = null;
-   $("#report").get(0).innerHTML = '';
-   $("#report").innerHTML = '';
-   delete $("#report").get(0);
-   //window.location.reload(true);
-   $('#status').get(0).innerHTML = '';
-   $('#report').get(0).innerHTML = '';
-   $(window).unbind('resize');
-};
+   if (filename.length == 0) return;
+
+   var layout = null;
+   var itemsarr = [];
+   var optionsarr = [];
+   if (checkitem) {
+      var itemname = JSROOT.GetUrlOption("item");
+      if (itemname) itemsarr.push(itemname);
+      var items = JSROOT.GetUrlOption("items");
+      if (items!=null) {
+         items = JSON.parse(items);
+         for (var i in items) itemsarr.push(items[i]);
+      }
+
+      layout = JSROOT.GetUrlOption("layout");
+      if (layout=="") layout = null;
+
+      var opt = JSROOT.GetUrlOption("opt");
+      if (opt) optionsarr.push(opt);
+      var opts = JSROOT.GetUrlOption("opts");
+      if (opts!=null) {
+         opts = JSON.parse(opts);
+         for (var i in opts) optionsarr.push(opts[i]);
+      }
+   }
+
+   if (layout==null)
+      layout = guiLayout();
+   else
+      setGuiLayout(layout);
+
+   var painter = new JSROOT.HierarchyPainter('root', 'browser');
+
+   painter.SetDisplay(layout, 'right-div');
+
+   painter.OpenRootFile(filename, function() {
+      painter.displayAll(itemsarr, optionsarr);
+   });
+}
+
+function ProcessResize(direct)
+{
+   if (direct) document.body.style.cursor = 'wait';
+
+   JSROOT.H('root').CheckResize();
+
+   if (direct) document.body.style.cursor = 'auto';
+}
+
+function AddInteractions() {
+   var drag_sum = 0;
+
+   var drag_move = d3.behavior.drag()
+      .origin(Object)
+      .on("dragstart", function() {
+          d3.event.sourceEvent.preventDefault();
+          // console.log("start drag");
+          drag_sum = 0;
+       })
+      .on("drag", function() {
+         d3.event.sourceEvent.preventDefault();
+         drag_sum += d3.event.dx;
+         // console.log("dx = " + d3.event.dx);
+         d3.event.sourceEvent.stopPropagation();
+      })
+      .on("dragend", function() {
+         d3.event.sourceEvent.preventDefault();
+         // console.log("stop drag " + drag_sum);
+
+         var width = d3.select("#left-div").style('width');
+         width = (parseInt(width.substr(0, width.length - 2)) + Number(drag_sum)).toString() + "px";
+         d3.select("#left-div").style('width', width);
+
+         var left = d3.select("#separator-div").style('left');
+         left = parseInt(left.substr(0, left.length - 2)) + Number(drag_sum);
+         d3.select("#separator-div").style('left',left.toString() + "px");
+         d3.select("#right-div").style('left',(left+6).toString() + "px");
+
+         ProcessResize(true);
+      });
+
+   d3.select("#separator-div").call(drag_move);
+
+   JSROOT.RegisterForResize(ProcessResize);
+
+   // specify display kind every time selection done
+   // will be actually used only for first drawing or after reset
+   document.getElementById("layout").onchange = function() {
+      if (JSROOT.H('root'))
+         JSROOT.H('root').SetDisplay(guiLayout(), "right-div");
+   }
+}
+
+
+function BuildOnlineGUI() {
+   var myDiv = $('#onlineGUI');
+   if (!myDiv) {
+      alert("You have to define a div with id='onlineGUI'!");
+      return;
+   }
+
+   JSROOT.Painter.readStyleFromURL();
+
+   if (JSROOT.GetUrlOption("nobrowser")!=null)
+      return BuildNoBrowserGUI(true);
+
+   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOT version " + JSROOT.version + "&nbsp</font></div>"
+
+   guiCode += '<div id="left-div" class="column"><br/>'
+            + '  <h1><font face="Verdana" size="4">ROOT online server</font></h1>'
+            + '  Hierarchy in <a href="h.json">json</a> and <a href="h.xml">xml</a> format<br/><br/>'
+            + ' <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring '
+            + ' <select style="padding:2px; margin-left:10px; margin-top:5px;" id="layout">'
+            + '   <option>collapsible</option><option>grid 2x2</option><option>grid 3x3</option><option>grid 4x4</option><option>tabs</option>'
+            + ' </select>'
+            + ' <div id="browser"></div>'
+            + '</div>'
+            + '<div id="separator-div" class="column"></div>'
+            + '<div id="right-div" class="column"></div>';
+
+   $('#onlineGUI').empty();
+   $('#onlineGUI').append(guiCode);
+
+   var layout = JSROOT.GetUrlOption("layout");
+   if ((layout=="") || (layout==null))
+      layout = guiLayout();
+   else
+      setGuiLayout(layout);
+
+   var monitor = JSROOT.GetUrlOption("monitoring");
+
+   var itemsarr = [], optionsarr = [];
+   var itemname = JSROOT.GetUrlOption("item");
+   if (itemname) itemsarr.push(itemname);
+   var items = JSROOT.GetUrlOption("items");
+   if (items!=null) {
+      items = JSON.parse(items);
+      for (var i in items) itemsarr.push(items[i]);
+   }
+
+   var opt = JSROOT.GetUrlOption("opt");
+   if (opt) optionsarr.push(opt);
+   var opts = JSROOT.GetUrlOption("opts");
+   if (opts!=null) {
+      opts = JSON.parse(opts);
+      for (var i in opts) optionsarr.push(opts[i]);
+   }
+
+   var h = new JSROOT.HierarchyPainter("root", "browser");
+
+   h.SetDisplay(layout, 'right-div');
+
+   h.EnableMonitoring(monitor!=null);
+   $("#monitoring")
+      .prop('checked', monitor!=null)
+      .click(function() {
+         h.EnableMonitoring(this.checked);
+         if (this.checked) h.updateAll();
+      });
+
+   h.OpenOnline("", function() {
+      h.displayAll(itemsarr, optionsarr);
+   });
+
+   setInterval(function() { if (h.IsMonitoring()) h.updateAll(); }, h.MonitoringInterval());
+
+   AddInteractions();
+}
 
 function BuildSimpleGUI() {
-   AssertPrerequisites(function DisplayGUI() {
+
+   if (document.getElementById('onlineGUI')) return BuildOnlineGUI();
+
    var myDiv = $('#simpleGUI');
-   if (!myDiv) {
-      alert("You have to define a div with id='simpleGUI'!");
-      return;
-   }
-   var files = myDiv.attr("files");
-   if (!files) {
-      alert("div id='simpleGUI' must have a files attribute!");
-      return;
-   }
+   if (!myDiv) return;
+
+   JSROOT.Painter.readStyleFromURL();
+
+   if (JSROOT.GetUrlOption("nobrowser")!=null)
+      return BuildNoBrowserGUI(false);
+
+   var files = JSROOT.GetUrlOption("files");
+   if (files==null) files = myDiv.attr("files");
+   var filesdir = JSROOT.GetUrlOption("path");
+   if (filesdir==null) filesdir = myDiv.attr("path");
+
+   if (files==null) files = "files/hsimple.root";
+   if (filesdir==null) filesdir = "";
    var arrFiles = files.split(';');
 
-   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
+   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOT version " + JSROOT.version + "&nbsp</font></div>"
 
-      guiCode += "<div id='main' class='column'>\n"
+   guiCode += "<div id='left-div' class='column'>\n"
       +"<h1><font face='Verdana' size='4'>Read a ROOT file with Javascript</font></h1>\n"
       +"<p><b>Select a ROOT file to read, or enter a url (*): </b><br/>\n"
       +'<small><sub>*: Other URLs might not work because of cross site scripting protection, see e.g. <a href="https://developer.mozilla.org/en/http_access_control">developer.mozilla.org/http_access_control</a> on how to avoid it.</sub></small></p>'
       +'<form name="ex">'
       +'<div style="margin-left:10px;">'
-      +'<input type="text" name="state" value="" size="30" id="urlToLoad"/><br/>'
+      + '<input type="text" name="state" value="" size="30" id="urlToLoad"/><br/>'
       +'<select name="s" size="1" '
       +'onchange="document.ex.state.value = document.ex.s.options[document.ex.s.selectedIndex].value;document.ex.s.selectedIndex=0;document.ex.s.value=\'\'">'
       +'<option value = " " selected = "selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>';
-      for (var i=0; i<arrFiles.length; i++) {
-         guiCode += '<option value = "' + arrFiles[i] + '">' + arrFiles[i] + '</option>';
-      }
-      guiCode += '</select>'
+   for (var i=0; i<arrFiles.length; i++) {
+      guiCode += '<option value = "' + filesdir + arrFiles[i] + '">' + arrFiles[i] + '</option>';
+   }
+   guiCode += '</select>'
       +'</div>'
       +'<input style="padding:2px; margin-left:10px; margin-top:5px;"'
-      +' onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
+      +'       onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
       +'<input style="padding:2px; margin-left:10px;"'
-      +'onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
+      +'       onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
+      +'<select style="padding:2px; margin-left:10px; margin-top:5px;" id="layout">'
+      +'  <option>collapsible</option><option>grid 2x2</option><option>grid 3x3</option><option>grid 4x4</option><option>tabs</option>'
+      +'</select>'
       +'</form>'
-
       +'<br/>'
-      +'<div id="status"></div>'
+      +'<div id="browser"></div>'
       +'</div>'
+      +'<div id="separator-div" class="column"></div>'
+      +'<div id="right-div" class="column"></div>';
 
-      +'<div id="reportHolder" class="column">'
-      +'<div id="report"> </div>'
-      +'</div>';
-      $('#simpleGUI').append(guiCode);
-   });
-};
+   $('#simpleGUI').empty();
+   $('#simpleGUI').append(guiCode);
+   // $("#layout").selectmenu();
+
+   AddInteractions();
+
+   var filename = JSROOT.GetUrlOption("file");
+   if ((typeof filename == 'string') && (filename.length>0))
+      ReadFile(filename, true);
+}

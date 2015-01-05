@@ -7,6 +7,7 @@
 
 var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
+var fs = require('fs');
 var arc = new emitter();
 
 // Set this to your ARTDAQ installation directory
@@ -30,14 +31,16 @@ var systemStatus = {
     commandErrorBuffer: "",
     commandRunning: false,
     systemRunning: false,
+    WFPlotsUpdated: Date.now(),
 };
 
 // System Command Holder (start2x2x2System.sh calls)
 var system;
 
-
 //Command Holder (manage2x2x2System.sh calls)
 var command;
+
+var monitorFileSize = 0;
 
 arc.MasterInitFunction = function () {};
 
@@ -111,7 +114,7 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
         var fileTimeCMD = [];
         if (fileTime > 0) { fileTimeCMD = ["--file-duration", fileTime.toString()]; }
         
-        var args = ["-m", "file"].concat(verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
+        var args = ["-m", "on"].concat(verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
         startCommand(args)
         systemStatus.state = "Initialized";
     }
@@ -184,7 +187,7 @@ function  killSystem() {
         if (!systemStatus.commandRunning) {
             console.log("Killing System, PID: " +system.pid);
             system.kill();
-            spawn(__dirname + '/killRogueArtdaq.sh');
+            spawn(__dirname + '/killRogueArtdaq.sh',[__dirname]);
         } else {
             setTimeout(function () { killSystem() }, 1000);
         }
@@ -207,6 +210,16 @@ function shutdownSystem() {
 };
 
 arc.GET_ = function () {
+    if(fs.existsSync(__dirname + "/../client/artdaqdemo_onmon.root")) {
+        var statSize = fs.statSync(__dirname + "/../client/artdaqdemo_onmon.root")["size"];
+        if( statSize != monitorFileSize) {
+            monitorFileSize = statSize;
+            systemStatus.WFPlotsUpdated = Date.now();
+	}
+        console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
+    } else {
+        systemStatus.WFPlotsUpdated = null;
+    }
     arc.emit('end', JSON.stringify(systemStatus));
     //systemStatus.systemErrorBuffer = "";
     //systemStatus.commandErrorBuffer = "";

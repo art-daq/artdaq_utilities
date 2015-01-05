@@ -1,4 +1,22 @@
+var hpainter;
+var lastUpdate = 0;
+
+function updateGUI() {
+    if(hpainter == null) hpainter = new JSROOT.HierarchyPainter('root', 'wd1div');
+    hpainter.SetDisplay("grid2x1", 'wd0div');
+
+    hpainter.OpenRootFile("artdaqdemo_onmon.root", function() {
+	    hpainter.displayAll(["wf0", "wf1"]);
+	});    
+};
+
 function manageButtons(state, running, systemRunning) {
+    var shutdownActive = $("#shutdown").hasClass("active") ? " active " : "";
+    var startedActive = $("#started").hasClass("active") ? " active" : "";
+    var initializedActive = $("#initialized").hasClass("active") ? " active" : "";
+    var runStartedActive = $("#runStarted").hasClass("active") ? " active" : "";
+    var runPausedActive = $("#runPaused").hasClass("active") ? " active" : "";
+
     var color = running ? "yellow" : "green";
     var sdColor = color;
     if (!systemRunning) { color = "red"; }
@@ -6,41 +24,46 @@ function manageButtons(state, running, systemRunning) {
     switch (state) {
         case "Shutdown":
             color = systemRunning ? "yellow" : "green";
-            $("#shutdown").html("<span>System Shutdown</span>").attr("class", "animated blue visible");
-            $("#started").html("<span>Start System</span>").attr("class", "animated visible " + color);
+	    $("#shutdown").html("<span>System Shutdown</span>").attr("class", "animated blue visible");
+		$("#started").html("<span>Start System</span>").attr("class", "animated visible " + color + startedActive);
             $("#initialized").html("<span></span>").attr("class", "animated red hidden");
             $("#runStarted").html("<span></span>").attr("class", "animated red hidden");
             $("#runPaused").html("<span></span>").attr("class", "animated red hidden");
             break;
         case "Started":
-            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor);
+            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor + shutdownActive);
             $("#started").html("<span>System Started</span>").attr("class", "animated blue visible");
-            $("#initialized").html("<span>Initialize System</span>").attr("class", "animated visible " + color);
+            $("#initialized").html("<span>Initialize System</span>").attr("class", "animated visible " + color + initializedActive);
             $("#runStarted").html("<span></span>").attr("class", "animated red hidden");
             $("#runPaused").html("<span></span>").attr("class", "animated red hidden");
             break;
         case "Initialized":
-            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor);
+            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor + shutdownActive);
             $("#started").html("<span></span>").attr("class", "animated red hidden");
             $("#initialized").html("<span>System Initialized</span>").attr("class", "animated blue visible");
-            $("#runStarted").html("<span>Start Run</span>").attr("class", "animated visible " + color);
+            $("#runStarted").html("<span>Start Run</span>").attr("class", "animated visible " + color + runStartedActive);
             $("#runPaused").html("<span></span>").attr("class", "animated red hidden");
             break;
         case "Running":
             $("#shutdown").html("<span></span>").attr("class", "animated red hidden");
             $("#started").html("<span></span>").attr("class", "animated red hidden");
-            $("#initialized").html("<span>End Run</span>").attr("class", "animated visible " + color);
+            $("#initialized").html("<span>End Run</span>").attr("class", "animated visible " + color + initializedActive);
             $("#runStarted").html("<span>Running</span>").attr("class", "animated blue visible");
-            $("#runPaused").html("<span>Pause Run</span>").attr("class", "animated visible " + color);
+            $("#runPaused").html("<span>Pause Run</span>").attr("class", "animated visible " + color + runPausedActive);
             break;
         case "Paused":
-            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor);
+            $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor + shutdownActive);
             $("#started").html("<span></span>").attr("class", "animated red hidden");
-            $("#initialized").html("<span>Reinitialize System</span>").attr("class", "animated visible " + color);
-            $("#runStarted").html("<span>Restart Run</span>").attr("class", "animated visible " + color);
+            $("#initialized").html("<span>Reinitialize System</span>").attr("class", "animated visible " + color + initializedActive);
+            $("#runStarted").html("<span>Restart Run</span>").attr("class", "animated visible " + color + runStartedActive);
             $("#runPaused").html("<span>Run Paused</span>").attr("class", "animated blue visible");
             break;
     }
+
+$(".green.animated").hover(function() {
+	    $(this).addClass("active");
+	}, function() {$(this).removeClass("active"); });
+    
 }
 
 function update(dataJSON) {
@@ -60,6 +83,18 @@ function update(dataJSON) {
     $("#systemErr").val(data.systemErrorBuffer);
     $("#commOut").val(data.commandOutputBuffer);
     $("#commErr").val(data.commandErrorBuffer);
+ 
+
+	if(data.WFPlotsUpdated && $("#monitoringEnabled").is(":checked")) {
+	var updateDate = data.WFPlotsUpdated;
+	if(updateDate > lastUpdate) {
+      updateGUI();
+      lastUpdate = updateDate;
+    }
+	} else {
+	    hpainter = null;
+            $("#wd0div").html("");
+	}
 }
 
 
@@ -121,6 +156,12 @@ $(document).ready(function () {
     $("#runPaused").click(function () {
         pauseRun();
     });
+    $("#monitoringEnabled").change(function () {
+	    if($("#monitoringEnabled").is(":checked")) {
+		updateGUI();
+            }
+	});
     setInterval(function () { AjaxGet("/artdaq-runcontrol/", update); }, 1000);
+    JSROOT.AssertPrerequisites('2d;io;', updateGUI);
 });
 
