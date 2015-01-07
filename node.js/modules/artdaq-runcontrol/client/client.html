@@ -29,6 +29,17 @@
                 <legend>ARTDAQ Parameters</legend>
                 <table>
                     <tr>
+                        <td>Partition</td>
+                        <td>
+                            <select id="partition">
+                                <option value="0">Partition 0</option>
+                                <option value="1">Partition 1</option>
+                                <option value="2">Partition 2</option>
+                                <option value="3">Partition 3</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
                         <td>Data Directory:</td>
                         <td><input type="text" id="dataDir" value="/tmp"></td>
                     </tr>
@@ -84,7 +95,6 @@
         <textarea readonly id="commOut"></textarea>
         <textarea readonly id="commErr" class="error"></textarea>
         <div id="wd1div" class="hidden"></div>
-        <input type="button" id="killSwitch" value="Kill ARTDAQ">Only press this if you absolutely have to...
     </div>
 </body>
 </html>

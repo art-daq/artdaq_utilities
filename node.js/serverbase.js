@@ -14,6 +14,7 @@ var numCPUs = require("os").cpus().length;
 var fs = require('fs');
 var path_module = require('path');
 var module_holder = {};
+var workerData = {};
 
 var util = require('util');
 var log_file = fs.createWriteStream(__dirname + '/server.log', { flags : 'a' });
@@ -49,29 +50,53 @@ LoadModules(DIR);
 // Node.js by default is single-threaded. Start multiple servers sharing
 // the same port so that an error doesn't bring the whole system down
 if (cluster.isMaster) {
+    
+    function messageHandler(msg) {
+        //console.log("Got Message from worker!");
+        workerData = msg;
+        Object.keys(cluster.workers).forEach(function (id) {
+            cluster.workers[id].send(workerData);
+        });
+    }
+    
+    // Call Master Init functions
     for (var name in module_holder) {
-        module_holder[name].MasterInitFunction();
+        module_holder[name].MasterInitFunction(workerData);
     }
     fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
     
+    cluster.on('online', function (worker) {
+        worker.send(workerData);
+    });
+    
     // Start workers for each CPU on the host
     for (var i = 0; i < numCPUs; i++) {
-        //cluster.fork();
+        var worker = cluster.fork();
+        worker.on('message', messageHandler);
     }
-    // Or start just one...
-    cluster.fork();
     
     // If one dies, start a new one!
     cluster.on("exit", function (worker, code, signal) {
-        cluster.fork();
+        var newWorker = cluster.fork();
+        newWorker.on('message', messageHandler);
     });
 } else {
-    
     // Node.js framework "includes"
     var https = require('https');
     var http = require('http');
     var url = require('url');
     var qs = require('querystring');
+    
+    process.on('message', function (data) {
+        workerData = data;
+    })
+    
+    for (var name in module_holder) {
+        module_holder[name].on("message", function (data) {
+            workerData[name] = data;
+            process.send(workerData);
+        });
+    }
     
     function serve(req, res, readOnly, username) {
         // req is the HTTP request, res is the response the server will send
@@ -125,11 +150,13 @@ if (cluster.isMaster) {
                         dataTemp += data;
                     });
                     module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
+                        //console.log("Sending Message!");
+                        process.send(workerData);
                         res.end(JSON.stringify(dataTemp + data));
                     });
                     if (readOnly) {
                         try {
-                            var data = module_holder[moduleName]["RO_" + functionName](POST);
+                            var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
                             if (data != null) {
                                 res.end(JSON.stringify(data));
                             }
@@ -141,14 +168,16 @@ if (cluster.isMaster) {
                         }
                     } else {
                         try {
-                            var data = module_holder[moduleName]["RW_" + functionName](POST);
+                            var data = module_holder[moduleName]["RW_" + functionName](POST, workerData[moduleName]);
                             if (data != null) {
                                 res.end(JSON.stringify(data));
+                                //console.log("Sending Message!");
+                                process.send(workerData);
                             }
                         } catch (err) {
                             if (err instanceof TypeError) {
                                 //RW_ version not available, try read-only version:
-                                var data = module_holder[moduleName]["RO_" + functionName](POST);
+                                var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
                                 if (data != null) {
                                     res.end(JSON.stringify(data));
                                 }
@@ -223,7 +252,7 @@ if (cluster.isMaster) {
                 module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
                     res.end(JSON.stringify(dataTemp + data));
                 });
-                var data = module_holder[moduleName]["GET_" + functionName]();
+                var data = module_holder[moduleName]["GET_" + functionName](workerData[moduleName]);
                 if (data != null) {
                     res.end(JSON.stringify(data));
                 }
@@ -272,7 +301,7 @@ if (cluster.isMaster) {
     if (__dirname.search("dev") >= 0) {
         baseport = 9090;
     }
-    console.log("Listening on port " + baseport);
+    console.log("Listening on ports " + baseport + " and " + (baseport + 1));
     server.listen(baseport + 1);
     insecureServer.listen(baseport);
 }

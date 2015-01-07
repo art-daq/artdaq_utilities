@@ -34,7 +34,7 @@ for (var name in clientCommands) {
     }
 }
 
-runcommand.MasterInitFunction = function () { };
+runcommand.MasterInitFunction = function () { return null; };
 
 
 // Entry point for the module. Check the passed command and run it if

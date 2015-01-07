@@ -1,15 +1,16 @@
 var hpainter;
 var lastUpdate = 0;
+var partition = -1;
 
 function openCanvasWindow(pad, width, height) {
-    var thisWindow = window.open("/artdaq-runcontrol/viewer.html?pad=" + pad, "ROOT Pad Inspector", "width=" + width + ", height=" + height);
+    var thisWindow = window.open("/artdaq-runcontrol/viewer.html?pad=" + pad + "&partition=" + partition, "ROOT Pad Inspector", "width=" + width + ", height=" + height);
 }
 
 function updateGUI() {
     if (hpainter == null) hpainter = new JSROOT.HierarchyPainter('root', 'wd1div');
     hpainter.SetDisplay("grid2x1", 'wd0div');
     
-    hpainter.OpenRootFile("artdaqdemo_onmon.root", function () {
+    hpainter.OpenRootFile("/artdaq-runcontrol/P"+partition+"/artdaqdemo_onmon.root", function () {
         hpainter.displayAll(["wf0", "wf1"]);
         
         $("#wd0div_grid_0").click(function () {
@@ -79,6 +80,8 @@ function manageButtons(state, running, systemRunning) {
 
 function update(dataJSON) {
     var data = $.parseJSON(dataJSON);
+    partition = data.partition;
+    $("#partition").val(data.partition);
     manageButtons(data.state, data.commandRunning, data.systemRunning);
     //var sOut = $("#systemOut").val();
     //$("#systemOut").val(sOut + data.systemOutputBuffer);
@@ -111,13 +114,13 @@ function update(dataJSON) {
 
 function shutdownSystem() {
     if ($("#shutdown").is(".green")) {
-        AjaxPost("/artdaq-runcontrol/Shutdown", { data: 0 }, update);
+        AjaxPost("/artdaq-runcontrol/Shutdown", { partition: $("#partition").val() }, update);
     }
 }
 
 function startSystem() {
     if ($("#started").is(".green")) {
-        AjaxPost("/artdaq-runcontrol/Start", { data: 0 }, update);
+        AjaxPost("/artdaq-runcontrol/Start", { partition: $("#partition").val() }, update);
     }
 }
 
@@ -125,10 +128,10 @@ function initSystem() {
     if ($("#initialized").is(".green")) {
         if ($("#started").is(".blue")) {
             var verbosity = $("#verbosity").is(":checked");
-            AjaxPost("/artdaq-runcontrol/Init", { dataDir: $("#dataDir").val(), verbose: verbosity, fileSize: $("#fileSize").val(), fileEvents: $("#fileEvents").val(), fileTime: $("#fileTime").val() }, update);
+            AjaxPost("/artdaq-runcontrol/Init", { partition: $("#partition").val(), dataDir: $("#dataDir").val(), verbose: verbosity, fileSize: $("#fileSize").val(), fileEvents: $("#fileEvents").val(), fileTime: $("#fileTime").val() }, update);
         }
         else {
-            AjaxPost("/artdaq-runcontrol/End", { events: 0, time: 0 }, update);
+            AjaxPost("/artdaq-runcontrol/End", { partition: $("#partition").val(), events: 0, time: 0 }, update);
             var number = parseInt($("#runNumber").val());
             $("#runNumber").val(number + 1);
         }
@@ -138,21 +141,17 @@ function initSystem() {
 function startRun() {
     if ($("#runStarted").is(".green")) {
         if ($("#runPaused").is(".blue")) {
-            AjaxPost("/artdaq-runcontrol/Resume", { runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
+            AjaxPost("/artdaq-runcontrol/Resume", { partition: $("#partition").val(), runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
         } else {
-            AjaxPost("/artdaq-runcontrol/Run", { runNumber: $("#runNumber").val(), runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
+            AjaxPost("/artdaq-runcontrol/Run", { partition: $("#partition").val(), runNumber: $("#runNumber").val(), runEvents: $("#runEvents").val(), runTime: $("#runTime").val() }, update);
         }
     }
 }
 
 function pauseRun() {
     if ($("#runPaused").is(".green")) {
-        AjaxPost("/artdaq-runcontrol/Pause", { data: 0 }, update);
+        AjaxPost("/artdaq-runcontrol/Pause", { partition: $("#partition").val() }, update);
     }
-}
-
-function kill() {
-    AjaxPost("/artdaq-runcontrol/KILL", { data: 0 }, update);
 }
 
 $(document).ready(function () {
@@ -171,16 +170,13 @@ $(document).ready(function () {
     $("#runPaused").click(function () {
         pauseRun();
     });
-    $("#killSwitch").click(function () {
-        kill();
-    });
     $("#monitoringEnabled").change(function () {
         if ($("#monitoringEnabled").is(":checked")) {
             updateGUI();
         }
     });
     
-    setInterval(function () { AjaxGet("/artdaq-runcontrol/", update); }, 1000);
+    setInterval(function () { AjaxGet("/artdaq-runcontrol/P" + $("#partition").val(), update); }, 1000);
     JSROOT.AssertPrerequisites('2d;io;', updateGUI);
 });
 

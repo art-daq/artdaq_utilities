@@ -17,80 +17,99 @@ var artdaqDir = "/home/eflumerf/Desktop/artdaq-demo-base";
 var setupScript = "setupARTDAQDEMO";
 
 // System Status
-var systemStatus = {
-    state: "Shutdown",
-    runNumber: 1000,
-    dataDir: "/tmp",
-    vebosity: false,
-    fileSize: 0,
-    fileEvents: 0,
-    fileTime: 0,
-    systemOutputBuffer: "",
-    systemErrorBuffer: "",
-    commandOutputBuffer: "",
-    commandErrorBuffer: "",
-    commandRunning: false,
-    systemRunning: false,
-    WFPlotsUpdated: Date.now(),
+var Status = function (partition) {
+    this.state = "Shutdown";
+    this.runNumber = 1000;
+    this.dataDir = "/tmp";
+    this.vebosity = false;
+    this.fileSize = 0;
+    this.fileEvents = 0;
+    this.fileTime = 0;
+    this.systemPID = null;
+    this.systemRunning = false;
+    this.systemOutputBuffer = "";
+    this.systemErrorBuffer = "";
+    this.commandPID = null;
+    this.commandRunning = false;
+    this.commandOutputBuffer = "";
+    this.commandErrorBuffer = "";
+    this.WFPlotsUpdated = Date.now();
+    this.WFFileSize = 0;
+    this.partition = partition;
 };
 
-// System Command Holder (start2x2x2System.sh calls)
-var system;
-
-//Command Holder (manage2x2x2System.sh calls)
-var command;
-
-var monitorFileSize = 0;
-
-arc.MasterInitFunction = function () { };
-
-function startCommand(args) {
-    var commandArray = [artdaqDir, setupScript, "manage2x2x2System.sh"].concat(args);
-    command = spawn(__dirname + "/runARTDAQ.sh", commandArray);
-    systemStatus.commandRunning = true;
-    systemStatus.commandErrorBuffer = "";
-    systemStatus.commandOutputBuffer = "";
+arc.MasterInitFunction = function (workerData) {
+    var output = {};
+    output.p0 = new Status(0);
+    output.p1 = new Status(1);
+    output.p2 = new Status(2);
+    output.p3 = new Status(3);
     
-    command.stdout.on('data', function (data) {
-        systemStatus.commandOutputBuffer += data;
-    });
-    command.stderr.on('data', function (data) {
-        // HTML-ize and color red the output
-        systemStatus.commandErrorBuffer += data;
-    });
-    command.on('close', function (code) {
+    workerData["artdaq-runcontrol"] = output;
+};
+
+function checkCommand(systemStatus) {
+    if (systemStatus.commandPID != null) {
+        try {
+            process.kill(systemStatus.commandPID, 0);
+            systemStatus.commandRunning = true;
+        } catch (err) {
+            systemStatus.commandRunning = false;
+            systemStatus.commandPID = null;
+        }
+    } else {
         systemStatus.commandRunning = false;
-    });
+    }
 }
 
-function startSystem() {
-    console.log("Starting System");
+function checkSystem(systemStatus) {
+    if (systemStatus.systemPID != null) {
+        try {
+            process.kill(systemStatus.systemPID, 0);
+            systemStatus.systemRunning = true;
+        } catch (err) {
+            systemStatus.systemRunning = false;
+            systemStatus.systemPID = null;
+        }
+    } else {
+        systemStatus.systemRunning = false;
+    }
+}
+
+function startCommand(args, systemStatus) {
+    var port = (systemStatus.partition * 100) + 5600;
+    var commandArray = [artdaqDir, setupScript, port, "manage2x2x2System.sh"].concat(args);
+    systemStatus.commandErrorBuffer = "";
+    systemStatus.commandOutputBuffer = "";
+    var out = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.out.log", 'w');
+    var err = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.err.log", 'w');
+    var command = spawn(__dirname + "/runARTDAQ.sh", commandArray, { detached: true, stdio: ['ignore', out, err] });
+    systemStatus.commandPID = command.pid;
+    command.unref();
+    systemStatus.commandRunning = true;
+    checkCommand(systemStatus);
+}
+
+function startSystem(systemStatus) {
+    console.log("Starting System, Partition " + systemStatus.partition);
+    var port = (systemStatus.partition * 100) + 5600;
+    var commandArray = [artdaqDir, setupScript, port, "start2x2x2System.sh", "-p", port];
+    var out = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/out.log", 'w');
+    var err = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/err.log", 'w');
     systemStatus.systemErrorBuffer = "";
     systemStatus.systemOutputBuffer = "";
-    var commandArray = [artdaqDir, setupScript, "start2x2x2System.sh"];
-    system = spawn(__dirname + "/runARTDAQ.sh", commandArray);
+    var system = spawn(__dirname + "/runARTDAQ.sh", commandArray, { detached: true, stdio: ['ignore', out, err] });
+    systemStatus.systemPID = system.pid;
+    system.unref();
     systemStatus.systemRunning = true;
     console.log("Command Spawned");
-    system.stdout.on('data', function (data) {
-        systemStatus.systemOutputBuffer += data;
-    });
-    system.stderr.on('data', function (data) {
-        // HTML-ize and color red the output
-        systemStatus.systemErrorBuffer += data;
-    });
-    system.on('close', function (code) {
-        console.log("System command exited with code " + code);
-        systemStatus.systemRunning = false;
-    });
-    system.on('error', function (err) {
-        console.log("SYSTEM COMMAND ERROR!!!!\n" + err);
-    });
+    
     systemStatus.state = "Started";
 };
 
-function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
+function initialize(systemStatus, dataDir, verbose, fileSize, fileEvents, fileTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { initialize(dataDir, verbose, fileSize, fileEvents, fileTime); });
+        setTimeout(function () { initialize(systemStatus, dataDir, verbose, fileSize, fileEvents, fileTime); });
     }
     else {
         systemStatus.dataDir = dataDir;
@@ -114,58 +133,58 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
         var fileTimeCMD = [];
         if (fileTime > 0) { fileTimeCMD = ["--file-duration", fileTime.toString()]; }
         
-        var onmonDir = __dirname + "/../client/";
+        var onmonDir = __dirname + "/../client/P" + systemStatus.partition;
         
         var args = ["-m", "on", "-M"].concat(onmonDir, verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
-        startCommand(args)
+        startCommand(args, systemStatus)
         systemStatus.state = "Initialized";
     }
 };
 
-function startRun(number, runEvents, runTime) {
+function startRun(systemStatus, number, runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { startRun(number, runEvents, runTime); }, 500);
+        setTimeout(function () { startRun(systemStatus, number, runEvents, runTime); }, 500);
     }
     else {
         systemStatus.runNumber = number;
         
         var args = ["-N", number, "start"];
-        startCommand(args)
+        startCommand(args, systemStatus)
         systemStatus.state = "Running";
         if (runEvents > 0 || runTime > 0) {
-            endRun(runEvents, runTime);
+            endRun(systemStatus, runEvents, runTime);
         }
     }
 };
 
-function pauseRun() {
+function pauseRun(systemStatus) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { pauseRun(); }, 500);
+        setTimeout(function () { pauseRun(systemStatus); }, 500);
     }
     else {
         var args = ["pause"];
-        startCommand(args)
+        startCommand(args, systemStatus)
         systemStatus.state = "Paused";
     }
 };
 
-function resumeRun(runEvents, runTime) {
+function resumeRun(systemStatus, runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { resumeRun(runEvents, runTime); }, 500);
+        setTimeout(function () { resumeRun(systemStatus, runEvents, runTime); }, 500);
     }
     else {
         var args = ["resume"];
-        startCommand(args)
+        startCommand(args, systemStatus)
         systemStatus.state = "Running";
         if (runEvents > 0 || runTime > 0) {
-            endRun(runEvents, runTime);
+            endRun(systemStatus, runEvents, runTime);
         }
     }
 };
 
-function endRun(runEvents, runTime) {
+function endRun(systemStatus, runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { endRun(runEvents, runTime); }, 500);
+        setTimeout(function () { endRun(systemStatus, runEvents, runTime); }, 500);
     }
     else {
         var events = [],
@@ -180,109 +199,137 @@ function endRun(runEvents, runTime) {
             systemStatus.state = "Initialized";
         }
         var args = events.concat(time, "stop");
-        startCommand(args)
+        startCommand(args, systemStatus)
     }
 };
 
-function  killSystem() {
-    if (systemStatus.systemRunning) {
-        if (!systemStatus.commandRunning) {
-            console.log("Killing System, PID: " + system.pid);
-            system.kill();
-            spawn(__dirname + '/killRogueArtdaq.sh', [__dirname]);
-        } else {
-            setTimeout(function () { killSystem() }, 1000);
+function killSystem(systemStatus) {
+    checkCommand(systemStatus);
+    if (!systemStatus.commandRunning) {
+        checkSystem(systemStatus);
+        if (systemStatus.systemRunning) {
+            console.log("Killing System, PID: " + systemStatus.systemPID);
+            spawn(__dirname + '/killArtdaq.sh', [systemStatus.systemPID]);
+            setTimeout(function () { killSystem(systemStatus); }, 1000);
         }
+    } else {
+        console.log("Command running, spinning...")
+        setTimeout(function () { killSystem(systemStatus) }, 1000);
     }
 }
 
-function shutdownSystem() {
+function shutdownSystem(systemStatus) {
     if (systemStatus.commandRunning) {
-        setTimeout(function () { shutdownSystem(); }, 500);
+        setTimeout(function () { shutdownSystem(systemStatus); }, 500);
     }
     else {
+        console.log("Shutting down system, Partition " + systemStatus.partition);
         var args = ["shutdown"];
-        startCommand(args)
+        startCommand(args, systemStatus);
+        spawn(__dirname + '/cleanupArtdaq.sh', [__dirname, systemStatus.partition]);
         systemStatus.state = "Shutdown";
     }
     
     setTimeout(function () {
-        killSystem();
+        killSystem(systemStatus);
     }, 4000);
 };
 
-arc.GET_ = function () {
-    if (fs.existsSync(__dirname + "/../client/artdaqdemo_onmon.root")) {
-        var statSize = fs.statSync(__dirname + "/../client/artdaqdemo_onmon.root")["size"];
-        if (statSize != monitorFileSize) {
-            monitorFileSize = statSize;
+function getStatus(systemStatuses, partition) {
+    var systemStatus = systemStatuses["p" + partition];
+    checkCommand(systemStatus);
+    checkSystem(systemStatus);
+    if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root")) {
+        var statSize = fs.statSync(__dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root")["size"];
+        if (statSize != systemStatus.WFFileSize) {
+            systemStatus.WFFileSize = statSize;
             systemStatus.WFPlotsUpdated = Date.now();
         }
         //console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
     } else {
         systemStatus.WFPlotsUpdated = null;
     }
+    if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/out.log")) {
+        systemStatus.systemOutputBuffer = "" + fs.readFileSync(__dirname + "/../client/P" + systemStatus.partition + "/out.log")
+    }
+    if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/err.log")) {
+        systemStatus.systemErrorBuffer = "" + fs.readFileSync(__dirname + "/../client/P" + systemStatus.partition + "/err.log")
+    }
+    if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.out.log")) {
+        systemStatus.commandOutputBuffer = "" + fs.readFileSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.out.log")
+    }
+    if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.err.log")) {
+        systemStatus.commandErrorBuffer = "" + fs.readFileSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.err.log")
+    }
     if (systemStatus.stopPending && !systemStatus.commandRunning) {
         systemStatus.state = "Initialized";
     }
     arc.emit('end', JSON.stringify(systemStatus));
-    //systemStatus.systemErrorBuffer = "";
-    //systemStatus.commandErrorBuffer = "";
-    //systemStatus.commandOutputBuffer = "";
-    //systemStatus.systemOutputBuffer = "";
 }
 
-arc.RW_Start = function (POST) {
-    if (systemStatus.state === "Shutdown") {
-        startSystem();
+arc.GET_P0 = function (systemStatuses) {
+    getStatus(systemStatuses, 0);
+}
+
+arc.GET_P1 = function (systemStatuses) {
+    getStatus(systemStatuses, 1);
+}
+
+arc.GET_P2 = function (systemStatuses) {
+    getStatus(systemStatuses, 2);
+}
+
+arc.GET_P3 = function (systemStatuses) {
+    getStatus(systemStatuses, 3);
+}
+
+arc.RW_Start = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Shutdown") {
+        startSystem(systemStatuses["p" + POST.partition]);
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_Init = function (POST) {
-    if (systemStatus.state === "Started") {
-        initialize(POST.dataDir, POST.verbose, parseInt(POST.fileSize), parseInt(POST.fileEvents), parseInt(POST.fileTime));
+arc.RW_Init = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Started") {
+        initialize(systemStatuses["p" + POST.partition], POST.dataDir, POST.verbose, parseInt(POST.fileSize), parseInt(POST.fileEvents), parseInt(POST.fileTime));
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_Run = function (POST) {
-    if (systemStatus.state === "Initialized") {
-        startRun(POST.runNumber, parseInt(POST.runEvents), parseInt(POST.runTime));
+arc.RW_Run = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Initialized") {
+        startRun(systemStatuses["p" + POST.partition], POST.runNumber, parseInt(POST.runEvents), parseInt(POST.runTime));
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_Pause = function (POST) {
-    if (systemStatus.state === "Running") {
-        pauseRun();
+arc.RW_Pause = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Running") {
+        pauseRun(systemStatuses["p" + POST.partition]);
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_Resume = function (POST) {
-    if (systemStatus.state === "Paused") {
-        resumeRun(parseInt(POST.runEvents), parseInt(POST.runTime));
+arc.RW_Resume = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Paused") {
+        resumeRun(systemStatuses["p" + POST.partition], parseInt(POST.runEvents), parseInt(POST.runTime));
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_End = function (POST) {
-    if (systemStatus.state === "Running" || systemStatus.state === "Paused") {
-        endRun(parseInt(POST.events), parseInt(POST.time));
+arc.RW_End = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Running" || systemStatuses["p" + POST.partition].state === "Paused") {
+        endRun(systemStatuses["p" + POST.partition], parseInt(POST.events), parseInt(POST.time));
     }
-    arc.GET_();
+    getStatus(systemStatuses, POST.partition);
 };
 
-arc.RW_Shutdown = function (POST) {
-    if (systemStatus.state === "Started" || systemStatus.state === "Initialized" || systemStatus.state === "Paused") {
-        shutdownSystem();
+arc.RW_Shutdown = function (POST, systemStatuses) {
+    if (systemStatuses["p" + POST.partition].state === "Started" || systemStatuses["p" + POST.partition].state === "Initialized" || systemStatuses["p" + POST.partition].state === "Paused") {
+        shutdownSystem(systemStatuses["p" + POST.partition]);
     }
-    arc.GET_();
-};
-
-arc.RW_KILL = function (POST) {
-    process.exit(1);
+    getStatus(systemStatuses, POST.partition);
 };
 
 module.exports = function (module_holder) {

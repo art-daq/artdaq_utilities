@@ -12,11 +12,12 @@ function getUrlParameter(sParam) {
 }
 function updateGUI() {
     var key = getUrlParameter("pad");
+    var partition = getUrlParameter("partition");
     
     if (hpainter == null) hpainter = new JSROOT.HierarchyPainter('root', 'wd1div');
     hpainter.SetDisplay("grid1x1", 'wd0div');
     
-    hpainter.OpenRootFile("artdaqdemo_onmon.root", function () {
+    hpainter.OpenRootFile("P"+partition+"/artdaqdemo_onmon.root", function () {
         hpainter.displayAll([key]);
     });
 }
