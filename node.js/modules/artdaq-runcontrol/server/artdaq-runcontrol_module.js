@@ -42,7 +42,7 @@ var command;
 
 var monitorFileSize = 0;
 
-arc.MasterInitFunction = function () {};
+arc.MasterInitFunction = function () { };
 
 function startCommand(args) {
     var commandArray = [artdaqDir, setupScript, "manage2x2x2System.sh"].concat(args);
@@ -90,7 +90,7 @@ function startSystem() {
 
 function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function() {initialize(dataDir, verbose, fileSize, fileEvents, fileTime);});
+        setTimeout(function () { initialize(dataDir, verbose, fileSize, fileEvents, fileTime); });
     }
     else {
         systemStatus.dataDir = dataDir;
@@ -113,10 +113,10 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
         
         var fileTimeCMD = [];
         if (fileTime > 0) { fileTimeCMD = ["--file-duration", fileTime.toString()]; }
-
-        var onmonDir = __dirname + "/../client/";        
-
-        var args = ["-m", "on","-M"].concat(onmonDir, verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
+        
+        var onmonDir = __dirname + "/../client/";
+        
+        var args = ["-m", "on", "-M"].concat(onmonDir, verbosity, dataDirectory, fileSizeCMD, fileEventsCMD, fileTimeCMD, ["init"]);
         startCommand(args)
         systemStatus.state = "Initialized";
     }
@@ -124,7 +124,7 @@ function initialize(dataDir, verbose, fileSize, fileEvents, fileTime) {
 
 function startRun(number, runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function() {startRun(number, runEvents, runTime);}, 500);
+        setTimeout(function () { startRun(number, runEvents, runTime); }, 500);
     }
     else {
         systemStatus.runNumber = number;
@@ -140,7 +140,7 @@ function startRun(number, runEvents, runTime) {
 
 function pauseRun() {
     if (systemStatus.commandRunning) {
-        setTimeout(function() {pauseRun();}, 500);
+        setTimeout(function () { pauseRun(); }, 500);
     }
     else {
         var args = ["pause"];
@@ -151,7 +151,7 @@ function pauseRun() {
 
 function resumeRun(runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function(){resumeRun(runEvents, runTime);}, 500);
+        setTimeout(function () { resumeRun(runEvents, runTime); }, 500);
     }
     else {
         var args = ["resume"];
@@ -165,7 +165,7 @@ function resumeRun(runEvents, runTime) {
 
 function endRun(runEvents, runTime) {
     if (systemStatus.commandRunning) {
-        setTimeout(function() {endRun(runEvents, runTime);}, 500);
+        setTimeout(function () { endRun(runEvents, runTime); }, 500);
     }
     else {
         var events = [],
@@ -187,9 +187,9 @@ function endRun(runEvents, runTime) {
 function  killSystem() {
     if (systemStatus.systemRunning) {
         if (!systemStatus.commandRunning) {
-            console.log("Killing System, PID: " +system.pid);
+            console.log("Killing System, PID: " + system.pid);
             system.kill();
-            spawn(__dirname + '/killRogueArtdaq.sh',[__dirname]);
+            spawn(__dirname + '/killRogueArtdaq.sh', [__dirname]);
         } else {
             setTimeout(function () { killSystem() }, 1000);
         }
@@ -198,7 +198,7 @@ function  killSystem() {
 
 function shutdownSystem() {
     if (systemStatus.commandRunning) {
-        setTimeout(function() {shutdownSystem();}, 500);
+        setTimeout(function () { shutdownSystem(); }, 500);
     }
     else {
         var args = ["shutdown"];
@@ -212,18 +212,18 @@ function shutdownSystem() {
 };
 
 arc.GET_ = function () {
-    if(fs.existsSync(__dirname + "/../client/artdaqdemo_onmon.root")) {
+    if (fs.existsSync(__dirname + "/../client/artdaqdemo_onmon.root")) {
         var statSize = fs.statSync(__dirname + "/../client/artdaqdemo_onmon.root")["size"];
-        if( statSize != monitorFileSize) {
+        if (statSize != monitorFileSize) {
             monitorFileSize = statSize;
             systemStatus.WFPlotsUpdated = Date.now();
-	}
+        }
         //console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
     } else {
         systemStatus.WFPlotsUpdated = null;
     }
-    if(systemStatus.stopPending && !systemStatus.commandRunning) {
-	systemStatus.state = "Initialized";
+    if (systemStatus.stopPending && !systemStatus.commandRunning) {
+        systemStatus.state = "Initialized";
     }
     arc.emit('end', JSON.stringify(systemStatus));
     //systemStatus.systemErrorBuffer = "";

@@ -7,7 +7,7 @@
 
 
 // Node.js "includes"
-var fs = require('fs');
+var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
 
 var base = new emitter();
@@ -18,9 +18,12 @@ base.MasterInitFunction = function () {
 
 base.GET_ReadLog = function () {
     console.log("Reading " + (__dirname + "/../../../server.log"));
-    fs.readFile(__dirname + "/../../../server.log", function (err, data) {
-        if (err) throw err;
-        base.emit('end', data);
+    var tail = spawn("tail", ["-1000", __dirname + "/../../../server.log"]);
+    tail.stdout.on('data', function (data) {
+        base.emit('data', data.toString());
+    });
+    tail.on('close', function (code) {
+        base.emit('end', "");
     });
 }
 

@@ -1,13 +1,24 @@
 var hpainter;
 var lastUpdate = 0;
 
-function updateGUI() {
-    if(hpainter == null) hpainter = new JSROOT.HierarchyPainter('root', 'wd1div');
-    hpainter.SetDisplay("grid2x1", 'wd0div');
+function openCanvasWindow(pad, width, height) {
+    var thisWindow = window.open("/artdaq-runcontrol/viewer.html?pad=" + pad, "ROOT Pad Inspector", "width=" + width + ", height=" + height);
+}
 
-    hpainter.OpenRootFile("artdaqdemo_onmon.root", function() {
-	    hpainter.displayAll(["wf0", "wf1"]);
-	});    
+function updateGUI() {
+    if (hpainter == null) hpainter = new JSROOT.HierarchyPainter('root', 'wd1div');
+    hpainter.SetDisplay("grid2x1", 'wd0div');
+    
+    hpainter.OpenRootFile("artdaqdemo_onmon.root", function () {
+        hpainter.displayAll(["wf0", "wf1"]);
+        
+        $("#wd0div_grid_0").click(function () {
+            openCanvasWindow("wf0", $(this).width(), $(this).height());
+        });
+        $("#wd0div_grid_1").click(function () {
+            openCanvasWindow("wf1", $(this).width(), $(this).height());
+        });
+    });
 };
 
 function manageButtons(state, running, systemRunning) {
@@ -16,23 +27,23 @@ function manageButtons(state, running, systemRunning) {
     var initializedActive = $("#initialized").hasClass("active") ? " active" : "";
     var runStartedActive = $("#runStarted").hasClass("active") ? " active" : "";
     var runPausedActive = $("#runPaused").hasClass("active") ? " active" : "";
-
+    
     var color = running ? "yellow" : "green";
     var sdColor = color;
     if (!systemRunning) { color = "red"; }
-
+    
     switch (state) {
         case "Shutdown":
             color = systemRunning ? "yellow" : "green";
-	    $("#shutdown").html("<span>System Shutdown</span>").attr("class", "animated blue visible");
-		$("#started").html("<span>Start System</span>").attr("class", "animated visible " + color + startedActive);
+            $("#shutdown").html("<span>System Shutdown</span>").attr("class", "animated blue visible");
+            $("#started").html("<span>Boot System</span>").attr("class", "animated visible " + color + startedActive);
             $("#initialized").html("<span></span>").attr("class", "animated red hidden");
             $("#runStarted").html("<span></span>").attr("class", "animated red hidden");
             $("#runPaused").html("<span></span>").attr("class", "animated red hidden");
             break;
         case "Started":
             $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor + shutdownActive);
-            $("#started").html("<span>System Started</span>").attr("class", "animated blue visible");
+            $("#started").html("<span>System Booted</span>").attr("class", "animated blue visible");
             $("#initialized").html("<span>Initialize System</span>").attr("class", "animated visible " + color + initializedActive);
             $("#runStarted").html("<span></span>").attr("class", "animated red hidden");
             $("#runPaused").html("<span></span>").attr("class", "animated red hidden");
@@ -55,14 +66,14 @@ function manageButtons(state, running, systemRunning) {
             $("#shutdown").html("<span>Shutdown System</span>").attr("class", "animated visible " + sdColor + shutdownActive);
             $("#started").html("<span></span>").attr("class", "animated red hidden");
             $("#initialized").html("<span>Reinitialize System</span>").attr("class", "animated visible " + color + initializedActive);
-            $("#runStarted").html("<span>Restart Run</span>").attr("class", "animated visible " + color + runStartedActive);
+            $("#runStarted").html("<span>Resume Run</span>").attr("class", "animated visible " + color + runStartedActive);
             $("#runPaused").html("<span>Run Paused</span>").attr("class", "animated blue visible");
             break;
     }
-
-$(".green.animated").hover(function() {
-	    $(this).addClass("active");
-	}, function() {$(this).removeClass("active"); });
+    
+    $(".green.animated").hover(function () {
+        $(this).addClass("active");
+    }, function () { $(this).removeClass("active"); });
     
 }
 
@@ -77,24 +88,24 @@ function update(dataJSON) {
     //$("#commOut").val(cOut + data.commandOutputBuffer);
     //var cErr = $("#commErr").val();
     //$("#commErr").val(cErr + data.commandErrorBuffer);
-
+    
     
     $("#systemOut").val(data.systemOutputBuffer);
     $("#systemErr").val(data.systemErrorBuffer);
     $("#commOut").val(data.commandOutputBuffer);
     $("#commErr").val(data.commandErrorBuffer);
- 
-
-	if(data.WFPlotsUpdated && $("#monitoringEnabled").is(":checked")) {
-	var updateDate = data.WFPlotsUpdated;
-	if(updateDate > lastUpdate) {
-      updateGUI();
-      lastUpdate = updateDate;
+    
+    
+    if (data.WFPlotsUpdated && $("#monitoringEnabled").is(":checked")) {
+        var updateDate = data.WFPlotsUpdated;
+        if (updateDate > lastUpdate) {
+            updateGUI();
+            lastUpdate = updateDate;
+        }
+    } else {
+        hpainter = null;
+        $("#wd0div").html("");
     }
-	} else {
-	    hpainter = null;
-            $("#wd0div").html("");
-	}
 }
 
 
@@ -141,7 +152,7 @@ function pauseRun() {
 }
 
 function kill() {
-    AjaxPost("/artdaq-runcontrol/KILL", {data: 0 }, update);
+    AjaxPost("/artdaq-runcontrol/KILL", { data: 0 }, update);
 }
 
 $(document).ready(function () {
@@ -160,14 +171,15 @@ $(document).ready(function () {
     $("#runPaused").click(function () {
         pauseRun();
     });
-    $("#killSwitch").click(function() {
-	    kill();
-	});
+    $("#killSwitch").click(function () {
+        kill();
+    });
     $("#monitoringEnabled").change(function () {
-	    if($("#monitoringEnabled").is(":checked")) {
-		updateGUI();
-            }
-	});
+        if ($("#monitoringEnabled").is(":checked")) {
+            updateGUI();
+        }
+    });
+    
     setInterval(function () { AjaxGet("/artdaq-runcontrol/", update); }, 1000);
     JSROOT.AssertPrerequisites('2d;io;', updateGUI);
 });

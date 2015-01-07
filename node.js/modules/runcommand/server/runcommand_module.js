@@ -27,7 +27,7 @@ runcommand.running = false;
 
 // Which commands am I allowed to run?
 var clientCommands = fs.readdirSync(path_module.join(__dirname, "..", "client"));
-var safeCommands = ["top","echo", "iostat"];
+var safeCommands = ["top", "echo", "iostat"];
 for (var name in clientCommands) {
     if (clientCommands[name].search(".sh") > 0) {
         safeCommands.push(clientCommands[name]);
@@ -42,13 +42,13 @@ runcommand.MasterInitFunction = function () { };
 runcommand.RW_Run = function (POST) {
     // Log the recieved command
     console.log("Command: " + POST.comm);
-
+    
     // Make an array of the space-delimited arguments. Pull out the first one
     // (the command to be run)
     var commArr = POST.comm.split(' ');
     var command = commArr[0];
     commArr.shift();
-
+    
     console.log("Command: " + command + ", Arguments: " + commArr);
     var safeCommandArgs = true;
     for (var name in commArr) {
@@ -56,12 +56,12 @@ runcommand.RW_Run = function (POST) {
             safeCommandArgs = false;
         }
     }
-
+    
     // If the command is in the safe list, and actually exists:
-    if (safeCommandArgs && safeCommands.indexOf(command) >= 0 && (fs.existsSync(path_module.join(__dirname, "..", "client") +"/"+  command) || fs.existsSync("/bin/" + command) || fs.existsSync("/usr/bin/" + command))) {
+    if (safeCommandArgs && safeCommands.indexOf(command) >= 0 && (fs.existsSync(path_module.join(__dirname, "..", "client") + "/" + command) || fs.existsSync("/bin/" + command) || fs.existsSync("/usr/bin/" + command))) {
         // Start the command
-        if (fs.existsSync(path_module.join(__dirname, "..", "client") +"/"+ command)) {
-            command = path_module.join(__dirname, "..", "client") +"/"+ command;
+        if (fs.existsSync(path_module.join(__dirname, "..", "client") + "/" + command)) {
+            command = path_module.join(__dirname, "..", "client") + "/" + command;
         }
         var commd = spawn(command, commArr);
         // Save a reference to the command (for stdin and kill)
@@ -71,19 +71,19 @@ runcommand.RW_Run = function (POST) {
         OutBuf = "";
         ErrBuf = "";
         code = 0;
-
+        
         // When the command prints to stdout, this callback is called
         commd.stdout.on('data', function (data) {
             // HTML-ize the output
             OutBuf += data;
         });
-
+        
         // When the command prints to stderr, this callback is called
         commd.stderr.on('data', function (data) {
             // HTML-ize and color red the output
             ErrBuf += data;
         });
-
+        
         // When the command is complete, this callback is called
         commd.on('exit', function (retcode) {
             // Print the command's return code
@@ -96,7 +96,7 @@ runcommand.RW_Run = function (POST) {
         // Tell the user that what they typed was no good
         ErrBuf = "Invalid Command: " + POST.comm;
     }
-
+    
     runcommand.GET_();
 }
 
@@ -116,7 +116,7 @@ runcommand.RW_Input = function (POST) {
 };
 
 runcommand.GET_ = function () {
-    runcommand.emit('end', JSON.stringify({ out: OutBuf, err: ErrBuf, exitCode:code, running: runcommand.running }));
+    runcommand.emit('end', JSON.stringify({ out: OutBuf, err: ErrBuf, exitCode: code, running: runcommand.running }));
     OutBuf = "";
     ErrBuf = "";
 };

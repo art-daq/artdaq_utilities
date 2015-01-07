@@ -95,7 +95,7 @@ if (cluster.isMaster) {
                 return "";
             }
         });
-
+        
         res.setHeader("Content-Type", "application/json");
         res.statusCode = 200;
         // Log to console...
