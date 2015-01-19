@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
 parent artdaq_ganglia_plugin	v1_0_1
-defaultqual	e6
+defaultqual	e6:eth
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -25,8 +25,10 @@ end_product_list
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
 qualifier		artdaq	       	   	notes
-e6:debug		e6:s6:eth:debug		-std=c++1y
-e6:prof			e6:s6:eth:prof		-std=c++1y
+e6:eth:debug		e6:s6:eth:debug		-std=c++1y
+e6:eth:prof		e6:s6:eth:prof		-std=c++1y
+e6:ib:debug		e6:s6:ib:debug		-std=c++1y
+e6:ib:prof		e6:s6:ib:prof		-std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
