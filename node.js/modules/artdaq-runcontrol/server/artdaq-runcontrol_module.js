@@ -45,6 +45,23 @@ arc.MasterInitFunction = function (workerData) {
     output.p2 = new Status(2);
     output.p3 = new Status(3);
     
+    if(!fs.existsSync(__dirname + "/../client/P0")) {
+        fs.mkdirSync(__dirname + "/../client/P0");
+    }
+    if(!fs.existsSync(__dirname + "/../client/P1")) {
+        fs.mkdirSync(__dirname + "/../client/P1");
+    }
+    if(!fs.existsSync(__dirname + "/../client/P2")) {
+        fs.mkdirSync(__dirname + "/../client/P2");
+    }
+    if(!fs.existsSync(__dirname + "/../client/P3")) {
+        fs.mkdirSync(__dirname + "/../client/P3");
+    }
+
+    fs.chmodSync(__dirname + "/runARTDAQ.sh", '777');
+    fs.chmodSync(__dirname + "/killArtdaq.sh", '777');
+    fs.chmodSync(__dirname + "/cleanupArtdaq.sh", '777');
+
     workerData["artdaq-runcontrol"] = output;
 };
 
@@ -83,6 +100,7 @@ function startCommand(args, systemStatus) {
     systemStatus.commandOutputBuffer = "";
     var out = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.out.log", 'w');
     var err = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/comm.err.log", 'w');
+    console.log("Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray);
     var command = spawn(__dirname + "/runARTDAQ.sh", commandArray, { detached: true, stdio: ['ignore', out, err] });
     systemStatus.commandPID = command.pid;
     command.unref();
@@ -94,10 +112,12 @@ function startSystem(systemStatus) {
     console.log("Starting System, Partition " + systemStatus.partition);
     var port = (systemStatus.partition * 100) + 5600;
     var commandArray = [artdaqDir, setupScript, port, "start2x2x2System.sh", "-p", port];
+    
     var out = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/out.log", 'w');
     var err = fs.openSync(__dirname + "/../client/P" + systemStatus.partition + "/err.log", 'w');
     systemStatus.systemErrorBuffer = "";
     systemStatus.systemOutputBuffer = "";
+    console.log("Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray.join(' '));
     var system = spawn(__dirname + "/runARTDAQ.sh", commandArray, { detached: true, stdio: ['ignore', out, err] });
     systemStatus.systemPID = system.pid;
     system.unref();
