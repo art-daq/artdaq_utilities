@@ -35,6 +35,7 @@ var Status = function (partition) {
     this.commandErrorBuffer = "";
     this.WFPlotsUpdated = Date.now();
     this.WFFileSize = 0;
+    this.WFFileMtime = 0;
     this.partition = partition;
 };
 
@@ -240,13 +241,19 @@ function getStatus(systemStatuses, partition) {
     checkCommand(systemStatus);
     checkSystem(systemStatus);
     if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root")) {
-        var statSize = fs.statSync(__dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root")["size"];
+        var stats = fs.statSync(__dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root");
+        var statSize = stats["size"];
         if (statSize != systemStatus.WFFileSize) {
             systemStatus.WFFileSize = statSize;
             systemStatus.WFPlotsUpdated = Date.now();
+            console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
         }
-        //console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
-    } else {
+        if ( stats["mtime"] - systemStatus.WFFileMtime ) {
+            systemStatus.WFFileMtime = stats["mtime"];
+            systemStatus.WFPlotsUpdated = Date.now();
+            console.log("Plots Updated at " + systemStatus.WFPlotsUpdated);
+        }
+            } else {
         systemStatus.WFPlotsUpdated = null;
     }
     if (fs.existsSync(__dirname + "/../client/P" + systemStatus.partition + "/out.log")) {
