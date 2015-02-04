@@ -29,7 +29,7 @@ case ${qual_set} in
   ;;
   e5) 
      basequal=e5
-     squal=s5
+     squal=s6
      artver=v1_12_05
      artdaqver=v1_12_06
   ;;
@@ -105,6 +105,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaqver} ${squal}-${basequal} ${build_type} 
+./pullProducts ${blddir} ${flvr} art-${artver} ${squal}-${basequal}-nu ${build_type} 
 echo
 echo "begin build"
 echo
