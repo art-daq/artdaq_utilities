@@ -93,6 +93,12 @@ ERROR: pull of art-${artver} failed
 EOF
         exit 1
       }
+./pullProducts ${blddir} source darkmon-${version} || \
+      { cat 1>&2 <<EOF
+ERROR: pull of darkmon-${version} failed
+EOF
+        exit 1
+      }
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
