@@ -87,15 +87,15 @@ chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
 # this might be a different version of art than in the darkmon source code tarball, which is only for the default art version
-./pullProducts ${blddir} source art-${artver} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of art-${artver} failed
-EOF
-        exit 1
-      }
 ./pullProducts ${blddir} source artdaq-${artdaqver} || \
       { cat 1>&2 <<EOF
 ERROR: pull of artdaq-${version} failed
+EOF
+        exit 1
+      }
+./pullProducts ${blddir} source darkmon-${version} || \
+      { cat 1>&2 <<EOF
+ERROR: pull of darkmon-${version} failed
 EOF
         exit 1
       }
