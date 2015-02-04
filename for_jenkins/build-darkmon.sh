@@ -87,15 +87,9 @@ chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
 # this might be a different version of art than in the darkmon source code tarball, which is only for the default art version
-./pullProducts ${blddir} source artdaq-${artdaqver} || \
+./pullProducts ${blddir} source art-${artver} || \
       { cat 1>&2 <<EOF
-ERROR: pull of artdaq-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source darkmon-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of darkmon-${version} failed
+ERROR: pull of art-${artver} failed
 EOF
         exit 1
       }
@@ -104,7 +98,6 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type} 
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaqver} ${squal}-${basequal} ${build_type} 
 echo
 echo "begin build"
