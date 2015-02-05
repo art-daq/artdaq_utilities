@@ -104,7 +104,8 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${squal}-${basequal}-nu ${build_type} 
+#./pullProducts ${blddir} ${flvr} art-${artver} ${squal}-${basequal} ${build_type} 
+./pullProducts ${blddir} ${flvr} nu-v1_07_01 ${squal}-${basequal} ${build_type} 
 ./pullProducts ${blddir} ${flvr} darkmon-${version} ${squal}-${basequal} ${build_type} 
 echo
 echo "begin build"
