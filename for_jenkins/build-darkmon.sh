@@ -23,12 +23,10 @@ build_type=${BUILDTYPE}
 case ${qual_set} in
   e6) 
      basequal=e6
-     squal=s6
      artver=v1_12_05
   ;;
   e5) 
      basequal=e5
-     squal=s6
      artver=v1_12_05
   ;;
   *)
@@ -125,7 +123,7 @@ fi
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} darkmon-${version} || \
+./buildFW -t -b ${basequal} ${blddir} ${build_type} darkmon-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
