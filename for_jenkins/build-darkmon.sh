@@ -25,13 +25,11 @@ case ${qual_set} in
      basequal=e6
      squal=s6
      artver=v1_12_05
-     artdaqver=v1_12_06
   ;;
   e5) 
      basequal=e5
      squal=s6
      artver=v1_12_05
-     artdaqver=v1_12_06
   ;;
   *)
     echo "unexpected qualifier set ${qual_set}"
@@ -87,12 +85,6 @@ chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
 # this might be a different version of art than in the darkmon source code tarball, which is only for the default art version
-./pullProducts ${blddir} source art-${artver} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of art-${artver} failed
-EOF
-        exit 1
-      }
 ./pullProducts ${blddir} source darkmon-${version} || \
       { cat 1>&2 <<EOF
 ERROR: pull of darkmon-${version} failed
@@ -104,9 +96,7 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-#./pullProducts ${blddir} ${flvr} art-${artver} ${squal}-${basequal} ${build_type} 
-./pullProducts ${blddir} ${flvr} nu-v1_07_01 ${squal}-${basequal} ${build_type} 
-./pullProducts ${blddir} ${flvr} darkmon-${version} ${squal}-${basequal} ${build_type} 
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type} 
 echo
 echo "begin build"
 echo
