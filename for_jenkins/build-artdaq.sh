@@ -99,7 +99,21 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type} 
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal} ${build_type}
+# remove any artdaq entities that were pulled so it will always be rebuilt
+if [ -d ${blddir}/artdaq/${version}.version ]; then
+  echo "Removing ${blddir}/artdaq/${version}.version"
+  rm -rfv ${blddir}/artdaq/${version}.version
+fi
+if [ -d ${blddir}/artdaq/${version} ]; then
+  echo "Removing ${blddir}/artdaq/${version}"
+  rm -rfv ${blddir}/artdaq/${version}
+fi
+if [ -f ${blddir}/artdaq*${dotver}*.tar.bz2 ]; then
+  echo "Removing ${blddir}/artdaq*${dotver}*.tar.bz2"
+  rm -fv ${blddir}/artdaq*${dotver}*.tar.bz2
+fi
 echo
 echo "begin build"
 echo
