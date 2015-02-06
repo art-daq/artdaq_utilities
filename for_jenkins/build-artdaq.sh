@@ -104,14 +104,13 @@ cd ${blddir} || exit 1
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq/${version}.version ]; then
   echo "Removing ${blddir}/artdaq/${version}.version"
-  rm -rfv ${blddir}/artdaq/${version}.version
+  rm -rf ${blddir}/artdaq/${version}.version
 fi
 if [ -d ${blddir}/artdaq/${version} ]; then
   echo "Removing ${blddir}/artdaq/${version}"
-  rm -rfv ${blddir}/artdaq/${version}
+  rm -rf ${blddir}/artdaq/${version}
 fi
-if [ -f ${blddir}/artdaq*${dotver}*.tar.bz2 ]; then
-  echo "Removing ${blddir}/artdaq*${dotver}*.tar.bz2"
+if [ `ls -1 ${blddir}/artdaq*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
   rm -fv ${blddir}/artdaq*${dotver}*.tar.bz2
 fi
 echo
