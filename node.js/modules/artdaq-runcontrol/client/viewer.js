@@ -10,6 +10,7 @@ function getUrlParameter(sParam) {
         }
     }
 }
+
 function updateGUI() {
     var key = getUrlParameter("pad");
     var partition = getUrlParameter("partition");

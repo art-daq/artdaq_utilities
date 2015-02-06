@@ -10,21 +10,10 @@ var emitter = require( 'events' ).EventEmitter;
 var fs = require( 'fs' );
 var arc = new emitter( );
 
-// Set this to your ARTDAQ installation directory
-var artdaqDir = "/home/eflumerf/Desktop/artdaq-demo-base";
-
-// And the setup script
-var setupScript = "setupARTDAQDEMO";
-
 // System Status
 var Status = function ( partition ) {
     this.state = "Shutdown";
     this.runNumber = 1000;
-    this.dataDir = "/tmp";
-    this.vebosity = false;
-    this.fileSize = 0;
-    this.fileEvents = 0;
-    this.fileTime = 0;
     this.systemPID = null;
     this.systemRunning = false;
     this.systemOutputBuffer = "";
@@ -37,6 +26,7 @@ var Status = function ( partition ) {
     this.WFFileSize = 0;
     this.WFFileMtime = 0;
     this.partition = partition;
+    this.config = "";
 };
 
 arc.MasterInitFunction = function ( workerData ) {
@@ -128,32 +118,11 @@ function startSystem( systemStatus ) {
     systemStatus.state = "Started";
 }
 
-function initialize( systemStatus,dataDir,verbose,fileSize,fileEvents,fileTime ) {
+function initialize( systemStatus ) {
     if ( systemStatus.commandRunning ) {
-        setTimeout( function () { initialize( systemStatus,dataDir,verbose,fileSize,fileEvents,fileTime ); } );
+        setTimeout( function () { initialize( systemStatus ); } );
     }
     else {
-        systemStatus.dataDir = dataDir;
-        systemStatus.vebosity = verbose;
-        systemStatus.fileSize = fileSize;
-        systemStatus.fileEvents = fileEvents;
-        systemStatus.fileTime = fileTime;
-        
-        var verbosity = [];
-        if ( verbose ) { verbosity = ["-v"]; }
-        
-        var dataDirectory = [];
-        if ( dataDir !== "/tmp" ) { dataDirectory = ["-o",dataDir]; }
-        
-        var fileSizeCMD = [];
-        if ( fileSize >= 0 ) { fileSizeCMD = ["-s",fileSize.toString( )]; }
-        
-        var fileEventsCMD = [];
-        if ( fileEvents > 0 ) { fileEventsCMD = ["--file-events",fileEvents.toString( )]; }
-        
-        var fileTimeCMD = [];
-        if ( fileTime > 0 ) { fileTimeCMD = ["--file-duration",fileTime.toString( )]; }
-        
         var onmonDir = __dirname + "/../client/P" + systemStatus.partition;
         
         var args = ["-m","on","-M"].concat( onmonDir,verbosity,dataDirectory,fileSizeCMD,fileEventsCMD,fileTimeCMD,["init"] );
@@ -162,19 +131,15 @@ function initialize( systemStatus,dataDir,verbose,fileSize,fileEvents,fileTime )
     }
 }
 
-function startRun( systemStatus,number,runEvents,runTime ) {
+function startRun( systemStatus) {
     if ( systemStatus.commandRunning ) {
-        setTimeout( function () { startRun( systemStatus,number,runEvents,runTime ); },500 );
+        setTimeout( function () { startRun( systemStatus ); },500 );
     }
     else {
-        systemStatus.runNumber = number;
         
         var args = ["-N",number,"start"];
         startCommand( args,systemStatus );
         systemStatus.state = "Running";
-        if ( runEvents > 0 || runTime > 0 ) {
-            endRun( systemStatus,runEvents,runTime );
-        }
     }
 }
 
@@ -189,29 +154,22 @@ function pauseRun( systemStatus ) {
     }
 }
 
-function resumeRun( systemStatus,runEvents,runTime ) {
+function resumeRun( systemStatus ) {
     if ( systemStatus.commandRunning ) {
-        setTimeout( function () { resumeRun( systemStatus,runEvents,runTime ); },500 );
+        setTimeout( function () { resumeRun( systemStatus ); },500 );
     }
     else {
         var args = ["resume"];
         startCommand( args,systemStatus );
         systemStatus.state = "Running";
-        if ( runEvents > 0 || runTime > 0 ) {
-            endRun( systemStatus,runEvents,runTime );
-        }
     }
 }
 
-function endRun( systemStatus,runEvents,runTime ) {
+function endRun( systemStatus ) {
     if ( systemStatus.commandRunning ) {
-        setTimeout( function () { endRun( systemStatus,runEvents,runTime ); },500 );
+        setTimeout( function () { endRun( systemStatus ); },500 );
     }
     else {
-        var events = [],
-            time = [];
-        if ( runEvents > 0 ) { events = ["-n" ,runEvents]; }
-        if ( runTime > 0 ) { time = ["-d" ,runTime]; }
         
         if ( runEvents > 0 || runTime > 0 ) {
             systemStatus.state = "Running";
@@ -311,6 +269,7 @@ arc.GET_P3 = function ( systemStatuses ) {
 };
 
 arc.RW_Start = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Shutdown" ) {
         startSystem( systemStatuses["p" + POST.partition] );
     }
@@ -318,20 +277,24 @@ arc.RW_Start = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Init = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Started" ) {
-        initialize( systemStatuses["p" + POST.partition],POST.dataDir,POST.verbose,parseInt( POST.fileSize ),parseInt( POST.fileEvents ),parseInt( POST.fileTime ) );
+        initialize( systemStatuses["p" + POST.partition] );
     }
     getStatus( systemStatuses,POST.partition );
 };
 
 arc.RW_Run = function ( POST,systemStatuses ) {
+    systemStatuses["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].runNumber = POST.runNumber;
     if ( systemStatuses["p" + POST.partition].state === "Initialized" ) {
-        startRun( systemStatuses["p" + POST.partition],POST.runNumber,parseInt( POST.runEvents ),parseInt( POST.runTime ) );
+        startRun( systemStatuses["p" + POST.partition] );
     }
     getStatus( systemStatuses,POST.partition );
 };
 
 arc.RW_Pause = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Running" ) {
         pauseRun( systemStatuses["p" + POST.partition] );
     }
@@ -339,20 +302,23 @@ arc.RW_Pause = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Resume = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Paused" ) {
-        resumeRun( systemStatuses["p" + POST.partition],parseInt( POST.runEvents ),parseInt( POST.runTime ) );
+        resumeRun( systemStatuses["p" + POST.partition] );
     }
     getStatus( systemStatuses,POST.partition );
 };
 
 arc.RW_End = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Running" || systemStatuses["p" + POST.partition].state === "Paused" ) {
-        endRun( systemStatuses["p" + POST.partition],parseInt( POST.events ),parseInt( POST.time ) );
+        endRun( systemStatuses["p" + POST.partition] );
     }
     getStatus( systemStatuses,POST.partition );
 };
 
 arc.RW_Shutdown = function ( POST,systemStatuses ) {
+    systemStatusees["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Started" || systemStatuses["p" + POST.partition].state === "Initialized" || systemStatuses["p" + POST.partition].state === "Paused" ) {
         shutdownSystem( systemStatuses["p" + POST.partition] );
     }

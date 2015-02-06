@@ -4,7 +4,7 @@ var fs = require( 'fs' );
 var ac = new emitter( );
 var path = require( 'path' );
 var xml = require( 'xml2js' );
-var parser = new xml.Parser( {explicitArray: false});
+var parser = new xml.Parser( { explicitArray: false } );
 var util = require( 'util' );
 
 function generateDefaultConfig() {
@@ -12,6 +12,8 @@ function generateDefaultConfig() {
     output.expertMode = false;
     output.configName = "Default";
     output.artdaqDir = "~/artdaq-demo-base";
+    output.setupScript = "setupARTDAQDEMO";
+    output.needsRestart = false;
     output.dataDir = "/tmp";
     output.logDir = "/tmp";
     output.dataLogger = {};
@@ -81,7 +83,7 @@ function checkBools( object ) {
                 object[key] = true;
             } else if ( object[key] === "false" ) {
                 object[key] = false;
-            } else if(object !== null && typeof(object) === "object") {
+            } else if ( object !== null && typeof ( object ) === "object" ) {
                 object[key] = checkBools( object[key] );
             }
         }
@@ -106,24 +108,54 @@ function deserializeXML( fileName ) {
     output.eventBuilders = xmlObj['artdaq-configuration'].eventBuilders;
     output.boardReaders = xmlObj['artdaq-configuration'].boardReaders.boardReader;
     
-    return checkBools(output);
+    return checkBools( output );
 }
 
 ac.MasterInitFunction = function ( workerData ) {
     workerData["artdaq-configuration"] = "ac";
 };
 
-ac.GET_NamedConfigs = function () {
-    var configs = [];
-    var files = fs.readdirSync( __dirname );
+function getFiles( mask,dir ) {
+    dir = typeof ( dir ) !== 'undefined' ? dir : __dirname;
+    
+    console.log( "Directory is " + dir + ", and mask is " + mask );
+    var output = [];
+    var files = fs.readdirSync( dir );
     var f, l = files.length;
     for ( var i = 0; i < l; i++ ) {
         f = files[i].toString( );
-        if ( f.search( ".xml" ) > 0 ) {
-            var cfgName = f.substring( 0,f.indexOf( '.' ) );
-            configs.push( "<option value=\"" + cfgName + "\">" + cfgName + "</option>" );
+        if ( f.search( mask ) > 0 ) {
+            var cfgName = f.substring( 0,f.indexOf( mask ) );
+            console.log( "Found file satisfying mask " + mask + ": " + f + " (" + cfgName + ")" );
+            output.push( "<option value=\"" + cfgName +mask+ "\">" + cfgName + "</option>" );
         }
     }
+    return output;
+}
+
+ac.GET_Default = function () {
+    return "";
+}
+
+ac.GET_GeneratorTypes = function () {
+    var types = [];
+    types.push( "<option value=\"Default\">No Generator Selected</option>" );
+    types.push( "<optgroup label=\"Simulators\">" );
+    types = types.concat( getFiles( "_simulator.html" ,__dirname + "/../client" ));
+    types.push( "</optgroup>" );
+    types.push( "<optgroup label=\"Recievers\">" );
+    types = types.concat( getFiles( "_receiver.html" ,__dirname + "/../client" ));
+    types.push( "</optgroup>" );
+    types.push( "<optgroup label=\"Readers\">" );
+    types = types.concat( getFiles( "_reader.html" ,__dirname + "/../client" ));
+    types.push( "</optgroup>" );
+    
+    return types;
+}
+
+ac.GET_NamedConfigs = function () {
+    var configs = getFiles( ".xml" );
+    
     configs.push( "<option value=\"Default\">Default Configuration</option>" )
     if ( configs.length < 2 ) {
         console.log( "I found no named configs!" );
@@ -142,11 +174,11 @@ ac.RW_saveConfig = function ( POST ) {
 }
 
 ac.RO_LoadNamedConfig = function ( POST ) {
-    console.log( "Request for configuration with name \"" + POST.configName + "\" received." );
+    console.log( "Request for configuration with file name \"" + POST.configFile + "\" received." );
     if ( POST.configName === "Default" ) {
         return generateDefaultConfig( );
     }
-    var output = deserializeXML( path.join( __dirname,POST.configName + ".xml" ) );
+    var output = deserializeXML( path.join( __dirname,POST.configFile ) );
     console.log( "Deserialized XML:" );
     console.log( output );
     return output;

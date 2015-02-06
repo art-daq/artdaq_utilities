@@ -45,7 +45,7 @@
                         <legend>Board Readers</legend>
                         <div data-role="collapsibleset" id="brs">
                         </div>
-                        <input type="button" data-inline="true" id="addbr" name="addbr" class="triggersModified" value="Add New">
+                        <input type="button" data-inline="true" id="addbr" name="addbr" class="triggersRestart triggersModified" value="Add New">
                     </fieldset>
                     <fieldset data-role="collapsible">
                         <legend>Event Builders</legend>
@@ -55,7 +55,7 @@
                         </div>
                         <div data-role="fieldcontain">
                             <label for="evbCount">Number of Event Builders</label>
-                            <input type="number" id="evbCount" class="triggersModified" value=2 step=1>
+                            <input type="number" id="evbCount" class="triggersRestart triggersModified" value=2 step=1>
                         </div>
                         <div data-role="fieldcontain">
                             <label for="evbCompress">Use Compression<input class="triggersModified" type="checkbox" id="evbCompress" unchecked></label>
@@ -92,7 +92,7 @@
                             </fieldset>
                             <fieldset data-role="collapsible">
                                 <legend>Online Monitor</legend>
-                                <label>Enabled<input type="checkbox" id="omEnabled" class="triggersModified" checked></label>
+                                <label>Enabled<input type="checkbox" id="omEnabled" class="triggersRestart triggersModified" checked></label>
                                 <label>Use Viewer<input type="checkbox" id="omvEnabled" class="triggersModified" unchecked></label>
                             </fieldset>
                         </div>
@@ -105,6 +105,8 @@
                         <input type="text" name="artdaqDataDir" id="artdaqDataDir" class="triggersModified" value="/tmp">
                         <label for="artdaqLogDir">ARTDAQ Log Directory</label>
                         <input type="text" name="artdaqLogDir" id="artdaqLogDir" class="triggersModified" value="/tmp">
+                        <label for="artdaqSetupScript">ARTDAQ Setup Script Name</label>
+                        <input type="text" name="artdaqSetupScript" id="artdaqSetupScript" class="triggersModified" value="setupARTDAQDEMO">
                     </fieldset>
                 </div>
             </form>

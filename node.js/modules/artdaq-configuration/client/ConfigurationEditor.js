@@ -1,6 +1,18 @@
 ﻿var defaultColor = "";
 var defaultShadow = "";
 var brs = {};
+var configNeedsRestart = false;
+
+function getUrlParameter( sParam ) {
+    var sPageURL = window.location.search.substring( 1 );
+    var sURLVariables = sPageURL.split( '&' );
+    for ( var i = 0; i < sURLVariables.length; i++ ) {
+        var sParameterName = sURLVariables[i].split( '=' );
+        if ( sParameterName[0] == sParam ) {
+            return sParameterName[1];
+        }
+    }
+}
 
 var addBR = function ( id,br ) {
     brs[id] = br;
@@ -11,31 +23,44 @@ var addBR = function ( id,br ) {
             $( "#brcfg" + id ).remove( );
             $( "#brs" ).collapsibleset( 'refresh' );
         } );
-        $( "#brcfg" + id + " #type" ).change( function () {
-            var selected = $( "#brcfg" + id ).find( ':selected' ).val( );
-            $.get( "/artdaq-configuration/" + selected + "_generator.html",function ( typedata ) {
-                $( "#brcfg" + id + " #typeConfig" ).html( typedata );
-                $( "#brcfg" + id + " #typeConfig #config" ).trigger( 'create' ).collapsible( );
-                
-                for ( var key in brs[id] ) {
-                    if ( key.search( "name" ) < 0 && key.search( "type" ) < 0 && key.search( "enabled" ) < 0 ) {
-                        $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( br[key] );
+        $.get( "/artdaq-configuration/GeneratorTypes",function ( data ) {
+            $( "#brcfg" + id + " #type" ).html( data ).trigger( 'create' ).selectmenu( 'refresh' );
+
+            $( "#brcfg" + id + " #type" ).change( function () {
+                var selected = $( "#brcfg" + id ).find( ':selected' ).val( );
+                $.get( "/artdaq-configuration/" + selected,function ( typedata ) {
+                    $( "#brcfg" + id + " #typeConfig" ).html( typedata );
+                    $( "#brcfg" + id + " #typeConfig #config" ).trigger( 'create' ).collapsible( );
+                    
+                    for ( var key in brs[id] ) {
+                        if ( key.search( "name" ) < 0 && key.search( "type" ) < 0 && key.search( "enabled" ) < 0 ) {
+                            $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( br[key] );
+                        }
                     }
-                }
+                } );
             } );
+
+            if ( brs[id] == null ) {
+                $( "#brcfg" + id + " #type" ).val( "Default" ).trigger( 'change' );
+            } else {
+                if ( $( "#brcfg" + id + " #type option[value='" + brs[id].type + "_simulator.html']" ).length > 0 ) {
+                    $( "#brcfg" + id + " #type" ).val( brs[id].type + "_simulator.html" ).trigger( 'change' );
+                } else if ( $( "#brcfg" + id + " #type option[value='" + brs[id].type + "_receiver.html']" ).length > 0 ) {
+                    $( "#brcfg" + id + " #type" ).val( brs[id].type + "_receiver.html" ).trigger( 'change' );
+                } else if ( $( "#brcfg" + id + " #type option[value='" + brs[id].type + "_reader.html']" ).length > 0 ) {
+                    $( "#brcfg" + id + " #type" ).val( brs[id].type + "_reader.html" ).trigger( 'change' );
+                }
+            }
         } );
         
-        if ( br == null) {
-            $( "#brcfg" + id + " #type" ).val( "TOY1" ).trigger('change');
-        } else {
+        if ( br != null ) {
             $( "#brcfg" + id + " #enabled" ).prop( 'checked',br.enabled ).checkboxradio( 'refresh' );
             $( "#brcfg" + id + " #name" ).val( br.name );
-            $( "#brcfg" + id + " #type" ).val( br.type ).trigger('change');
         }
     } );
 }
 
-var lastbrid = -1;
+var lastbrid = 0;
 
 var saveConfiguration = function () {
     var output = {};
@@ -44,6 +69,8 @@ var saveConfiguration = function () {
     output.artdaqDir = $( "#artdaqDir" ).val( );
     output.dataDir = $( "#artdaqDataDir" ).val( );
     output.logDir = $( "#artdaqLogDir" ).val( );
+    output.setupScript = $( "#artdaqSetupScript" ).val( );
+    output.needsRestart = configNeedsRestart;
     output.dataLogger = {};
     output.dataLogger.enabled = $( "#dlEnabled" ).is( ":checked" );
     output.dataLogger.fileMode = $( "input:radio[name=fileLimit]:checked" ).val( );
@@ -75,7 +102,7 @@ var saveConfiguration = function () {
 };
 
 var loadConfiguration = function ( config ) {
-    lastbrid = -1;
+    lastbrid = 0;
     $( "#brs" ).html( "" );
     
     $( "#expertMode" ).prop( 'checked',config.expertMode );
@@ -83,6 +110,7 @@ var loadConfiguration = function ( config ) {
     $( "#artdaqDir" ).val( config.artdaqDir );
     $( "#artdaqDataDir" ).val( config.dataDir );
     $( "#artdaqLogDir" ).val( config.logDir );
+    $( "#artdaqSetupScript" ).val( config.setupScript );
     $( "#dlEnabled" ).prop( 'checked',config.dataLogger.enabled );
     $( "input:radio[name=fileLimit]:checked" ).prop( 'checked',false );
     $( "#fileLimit" + config.dataLogger.fileMode ).prop( 'checked',true );
@@ -98,10 +126,10 @@ var loadConfiguration = function ( config ) {
     for ( var index in config.boardReaders ) {
         var br = config.boardReaders[index];
         ++lastbrid;
-        addBR( lastbrid, br );
+        addBR( lastbrid,br );
     }
     $( "input:radio" ).checkboxradio( 'refresh' );
-    $( "input:checkbox" );
+    $( "input:checkbox" ).checkboxradio('refresh');
 }
 
 var updateHeader = function ( error,text ) {
@@ -117,6 +145,9 @@ var updateHeader = function ( error,text ) {
 var loadConfigs = function () {
     AjaxGet( "/artdaq-configuration/NamedConfigs",function ( data ) {
         $( "#configs" ).html( data ).trigger( 'create' ).selectmenu( 'refresh' );
+        var config = getUrlParameter( "configs" );
+        $( "#configs" ).val( config );
+        $( "#loadConfigButton" ).trigger( 'click' );
     } );
 }
 
@@ -131,24 +162,29 @@ $( document ).ready( function () {
     } );
     
     $( ".triggersModified" ).click( function () {
-        configModified = true;
         updateHeader( true,changedText );
-    } )
+    } );
+    
+    $( ".triggersRestart" ).click( function () {
+        configNeedsRestart = true;
+        updateHeader( true,changedText + "\nYou will have to re-start any ARTDAQ partitions using this configuration to apply these changes." );
+    } );
     
     $( "#addbr" ).click( function () {
         ++lastbrid;
         addBR( lastbrid );
     } );
     
-    loadConfigs( );
-    
     $( "#loadConfigButton" ).click( function () {
+        configNeedsRestart = false;
         updateHeader( false,"" );
         var selected = $( "#configs" ).find( ':selected' ).val( );
-        AjaxPost( "/artdaq-configuration/LoadNamedConfig",{ configName: selected },function ( config ) {
+        AjaxPost( "/artdaq-configuration/LoadNamedConfig",{ configFile: selected },function ( config ) {
             loadConfiguration( config );
         } );
     } );
+    loadConfigs( );
+    
     $( "#saveConfig" ).click( function () {
         var config = saveConfiguration( );
         AjaxPost( "/artdaq-configuration/saveConfig",{ config: JSON.stringify( config ) },function ( res ) {
@@ -157,7 +193,7 @@ $( document ).ready( function () {
             } else {
                 updateHeader( true,"Failed to save configuration!" );
             }
-
+            
             loadConfigs( );
         } );
     } );
