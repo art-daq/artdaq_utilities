@@ -98,16 +98,12 @@ cd ${blddir} || exit 1
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
 # remove any lbne_raw_data entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/lbne_raw_data/${version}.version ]; then
-  echo "Removing ${blddir}/lbne_raw_data/${version}.version"
-  rm -rf ${blddir}/lbne_raw_data/${version}.version
+if [ -d ${blddir}/lbne_raw_data ]; then
+  echo "Removing ${blddir}/lbne_raw_data"
+  rm -rf ${blddir}/lbne_raw_data
 fi
-if [ -d ${blddir}/lbne_raw_data/${version} ]; then
-  echo "Removing ${blddir}/lbne_raw_data/${version}"
-  rm -rf ${blddir}/lbne_raw_data/${version}
-fi
-if [ `ls -1 ${blddir}/lbne_raw_data*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/lbne_raw_data*${dotver}*.tar.bz2
+if [ `ls -1 ${blddir}/lbne_raw_data*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
+  rm -fv ${blddir}/lbne_raw_data*.tar.bz2
 fi
 
 echo

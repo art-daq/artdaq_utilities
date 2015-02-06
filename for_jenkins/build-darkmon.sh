@@ -97,27 +97,19 @@ cd ${blddir} || exit 1
 ./pullProducts ${blddir} ${flvr} darkmon-${version} ${basequal} ${build_type}
 # remove any darkmon and darksidecore entities that were pulled so
 # that they will always be rebuilt
-if [ -d ${blddir}/darksidecore/${version}.version ]; then
-  echo "Removing ${blddir}/darksidecore/${version}.version"
-  rm -rf ${blddir}/darksidecore/${version}.version
+if [ -d ${blddir}/darksidecore ]; then
+  echo "Removing ${blddir}/darksidecore"
+  rm -rf ${blddir}/darksidecore
 fi
-if [ -d ${blddir}/darksidecore/${version} ]; then
-  echo "Removing ${blddir}/darksidecore/${version}"
-  rm -rf ${blddir}/darksidecore/${version}
+if [ `ls -1 ${blddir}/darksidecore*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
+  rm -fv ${blddir}/darksidecore*.tar.bz2
 fi
-if [ `ls -1 ${blddir}/darksidecore*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/darksidecore*${dotver}*.tar.bz2
+if [ -d ${blddir}/darkmon ]; then
+  echo "Removing ${blddir}/darkmon"
+  rm -rf ${blddir}/darkmon
 fi
-if [ -d ${blddir}/darkmon/${version}.version ]; then
-  echo "Removing ${blddir}/darkmon/${version}.version"
-  rm -rf ${blddir}/darkmon/${version}.version
-fi
-if [ -d ${blddir}/darkmon/${version} ]; then
-  echo "Removing ${blddir}/darkmon/${version}"
-  rm -rf ${blddir}/darkmon/${version}
-fi
-if [ `ls -1 ${blddir}/darkmon*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/darkmon*${dotver}*.tar.bz2
+if [ `ls -1 ${blddir}/darkmon*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
+  rm -fv ${blddir}/darkmon*.tar.bz2
 fi
 
 echo
