@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>ARTDAQ Demo Configuration</title>
+    <style>
+        @import url(/base/jquery.mobile.css);
+    </style>
+    <script src="/base/jquery.min.js"></script>
+    <script src="/base/jquery.mobile.min.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script src="/artdaq-configuration/ConfigurationEditor.js"></script>
+</head>
+<body>
+    <div data-role="page">
+        <div data-role="header" id="header">
+            <h1>ARTDAQ Demo Configuration</h1>
+            <p id="info"></p>
+        </div>
+
+        <div data-role="main" class="ui-content">
+            <form>
+                <fieldset data-role="collapsible">
+                    <legend>Configuration Parameters</legend>
+                    <label for="expertMode">Expert Mode<input type="checkbox" id="expertMode" unchecked disabled></label>
+
+                    <fieldset data-role="collapsible">
+                        <legend>Named Configurations</legend>
+                        <label for="configs">Configuration List</label>
+                        <select name="configs" id="configs">
+                            <option value="Default">No Named Configurations Found</option>
+                        </select>
+                        <button type="button" id="loadConfigButton">Load Selected Configuration</button>
+                    </fieldset>
+
+                    <div data-role="fieldcontain">
+                        <label for="configName">Configuration Name</label>
+                        <input type="text" name="configName" id="configName" class="triggersModified">
+                    </div>
+                    <button type="button" id="saveConfig">Save Configuration</button>
+                </fieldset>
+                <div data-role="collapsibleset">
+                    <fieldset data-role="collapsible">
+                        <legend>Board Readers</legend>
+                        <div data-role="collapsibleset" id="brs">
+                        </div>
+                        <input type="button" data-inline="true" id="addbr" name="addbr" class="triggersModified" value="Add New">
+                    </fieldset>
+                    <fieldset data-role="collapsible">
+                        <legend>Event Builders</legend>
+                        <div data-role="fieldcontain">
+                            <label for="evbName">Event Builder Base Nickname</label>
+                            <input type="text" id="evbName" class="triggersModified" value="EVB">
+                        </div>
+                        <div data-role="fieldcontain">
+                            <label for="evbCount">Number of Event Builders</label>
+                            <input type="number" id="evbCount" class="triggersModified" value=2 step=1>
+                        </div>
+                        <div data-role="fieldcontain">
+                            <label for="evbCompress">Use Compression<input class="triggersModified" type="checkbox" id="evbCompress" unchecked></label>
+                        </div>
+                    </fieldset>
+                    <fieldset data-role="collapsible">
+                        <legend>Aggregators</legend>
+                        <div data-role="collapsibleset" id="aggs">
+                            <fieldset data-role="collapsible">
+                                <legend>Data Logger</legend>
+                                <label>Enabled<input type="checkbox" id="dlEnabled" class="triggersModified" checked></label>
+
+                                <fieldset data-role="collapsible">
+                                    <legend>SubRun Limit</legend>
+                                    <div data-role="controlgroup" data-type="horizontal">
+                                        <label><input type="radio" name="fileLimit" id="fileLimitEvents" value="Events" checked>File Events</label>
+                                        <label><input type="radio" name="fileLimit" id="fileLimitTime" value="Time">File Time (s)</label>
+                                        <label><input type="radio" name="fileLimit" id="fileLimitSize" value="Size">File Size (MB)</label>
+                                    </div>
+                                    <div data-role="fieldcontain">
+                                        <label for="limitValue">Value (0 is disabled)<input type="number" name="limitValue" id="limitValue" class="triggersModified" value=0></label>
+                                    </div>
+                                </fieldset>
+                                <fieldset data-role="collapsible">
+                                    <legend>Run Limit</legend>
+                                    <div data-role="controlgroup" data-type="horizontal">
+                                        <label><input type="radio" name="runLimit" id="runLimitEvents" value="Events" checked>Run Events</label>
+                                        <label><input type="radio" name="runLimit" id="runLimitTime" value="Time">Run Time (s)</label>
+                                    </div>
+                                    <div data-role="fieldcontain">
+                                        <label for="runLimitValue">Value (0 is disabled)<input type="number" name="runLimitValue" id="runLimitValue" class="triggersModified" value=0></label>
+                                    </div>
+                                </fieldset>
+                            </fieldset>
+                            <fieldset data-role="collapsible">
+                                <legend>Online Monitor</legend>
+                                <label>Enabled<input type="checkbox" id="omEnabled" class="triggersModified" checked></label>
+                                <label>Use Viewer<input type="checkbox" id="omvEnabled" class="triggersModified" unchecked></label>
+                            </fieldset>
+                        </div>
+                    </fieldset>
+                    <fieldset data-role="collapsible">
+                        <legend>System</legend>
+                        <label for="artdaqDir">ARTDAQ Base Directory</label>
+                        <input type="text" name="artdaqDir" id="artdaqDir" class="triggersModified" value="~/artdaq-demo-base">
+                        <label for="artdaqDataDir">ARTDAQ Data Directory</label>
+                        <input type="text" name="artdaqDataDir" id="artdaqDataDir" class="triggersModified" value="/tmp">
+                        <label for="artdaqLogDir">ARTDAQ Log Directory</label>
+                        <input type="text" name="artdaqLogDir" id="artdaqLogDir" class="triggersModified" value="/tmp">
+                    </fieldset>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

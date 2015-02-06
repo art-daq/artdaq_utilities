@@ -4,7 +4,7 @@
 //
 // Currently Contains:
 //  -- GET_ReadLog: Read the serverbase.js server.log
-
+// Client-side ajax-loader.gif from http://www.ajaxload.info/
 
 // Node.js "includes"
 var spawn = require('child_process').spawn;
