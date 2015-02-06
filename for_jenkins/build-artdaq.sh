@@ -41,7 +41,6 @@ case ${qual_set} in
     usage
     exit 1
 esac
-ddtver=v1_04_08
 
 case ${build_type} in
   debug) ;;
@@ -89,13 +88,6 @@ cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
 # source code tarballs MUST be pulled first
-# this might be a different version of art than in the artdaq source code tarball, which is only for the default art version
-./pullProducts ${blddir} source art-${artver} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of art-${artver} failed
-EOF
-        exit 1
-      }
 ./pullProducts ${blddir} source artdaq-${version} || \
       { cat 1>&2 <<EOF
 ERROR: pull of artdaq-${version} failed
@@ -108,7 +100,6 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type} 
-./pullProducts ${blddir} ${flvr} novaddt-${ddtver} ${squal}-${basequal} ${build_type} 
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal} ${build_type} 
 echo
 echo "begin build"
