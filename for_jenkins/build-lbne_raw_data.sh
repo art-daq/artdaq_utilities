@@ -41,6 +41,34 @@ case ${qual_set} in
      squal=s6
      artver=v1_12_05
   ;;
+  s6:e6:nu) 
+     basequal=nu:e6
+     squal=s6
+     artver=v1_12_05
+     nutoolsver=v1_07_02
+     nutoolsbasequal=e6
+  ;;
+  s5:e5:nu) 
+     basequal=nu:e5
+     squal=s5
+     artver=v1_12_04
+     nutoolsver=v1_07_02
+     nutoolsbasequal=e5
+  ;;
+  s5:e6:nu) 
+     basequal=nu:e6
+     squal=s5
+     artver=v1_12_04
+     nutoolsver=v1_07_02
+     nutoolsbasequal=e6
+  ;;
+  s6:e5:nu) 
+     basequal=nu:e5
+     squal=s6
+     artver=v1_12_05
+     nutoolsver=v1_07_02
+     nutoolsbasequal=e5
+  ;;
   *)
     echo "unexpected qualifier set ${qual_set}"
     usage
@@ -105,7 +133,11 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+if [ -n "${nutoolsver}" ]; then
+  ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${nutoolsbasequal} ${build_type}
+else
+  ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+fi
 ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
 # remove any lbne_raw_data entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/lbne_raw_data ]; then
