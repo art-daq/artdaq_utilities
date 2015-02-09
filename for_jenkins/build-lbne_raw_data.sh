@@ -116,6 +116,14 @@ if [ `ls -1 ${blddir}/lbne_raw_data*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
   rm -fv ${blddir}/lbne_raw_data*.tar.bz2
 fi
 
+# pull cetbuildtools v4_05_00 specially
+cd ${blddir} || exit 1
+mytar="cetbuildtools-4.05.00-noarch.tar.bz2"
+mydist="http://scisoft.fnal.gov/scisoft/packages/cetbuildtools/v4_05_00/${mytar}"
+echo "pull ${mytar}"
+curl --fail --silent --location --insecure -O ${mydist}
+tar -xf ${mytar}
+
 echo
 echo "begin build"
 echo
