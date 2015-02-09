@@ -19,55 +19,32 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+target_env=${TARGET_ENV}
 
 case ${qual_set} in
   s6:e6) 
      basequal=e6
      squal=s6
      artver=v1_12_05
-  ;;
-  s5:e5) 
-     basequal=e5
-     squal=s5
-     artver=v1_12_04
+     nutoolsver=v1_07_02
   ;;
   s5:e6) 
      basequal=e6
      squal=s5
      artver=v1_12_04
+     nutoolsver=v1_07_00
   ;;
   s6:e5) 
      basequal=e5
      squal=s6
      artver=v1_12_05
-  ;;
-  s6:e6:nu) 
-     basequal=nu:e6
-     squal=s6
-     artver=v1_12_05
      nutoolsver=v1_07_02
-     nutoolsbasequal=e6
   ;;
-  s5:e5:nu) 
-     basequal=nu:e5
+  s5:e5) 
+     basequal=e5
      squal=s5
      artver=v1_12_04
-     nutoolsver=v1_07_02
-     nutoolsbasequal=e5
-  ;;
-  s5:e6:nu) 
-     basequal=nu:e6
-     squal=s5
-     artver=v1_12_04
-     nutoolsver=v1_07_02
-     nutoolsbasequal=e6
-  ;;
-  s6:e5:nu) 
-     basequal=nu:e5
-     squal=s6
-     artver=v1_12_05
-     nutoolsver=v1_07_02
-     nutoolsbasequal=e5
+     nutoolsver=v1_07_00
   ;;
   *)
     echo "unexpected qualifier set ${qual_set}"
@@ -86,7 +63,7 @@ esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
-echo "building the lbne_raw_data distribution for ${version} ${dotver} ${qual_set} ${build_type}"
+echo "building the lbne_raw_data distribution for ${version} ${dotver} ${qual_set} ${build_type} ${target_env}"
 
 OS=`uname`
 if [ "${OS}" = "Linux" ]
@@ -133,12 +110,13 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-if [ -n "${nutoolsver}" ]; then
-  ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${nutoolsbasequal} ${build_type}
+if [ "${target_env}" == "offline" ]; then
+  ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${basequal} ${build_type}
+  ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal}-nu ${build_type}
 else
   ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+  ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
 fi
-./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
 # remove any lbne_raw_data entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/lbne_raw_data ]; then
   echo "Removing ${blddir}/lbne_raw_data"
