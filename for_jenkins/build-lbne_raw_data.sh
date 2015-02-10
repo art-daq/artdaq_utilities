@@ -111,6 +111,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 if [ "${target_env}" == "offline" ]; then
+  ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
   ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${squal}-${basequal} ${build_type}
   ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal}-nu ${build_type}
 else
@@ -137,10 +138,17 @@ tar -xf ${mytar}
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
- { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
- }
+if [ "${target_env}" == "offline" ]; then
+  ../artdaq-utilities/for_jenkins/buildFW -t -b ${basequal}:nu -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
+   { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+     exit 1 
+   }
+else
+  ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
+   { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+     exit 1 
+   }
+fi
 
 echo
 echo "move files"
