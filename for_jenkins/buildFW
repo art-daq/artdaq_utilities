@@ -1035,7 +1035,8 @@ EOF
 # Make sure we know our bundle version and manifest filename.
 function prep_bundle() {
   echo "building ${bundle_name} ${bundle_version} (${bundle_dot_version})"
-  manifest=${product_topdir}/${bundle_name}-${bundle_dot_version}${flvr:+-${flvr}}${version_set:+-${version_set}}-${bqual}${build_label:+-${build_label}}-${build_type}_MANIFEST.txt
+  safe_bqual=`echo $bqual | sed 's/\:/\-/'`
+  manifest=${product_topdir}/${bundle_name}-${bundle_dot_version}${flvr:+-${flvr}}${version_set:+-${version_set}}-${safe_bqual}${build_label:+-${build_label}}-${build_type}_MANIFEST.txt
   backup_by_mtime "${manifest}"
   # Add UPS to the manifest.
   pname=ups; pver=${ups_version}; pquals=""; add_to_manifest
