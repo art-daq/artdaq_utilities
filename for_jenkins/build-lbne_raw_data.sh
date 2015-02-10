@@ -111,7 +111,6 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 if [ "${target_env}" == "offline" ]; then
-  ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
   ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${squal}-${basequal} ${build_type}
   ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal}-nu ${build_type}
 else
