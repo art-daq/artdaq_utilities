@@ -23,12 +23,10 @@ build_type=${BUILDTYPE}
 case ${qual_set} in
   e6) 
      basequal=e6
-     squal=s6
      artver=v1_12_05
   ;;
   e5) 
      basequal=e5
-     squal=s6
      artver=v1_12_05
   ;;
   *)
@@ -84,7 +82,6 @@ curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bu
 chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
-# this might be a different version of art than in the darkmon source code tarball, which is only for the default art version
 ./pullProducts ${blddir} source darkmon-${version} || \
       { cat 1>&2 <<EOF
 ERROR: pull of darkmon-${version} failed
@@ -96,11 +93,29 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type} 
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} darkmon-${version} ${basequal} ${build_type}
+# remove any darkmon and darksidecore entities that were pulled so
+# that they will always be rebuilt
+if [ -d ${blddir}/darksidecore ]; then
+  echo "Removing ${blddir}/darksidecore"
+  rm -rf ${blddir}/darksidecore
+fi
+if [ `ls -1 ${blddir}/darksidecore*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
+  rm -fv ${blddir}/darksidecore*.tar.bz2
+fi
+if [ -d ${blddir}/darkmon ]; then
+  echo "Removing ${blddir}/darkmon"
+  rm -rf ${blddir}/darkmon
+fi
+if [ `ls -1 ${blddir}/darkmon*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
+  rm -fv ${blddir}/darkmon*.tar.bz2
+fi
+
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} darkmon-${version} || \
+./buildFW -t -b ${basequal} ${blddir} ${build_type} darkmon-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
