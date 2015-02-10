@@ -179,6 +179,8 @@ if ( cluster.isMaster ) {
                                 process.send( workerData );
                             }
                         } catch ( err ) {
+                            console.log("Error caught; text:");
+                            console.log(err);
                             if ( err instanceof TypeError ) {
                                 //RW_ version not available, try read-only version:
                                 var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
