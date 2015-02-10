@@ -150,6 +150,12 @@ function pauseRun() {
     }
 }
 
+function getConfigs() {
+    $.get( "/artdaq-configuration/NamedConfigs",function ( result ) {
+        $( "#config" ).html( result );
+    } );
+}
+
 $( document ).ready( function () {
     $( "#shutdown" ).click( function () {
         shutdownSystem( );
@@ -172,13 +178,14 @@ $( document ).ready( function () {
         }
     } );
     
-    $.get( "/artdaq-configuration/NamedConfigs",function ( result ) {
-        $( "#config" ).html( result );
-    } );
-    
+    getConfigs( );
     $( "#editConfig" ).click( function () {
         var config = $( "#config" ).find( ":selected" ).val( );
         openConfigWindow( config );
+    } );
+    
+    $( "#reloadConfigs" ).click( function () {
+        getConfigs( );
     } );
     
     setInterval( function () { AjaxGet( "/artdaq-runcontrol/P" + $( "#partition" ).val( ),update ); },1000 );

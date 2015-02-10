@@ -23,7 +23,7 @@
             <form>
                 <fieldset data-role="collapsible">
                     <legend>Configuration Parameters</legend>
-                    <label for="expertMode">Expert Mode<input type="checkbox" id="expertMode" unchecked disabled></label>
+                    <label for="expertMode">Expert Mode<input type="checkbox" id="expertMode" unchecked></label>
 
                     <fieldset data-role="collapsible">
                         <legend>Named Configurations</legend>
@@ -60,6 +60,10 @@
                         <div data-role="fieldcontain">
                             <label for="evbCompress">Use Compression<input class="triggersModified" type="checkbox" id="evbCompress" unchecked></label>
                         </div>
+                        <div data-role="fieldcontain" class="expert">
+                            <label for="evbHostnames">Hosts to use for Event Builders (comma-delimeted)</label>
+                            <input type="text" id="evbHostnames" name="evbHostnames" value="localhost" class="triggersModified triggersRestart">
+                        </div>
                     </fieldset>
                     <fieldset data-role="collapsible">
                         <legend>Aggregators</legend>
@@ -67,7 +71,10 @@
                             <fieldset data-role="collapsible">
                                 <legend>Data Logger</legend>
                                 <label>Enabled<input type="checkbox" id="dlEnabled" class="triggersModified" checked></label>
-
+                                <div data-role="fieldcontain" class="expert">
+                                    <label for="dlName">Nickname of DataLogger Process</label>
+                                    <input type="text" id="dlName" name="dlName" value="DataLogger">
+                                </div>
                                 <fieldset data-role="collapsible">
                                     <legend>SubRun Limit</legend>
                                     <div data-role="controlgroup" data-type="horizontal">
@@ -86,7 +93,7 @@
                                         <label><input type="radio" name="runLimit" id="runLimitTime" value="Time">Run Time (s)</label>
                                     </div>
                                     <div data-role="fieldcontain">
-                                        <label for="runLimitValue">Value (0 is disabled)<input type="number" name="runLimitValue" id="runLimitValue" class="triggersModified" value=0></label>
+                                        <label for="runLimitValue">Value (-1 is disabled)<input type="number" name="runLimitValue" id="runLimitValue" class="triggersModified" value=0></label>
                                     </div>
                                 </fieldset>
                             </fieldset>
@@ -94,7 +101,15 @@
                                 <legend>Online Monitor</legend>
                                 <label>Enabled<input type="checkbox" id="omEnabled" class="triggersRestart triggersModified" checked></label>
                                 <label>Use Viewer<input type="checkbox" id="omvEnabled" class="triggersModified" unchecked></label>
+                                <div data-role="fieldcontain" class="expert">
+                                    <label for="omName">Online Monitor Nickname</label>
+                                    <input type="text" id="omName" name="omName" value="OnlineMonitor">
+                                </div>
                             </fieldset>
+                            <div data-role="fieldcontain" class="expert">
+                                <label for="aggHostname">Hostname for Aggregators</label>
+                                <input type="text" id="aggHostname" name="aggHostname" value="localhost" class="triggersModified triggersRestart">
+                            </div>
                         </div>
                     </fieldset>
                     <fieldset data-role="collapsible">

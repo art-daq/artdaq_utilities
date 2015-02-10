@@ -22,12 +22,54 @@ var Status = function ( partition ) {
     this.commandRunning = false;
     this.commandOutputBuffer = "";
     this.commandErrorBuffer = "";
+    this.stopPending = false;
     this.WFPlotsUpdated = Date.now( );
     this.WFFileSize = 0;
     this.WFFileMtime = 0;
     this.partition = partition;
     this.config = "";
 };
+
+var configuration = {};
+configuration.artdaqDir = "~/artdaq-demo-base";
+configuration.setupScript = "setupARTDAQDEMO";
+configuration.runValue = 0;
+
+function readConfiguration( systemStatus ) {
+    var fileName = __dirname + "/../../artdaq-configuration/server/" + systemStatus.config;
+    console.log( "Going to read configuration " + fileName );
+    if ( fs.existsSync( fileName ) ) {
+        var res = true;
+        var config = "" + fs.readFileSync( fileName );
+        
+        var matches = config.match( /<artdaqDir>(.*?)<\/artdaqDir>/i );
+        if ( matches.length > 1 ) {
+            configuration.artdaqDir = matches[1];
+        } else {
+            console.log( "ARTDAQ Dir not found!" );
+            res = false;
+        }
+        
+        matches = config.match( /<setupScript>(.*?)<\/setupScript>/i );
+        if ( matches.length > 1 ) {
+            configuration.setupScript = matches[1];
+        } else {
+            console.log( "Setup script not found!" );
+            res = false;
+        }
+        
+        matches = config.match( /<runValue>(.*?)<\/runValue>/i );
+        if ( matches.length > 1 ) {
+            configuration.runValue = parseInt( matches[1] );
+        } else {
+            console.log( "Run Value not found!" );
+            res = false;
+        }
+        return res;
+    }
+    console.log( "Configuration file not found!" );
+    return false;
+}
 
 arc.MasterInitFunction = function ( workerData ) {
     var output = {};
@@ -85,37 +127,48 @@ function checkSystem( systemStatus ) {
 }
 
 function startCommand( args,systemStatus ) {
-    var port = ( systemStatus.partition * 100 ) + 5600;
-    var commandArray = [artdaqDir,setupScript,port,"manage2x2x2System.sh"].concat( args );
-    systemStatus.commandErrorBuffer = "";
-    systemStatus.commandOutputBuffer = "";
-    var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.out.log",'w' );
-    var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.err.log",'w' );
-    console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray );
-    var command = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
-    systemStatus.commandPID = command.pid;
-    command.unref( );
-    systemStatus.commandRunning = true;
-    checkCommand( systemStatus );
+    if ( readConfiguration( systemStatus ) ) {
+        var port = ( systemStatus.partition * 100 ) + 5600;
+        var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
+        var commandArray = [systemStatus.config,configName,port,"manageSystem.sh", "-C", configName].concat( args );
+        systemStatus.commandErrorBuffer = "";
+        systemStatus.commandOutputBuffer = "";
+        var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.out.log",'w' );
+        var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.err.log",'w' );
+        console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray );
+        var command = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
+        systemStatus.commandPID = command.pid;
+        command.unref( );
+        systemStatus.commandRunning = true;
+        checkCommand( systemStatus );
+    } else {
+        console.log( "CANNOT READ CONFIGURATION. COMMAND NOT STARTED!!!!" );
+    }
 }
 
 function startSystem( systemStatus ) {
-    console.log( "Starting System, Partition " + systemStatus.partition );
-    var port = ( systemStatus.partition * 100 ) + 5600;
-    var commandArray = [artdaqDir,setupScript,port,"start2x2x2System.sh","-p",port];
-    
-    var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/out.log",'w' );
-    var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/err.log",'w' );
-    systemStatus.systemErrorBuffer = "";
-    systemStatus.systemOutputBuffer = "";
-    console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray.join( ' ' ) );
-    var system = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
-    systemStatus.systemPID = system.pid;
-    system.unref( );
-    systemStatus.systemRunning = true;
-    console.log( "Command Spawned" );
-    
-    systemStatus.state = "Started";
+    if ( readConfiguration( systemStatus ) ) {
+        console.log( "Starting System, Partition " + systemStatus.partition );
+        var port = ( systemStatus.partition * 100 ) + 5600;
+        var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
+        
+        var commandArray = [systemStatus.config, configName,port,"startSystem.sh","-c",configName];
+        
+        var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/out.log",'w' );
+        var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/err.log",'w' );
+        systemStatus.systemErrorBuffer = "";
+        systemStatus.systemOutputBuffer = "";
+        console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray.join( ' ' ) );
+        var system = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
+        systemStatus.systemPID = system.pid;
+        system.unref( );
+        systemStatus.systemRunning = true;
+        console.log( "Command Spawned" );
+        
+        systemStatus.state = "Started";
+    } else {
+        console.log( "CANNOT READ CONFIGURATION. COMMAND NOT STARTED!!!!" );
+    }
 }
 
 function initialize( systemStatus ) {
@@ -125,21 +178,24 @@ function initialize( systemStatus ) {
     else {
         var onmonDir = __dirname + "/../client/P" + systemStatus.partition;
         
-        var args = ["-m","on","-M"].concat( onmonDir,verbosity,dataDirectory,fileSizeCMD,fileEventsCMD,fileTimeCMD,["init"] );
+        var args = ["-M",onmonDir,"init"];
         startCommand( args,systemStatus );
         systemStatus.state = "Initialized";
     }
 }
 
-function startRun( systemStatus) {
+function startRun( systemStatus ) {
     if ( systemStatus.commandRunning ) {
         setTimeout( function () { startRun( systemStatus ); },500 );
     }
     else {
-        
-        var args = ["-N",number,"start"];
+        var args = ["-N",systemStatus.runNumber,"start"];
         startCommand( args,systemStatus );
         systemStatus.state = "Running";
+        if ( readConfiguration( systemStatus ) && configuration.runValue > 0 ) {
+            systemStatus.stopPending = true;
+            startCommand( ["stop"],systemStatus );
+        }
     }
 }
 
@@ -170,15 +226,9 @@ function endRun( systemStatus ) {
         setTimeout( function () { endRun( systemStatus ); },500 );
     }
     else {
-        
-        if ( runEvents > 0 || runTime > 0 ) {
-            systemStatus.state = "Running";
-            systemStatus.stopPending = true;
-        } else {
-            systemStatus.state = "Initialized";
-        }
-        var args = events.concat( time,"stop" );
+        var args = ["stop"];
         startCommand( args,systemStatus );
+        systemStatus.state = "Initialized";
     }
 }
 
@@ -209,9 +259,7 @@ function shutdownSystem( systemStatus ) {
         systemStatus.state = "Shutdown";
     }
     
-    setTimeout( function () {
-        killSystem( systemStatus );
-    },4000 );
+    setTimeout( function () { killSystem( systemStatus ); },4000 );
 }
 
 function getStatus( systemStatuses,partition ) {
@@ -269,7 +317,7 @@ arc.GET_P3 = function ( systemStatuses ) {
 };
 
 arc.RW_Start = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Shutdown" ) {
         startSystem( systemStatuses["p" + POST.partition] );
     }
@@ -277,7 +325,7 @@ arc.RW_Start = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Init = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Started" ) {
         initialize( systemStatuses["p" + POST.partition] );
     }
@@ -294,7 +342,7 @@ arc.RW_Run = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Pause = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Running" ) {
         pauseRun( systemStatuses["p" + POST.partition] );
     }
@@ -302,7 +350,7 @@ arc.RW_Pause = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Resume = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Paused" ) {
         resumeRun( systemStatuses["p" + POST.partition] );
     }
@@ -310,7 +358,7 @@ arc.RW_Resume = function ( POST,systemStatuses ) {
 };
 
 arc.RW_End = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Running" || systemStatuses["p" + POST.partition].state === "Paused" ) {
         endRun( systemStatuses["p" + POST.partition] );
     }
@@ -318,7 +366,7 @@ arc.RW_End = function ( POST,systemStatuses ) {
 };
 
 arc.RW_Shutdown = function ( POST,systemStatuses ) {
-    systemStatusees["p" + POST.partition].config = POST.config;
+    systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Started" || systemStatuses["p" + POST.partition].state === "Initialized" || systemStatuses["p" + POST.partition].state === "Paused" ) {
         shutdownSystem( systemStatuses["p" + POST.partition] );
     }

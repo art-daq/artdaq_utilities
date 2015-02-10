@@ -20,26 +20,32 @@ function generateDefaultConfig() {
     output.dataLogger.enabled = true;
     output.dataLogger.fileValue = 0;
     output.dataLogger.fileMode = "Events";
-    output.dataLogger.runValue = 0;
+    output.dataLogger.runValue = -1;
     output.dataLogger.runMode = "Events";
+    output.dataLogger.hostname = "localhost"
+    output.dataLogger.name = "DataLogger"
     output.onlineMonitor = {};
     output.onlineMonitor.enabled = true;
     output.onlineMonitor.viewerEnabled = false;
+    output.onlineMonitor.hostname = "localhost"
+    output.onlineMonitor.name = "OnlineMonitor"
     output.eventBuilders = {};
     output.eventBuilders.basename = "EVB";
     output.eventBuilders.count = 2;
     output.eventBuilders.compress = false;
+    output.eventBuilders.hostnames = ["localhost","localhost"];
+
     return output;
 }
 
-function traverse( obj ) {
+function traverse( obj, parent ) {
     var output = "";
     //console.log( "Traversing: " )
     //console.log( obj );
     for ( var key in obj ) {
         var keyPrint = key;
         if ( key.length == 1 && parseInt( key ) >= 0 ) {
-            keyPrint = "boardReader";
+            keyPrint = parent.slice( 0,parent.length - 1 );
         }
         if ( obj.hasOwnProperty( key ) ) {
             //console.log( "Key is " + keyPrint );
@@ -47,7 +53,7 @@ function traverse( obj ) {
             if ( obj[key] !== null && typeof ( obj[key] ) === "object" ) {
                 //console.log( "Going to traverse " + key + " with data:" );
                 //console.log( obj[key] );
-                output += "\n" + traverse( obj[key] );
+                output += "\n" + traverse( obj[key], key );
             } else {
                 //console.log( "Filling in key value " + obj[key] );
                 output += obj[key];
@@ -65,7 +71,7 @@ function serializeXML( config,who,fileName ) {
     var xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     
     var configurationXML = "<author>" + who + "</author>\n"
-    configurationXML += traverse( config );
+    configurationXML += traverse( config, "" );
     
     console.log( "Putting Generated configuration into artdaq-configuration block" )
     xmlData += "<artdaq-configuration>\n" + configurationXML + "</artdaq-configuration>";
@@ -103,9 +109,11 @@ function deserializeXML( fileName ) {
     output.configName = xmlObj['artdaq-configuration'].configName;
     output.dataDir = xmlObj['artdaq-configuration'].dataDir;
     output.logDir = xmlObj['artdaq-configuration'].logDir;
+    output.setupScript = xmlObj['artdaq-configuration'].setupScript;
     output.dataLogger = xmlObj['artdaq-configuration'].dataLogger;
     output.onlineMonitor = xmlObj['artdaq-configuration'].onlineMonitor;
     output.eventBuilders = xmlObj['artdaq-configuration'].eventBuilders;
+    output.eventBuilders.hostnames = xmlObj['artdaq-configuration'].eventBuilders.hostnames.hostname;
     output.boardReaders = xmlObj['artdaq-configuration'].boardReaders.boardReader;
     
     return checkBools( output );
@@ -175,7 +183,7 @@ ac.RW_saveConfig = function ( POST ) {
 
 ac.RO_LoadNamedConfig = function ( POST ) {
     console.log( "Request for configuration with file name \"" + POST.configFile + "\" received." );
-    if ( POST.configName === "Default" ) {
+    if ( POST.configFile === "Default" ) {
         return generateDefaultConfig( );
     }
     var output = deserializeXML( path.join( __dirname,POST.configFile ) );

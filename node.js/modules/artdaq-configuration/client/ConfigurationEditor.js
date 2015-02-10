@@ -14,6 +14,14 @@ function getUrlParameter( sParam ) {
     }
 }
 
+function checkExpertMode() {
+    if ( $( "#expertMode" ).is( ":checked" ) ) {
+        $( ".expert" ).show( );
+    } else {
+        $( ".expert" ).hide( );
+    }
+}
+
 var addBR = function ( id,br ) {
     brs[id] = br;
     $.get( "/artdaq-configuration/BoardReader.html",function ( data ) {
@@ -49,6 +57,8 @@ var addBR = function ( id,br ) {
                     $( "#brcfg" + id + " #type" ).val( brs[id].type + "_receiver.html" ).trigger( 'change' );
                 } else if ( $( "#brcfg" + id + " #type option[value='" + brs[id].type + "_reader.html']" ).length > 0 ) {
                     $( "#brcfg" + id + " #type" ).val( brs[id].type + "_reader.html" ).trigger( 'change' );
+                } else {
+                    $( "#brcfg" + id + " #type" ).val( "Default" ).trigger( 'change' );
                 }
             }
         } );
@@ -56,6 +66,7 @@ var addBR = function ( id,br ) {
         if ( br != null ) {
             $( "#brcfg" + id + " #enabled" ).prop( 'checked',br.enabled ).checkboxradio( 'refresh' );
             $( "#brcfg" + id + " #name" ).val( br.name );
+            $( "#brcfg" + id + " #hostname" ).val( br.hostname );
         }
     } );
 }
@@ -77,18 +88,23 @@ var saveConfiguration = function () {
     output.dataLogger.fileValue = $( "#limitValue" ).val( );
     output.dataLogger.runMode = $( "input:radio[name=runLimit]:checked" ).val( );
     output.dataLogger.runValue = $( "#runLimitValue" ).val( );
+    output.dataLogger.hostname = $( "#aggHostname" ).val( );
+    output.dataLogger.name = $( "#dlName" ).val( );
     output.onlineMonitor = {};
+    output.onlineMonitor.hostname = $( "#aggHostname" ).val( );
     output.onlineMonitor.enabled = $( "#omEnabled" ).is( ":checked" );
     output.onlineMonitor.viewerEnabled = $( "#omvEnabled" ).is( ":checked" );
+    output.onlineMonitor.name = $( "#omName" ).val( );
     output.eventBuilders = {};
     output.eventBuilders.basename = $( "#evbName" ).val( );
     output.eventBuilders.count = $( "#evbCount" ).val( );
     output.eventBuilders.compress = $( "#evbCompress" ).is( ":checked" );
+    output.eventBuilders.hostnames = $( "#evbHostnames" ).val( ).split( "," );
     output.boardReaders = [];
     $( "#brs" ).children( ).each( function ( index,element ) {
         var br = {};
         var selected = $( this ).find( ':selected' );
-        br.type = selected.val( );
+        br.type = selected.text( );
         $( "input",this ).each( function ( innerIndex,innerElement ) {
             if ( $( innerElement ).is( ":checkbox" ) ) {
                 br[innerElement.id] = $( innerElement ).is( ":checked" );
@@ -112,6 +128,8 @@ var loadConfiguration = function ( config ) {
     $( "#artdaqLogDir" ).val( config.logDir );
     $( "#artdaqSetupScript" ).val( config.setupScript );
     $( "#dlEnabled" ).prop( 'checked',config.dataLogger.enabled );
+    $( "#dlName" ).val( config.dataLogger.name );
+    $( "#aggHostname" ).val( config.dataLogger.hostname );
     $( "input:radio[name=fileLimit]:checked" ).prop( 'checked',false );
     $( "#fileLimit" + config.dataLogger.fileMode ).prop( 'checked',true );
     $( "#limitValue" ).val( config.dataLogger.fileValue );
@@ -120,16 +138,30 @@ var loadConfiguration = function ( config ) {
     $( "#runLimitValue" ).val( config.dataLogger.runValue );
     $( "#omEnabled" ).prop( 'checked',config.onlineMonitor.enabled );
     $( "#omvEnabled" ).prop( 'checked',config.onlineMonitor.viewerEnabled );
+    $( "#omName" ).val( config.onlineMonitor.name );
     $( "#evbName" ).val( config.eventBuilders.basename );
     $( "#evbCount" ).val( config.eventBuilders.count );
     $( "#evbCompress" ).prop( 'checked',config.eventBuilders.compress );
-    for ( var index in config.boardReaders ) {
-        var br = config.boardReaders[index];
+    if ( typeof(config.eventBuilders.hostnames) == "string" ) {
+        $( "#evbHostnames" ).val( config.eventBuilders.hostnames );
+    } else {
+        $( "#evbHostnames" ).val( config.eventBuilders.hostnames.join( ) );
+
+    }
+    
+    if ( config.boardReaders.name != null ) {
         ++lastbrid;
-        addBR( lastbrid,br );
+        addBR( lastbrid,config.boardReaders );
+    } else {
+        for ( var index in config.boardReaders ) {
+            var br = config.boardReaders[index];
+            ++lastbrid;
+            addBR( lastbrid,br );
+        }
     }
     $( "input:radio" ).checkboxradio( 'refresh' );
-    $( "input:checkbox" ).checkboxradio('refresh');
+    $( "input:checkbox" ).checkboxradio( 'refresh' );
+    checkExpertMode( );
 }
 
 var updateHeader = function ( error,text ) {
@@ -156,7 +188,11 @@ $( document ).ready( function () {
     defaultShadow = $( "#header" ).css( "text-shadow" );
     var changedText = "Please define a Configuration Name and click \"Save Configuration\" to save your pending changes. Loading a configuration, navigating away from this page, or closing this page will discard your changes.";
     
-    
+    $( "#expertMode" ).click( function () {
+        checkExpertMode( );
+    } );
+    checkExpertMode( );
+
     $( ".triggersModified" ).change( function () {
         updateHeader( true,changedText );
     } );
