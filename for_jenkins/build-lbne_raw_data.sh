@@ -139,7 +139,9 @@ echo
 echo "begin build"
 echo
 if [ "${target_env}" == "offline" ]; then
-  ../artdaq-utilities/for_jenkins/buildFW -t -b ${basequal}:nu -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
+  mv buildFW buildFW.orig
+  cp ../artdaq-utilities/for_jenkins/buildFW .
+  ./buildFW -t -b ${basequal}:nu -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
    { mv ${blddir}/*.log  $WORKSPACE/copyBack/
      exit 1 
    }
