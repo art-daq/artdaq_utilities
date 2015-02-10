@@ -99,6 +99,14 @@ curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bu
 chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
+if [ "${target_env}" == "offline" ]; then
+  ./pullProducts ${blddir} source nu-${nutoolsver} || \
+      { cat 1>&2 <<EOF
+ERROR: pull of nu-${nutoolsver} failed
+EOF
+        exit 1
+      }
+fi
 ./pullProducts ${blddir} source lbne_raw_data-${version} || \
       { cat 1>&2 <<EOF
 ERROR: pull of lbne_raw_data-${version} failed
