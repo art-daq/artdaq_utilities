@@ -8,7 +8,7 @@ echo $artdaqDir
 setupScript=`grep -oE "<setupScript>(.*?)</setupScript>" $configFile|sed -r 's/<\/?setupScript>//g'`
 echo "Sourcing $artdaqDir/$setupScript"
 source $artdaqDir/$setupScript
-export ARTDAQDEMO_BASE_PORT=$3
+export ARTDAQ_BASE_PORT=$3
 shift
 shift
 shift

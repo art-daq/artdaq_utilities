@@ -33,7 +33,7 @@ var addBR = function ( id,br ) {
         } );
         $.get( "/artdaq-configuration/GeneratorTypes",function ( data ) {
             $( "#brcfg" + id + " #type" ).html( data ).trigger( 'create' ).selectmenu( 'refresh' );
-
+            checkExpertMode();
             $( "#brcfg" + id + " #type" ).change( function () {
                 var selected = $( "#brcfg" + id ).find( ':selected' ).val( );
                 $.get( "/artdaq-configuration/" + selected,function ( typedata ) {
@@ -45,6 +45,7 @@ var addBR = function ( id,br ) {
                             $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( br[key] );
                         }
                     }
+                    checkExpertMode();
                 } );
             } );
 

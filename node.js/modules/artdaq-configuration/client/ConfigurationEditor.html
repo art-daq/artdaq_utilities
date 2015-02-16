@@ -51,7 +51,7 @@
                         <legend>Event Builders</legend>
                         <div data-role="fieldcontain">
                             <label for="evbName">Event Builder Base Nickname</label>
-                            <input type="text" id="evbName" class="triggersModified" value="EVB">
+                            <input type="text" id="evbName" class="triggersModified triggersRestart" value="EVB">
                         </div>
                         <div data-role="fieldcontain">
                             <label for="evbCount">Number of Event Builders</label>
@@ -73,14 +73,14 @@
                                 <label>Enabled<input type="checkbox" id="dlEnabled" class="triggersModified" checked></label>
                                 <div data-role="fieldcontain" class="expert">
                                     <label for="dlName">Nickname of DataLogger Process</label>
-                                    <input type="text" id="dlName" name="dlName" value="DataLogger">
+                                    <input type="text" id="dlName" name="dlName" value="DataLogger" class="triggersModified triggersRestart">
                                 </div>
                                 <fieldset data-role="collapsible">
                                     <legend>SubRun Limit</legend>
                                     <div data-role="controlgroup" data-type="horizontal">
-                                        <label><input type="radio" name="fileLimit" id="fileLimitEvents" value="Events" checked>File Events</label>
-                                        <label><input type="radio" name="fileLimit" id="fileLimitTime" value="Time">File Time (s)</label>
-                                        <label><input type="radio" name="fileLimit" id="fileLimitSize" value="Size">File Size (MB)</label>
+                                        <label><input type="radio" name="fileLimit" id="fileLimitEvents" value="Events" class="triggersModified" checked>File Events</label>
+                                        <label><input type="radio" name="fileLimit" id="fileLimitTime" value="Time" class="triggersModified">File Time (s)</label>
+                                        <label><input type="radio" name="fileLimit" id="fileLimitSize" value="Size" class="triggersModified">File Size (MB)</label>
                                     </div>
                                     <div data-role="fieldcontain">
                                         <label for="limitValue">Value (0 is disabled)<input type="number" name="limitValue" id="limitValue" class="triggersModified" value=0></label>
@@ -89,11 +89,11 @@
                                 <fieldset data-role="collapsible">
                                     <legend>Run Limit</legend>
                                     <div data-role="controlgroup" data-type="horizontal">
-                                        <label><input type="radio" name="runLimit" id="runLimitEvents" value="Events" checked>Run Events</label>
-                                        <label><input type="radio" name="runLimit" id="runLimitTime" value="Time">Run Time (s)</label>
+                                        <label><input type="radio" name="runLimit" id="runLimitEvents" value="Events" class="triggersModified triggersRestart" checked>Run Events</label>
+                                        <label><input type="radio" name="runLimit" id="runLimitTime" value="Time" class="triggersModified triggersRestart">Run Time (s)</label>
                                     </div>
                                     <div data-role="fieldcontain">
-                                        <label for="runLimitValue">Value (-1 is disabled)<input type="number" name="runLimitValue" id="runLimitValue" class="triggersModified" value=0></label>
+                                        <label for="runLimitValue">Value (-1 is disabled)<input type="number" name="runLimitValue" id="runLimitValue" class="triggersModified triggersRestart" value=0></label>
                                     </div>
                                 </fieldset>
                             </fieldset>

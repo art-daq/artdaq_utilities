@@ -176,7 +176,7 @@ function initialize( systemStatus ) {
         setTimeout( function () { initialize( systemStatus ); } );
     }
     else {
-        var onmonDir = __dirname + "/../client/P" + systemStatus.partition;
+        var onmonDir = __dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root";
         
         var args = ["-M",onmonDir,"init"];
         startCommand( args,systemStatus );
