@@ -33,22 +33,20 @@ var addBR = function ( id,br ) {
         } );
         $.get( "/artdaq-configuration/GeneratorTypes",function ( data ) {
             $( "#brcfg" + id + " #type" ).html( data ).trigger( 'create' ).selectmenu( 'refresh' );
-            checkExpertMode();
+            checkExpertMode( );
             $( "#brcfg" + id + " #type" ).change( function () {
                 var selected = $( "#brcfg" + id ).find( ':selected' ).val( );
                 $.get( "/artdaq-configuration/" + selected,function ( typedata ) {
                     $( "#brcfg" + id + " #typeConfig" ).html( typedata );
                     $( "#brcfg" + id + " #typeConfig #config" ).trigger( 'create' ).collapsible( );
                     
-                    for ( var key in brs[id] ) {
-                        if ( key.search( "name" ) < 0 && key.search( "type" ) < 0 && key.search( "enabled" ) < 0 ) {
-                            $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( br[key] );
-                        }
+                    for ( var key in brs[id].typeConfig ) {
+                        $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( brs[id].typeConfig[key] );
                     }
-                    checkExpertMode();
+                    checkExpertMode( );
                 } );
             } );
-
+            
             if ( brs[id] == null ) {
                 $( "#brcfg" + id + " #type" ).val( "Default" ).trigger( 'change' );
             } else {
@@ -106,11 +104,14 @@ var saveConfiguration = function () {
         var br = {};
         var selected = $( this ).find( ':selected' );
         br.type = selected.text( );
-        $( "input",this ).each( function ( innerIndex,innerElement ) {
+        br.hostname = $( "#hostname",this ).val( );
+        br.name = $( "#name",this ).val( );
+        br.typeConfig = {};
+        $( "#typeConfig input",this ).each( function ( innerIndex,innerElement ) {
             if ( $( innerElement ).is( ":checkbox" ) ) {
-                br[innerElement.id] = $( innerElement ).is( ":checked" );
+                br.typeConfig[innerElement.id] = $( innerElement ).is( ":checked" );
             } else {
-                br[innerElement.id] = $( innerElement ).val( );
+                br.typeConfig[innerElement.id] = $( innerElement ).val( );
             }
         } );
         output.boardReaders.push( br );
@@ -143,7 +144,7 @@ var loadConfiguration = function ( config ) {
     $( "#evbName" ).val( config.eventBuilders.basename );
     $( "#evbCount" ).val( config.eventBuilders.count );
     $( "#evbCompress" ).prop( 'checked',config.eventBuilders.compress );
-    if ( typeof(config.eventBuilders.hostnames) == "string" ) {
+    if ( typeof ( config.eventBuilders.hostnames ) == "string" ) {
         $( "#evbHostnames" ).val( config.eventBuilders.hostnames );
     } else {
         $( "#evbHostnames" ).val( config.eventBuilders.hostnames.join( ) );
@@ -193,7 +194,7 @@ $( document ).ready( function () {
         checkExpertMode( );
     } );
     checkExpertMode( );
-
+    
     $( ".triggersModified" ).change( function () {
         updateHeader( true,changedText );
     } );

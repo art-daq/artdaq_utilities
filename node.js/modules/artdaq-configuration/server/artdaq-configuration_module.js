@@ -176,6 +176,7 @@ ac.RW_saveConfig = function ( POST ) {
     var success = false;
     console.log( "Request to save configuration recieved. Configuration data:" );
     var config = JSON.parse( POST.config );
+    console.log( util.inspect( config,false,null ) );
     
     success = serializeXML( config,POST.who,path.join( __dirname,config.configName + ".xml" ) );
     return { Success: success };
