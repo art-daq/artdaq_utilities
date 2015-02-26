@@ -25,10 +25,12 @@ case ${qual_set} in
      basequal=e7
      squal=s7
      artver=v1_13_01
+  ;;
   s7:e6)
      basequal=e6
      squal=s7
      artver=v1_13_01
+  ;;
   s6:e6) 
      basequal=e6
      squal=s6
