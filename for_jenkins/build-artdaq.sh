@@ -21,20 +21,18 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+  s7:e7)
+     basequal=e7
+     squal=s7
+     artver=v1_13_01
+  s7:e6)
+     basequal=e6
+     squal=s7
+     artver=v1_13_01
   s6:e6) 
      basequal=e6
      squal=s6
      artver=v1_12_05
-  ;;
-  s5:e5) 
-     basequal=e5
-     squal=s5
-     artver=v1_12_04
-  ;;
-  s5:e6) 
-     basequal=e6
-     squal=s5
-     artver=v1_12_04
   ;;
   *)
     echo "unexpected qualifier set ${qual_set}"
