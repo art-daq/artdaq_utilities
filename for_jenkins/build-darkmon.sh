@@ -16,7 +16,7 @@ EOF
 }
 
 working_dir=${WORKSPACE}
-version=${VERSION}
+version=${MYVER}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
