@@ -1155,9 +1155,13 @@ case ${bqual} in
         ;;
     e6:nu)
         gccqual=gcc491
-        gcc_version=v4_9_1        
+        gcc_version=v4_9_1
         ;;
     e7)
+        gccqual=gcc492
+        gcc_version=v4_9_2
+        ;;
+    e7:nu)
         gccqual=gcc492
         gcc_version=v4_9_2
         ;;
