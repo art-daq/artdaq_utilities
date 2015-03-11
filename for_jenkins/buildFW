@@ -1172,6 +1172,9 @@ esac
 
 # ifdh uses p276 or p278
 case ${version_set} in
+    s7)
+        ifdh_version_set=p279
+        ;;
     s6)
         ifdh_version_set=p278
         ;;
