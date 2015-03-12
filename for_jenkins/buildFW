@@ -622,20 +622,22 @@ function ensure_support_package() {
 #
 # Make sure we have the latest cetpkgsupport
 function ensure_cetpkgsupport() {
+  local cetpkgver=${1}
+  if [ -z ${1} ]; then cetpkgver=v1_07_01; fi
   local current_cetpkgsupport=$(ups list cetpkgsupport -K VERSION)
-  ensure_support_package -f NULL cetpkgsupport v1_07_01
-  if version_greater "${current_cetpkgsupport}" v1_07_01; then
+  ensure_support_package -f NULL cetpkgsupport ${cetpkgver}
+  if version_greater "${current_cetpkgsupport}" ${cetpkgver}; then
     # Current cetpkgsupport is later than the one we want to declare current.
-    echo "WARNING: not declaring old cetpkgsupport v1_07_01 current.x"
-    echo "         Execute ups declare -c cetpkgsupport v1_07_01 manually."
+    echo "WARNING: not declaring old cetpkgsupport ${cetpkgver} current.x"
+    echo "         Execute ups declare -c cetpkgsupport ${cetpkgver} manually."
     return
-  elif ! version_greater v1_07_01 "${current_cetpkgsupport}"; then
+  elif ! version_greater ${cetpkgver} "${current_cetpkgsupport}"; then
     # Current cetpkgsupport *is* the one we want to declare current: NOP.
     :
   else
     # Should declare this version current.
-    printf "INFO: Declaring cetpkgsupport v1_07_01 current."
-    ups declare -c cetpkgsupport v1_07_01 2>&1
+    printf "INFO: Declaring cetpkgsupport ${cetpkgver} current."
+    ups declare -c cetpkgsupport ${cetpkgver} 2>&1
   fi
 }
 
@@ -680,7 +682,7 @@ function build_cet_detail() {
   local basequal=$3
   bootstrap_cet "${cetprod}" "${cetver}" ${project} || return $?
 
-  ensure_cetpkgsupport || return $?
+  ##ensure_cetpkgsupport || return $?
   local cetbuildtools_ver=$(perl -wne 'm&^\s*only_for_build\s+cetbuildtools\s+(\S+)& and print ${1}' \
                             ${product_topdir}/${cetprod}/${cetver}/src/ups/product_deps 2>/dev/null)
   [[ -n "${cetbuildtools_ver}" ]] && { ensure_cetbuildtools ${cetbuildtools_ver} || return $?; }
@@ -775,7 +777,7 @@ function build_cet_null_detail() {
   local basequal=$3
   bootstrap_cet "${cetprod}" "${cetver}" ${project} || return $?
 
-  ensure_cetpkgsupport || return $?
+  ##ensure_cetpkgsupport || return $?
   local cetbuildtools_ver=$(perl -wne 'm&^\s*only_for_build\s+cetbuildtools\s+(\S+)& and print ${1}' \
                             ${product_topdir}/${cetprod}/${cetver}/src/ups/product_deps 2>/dev/null)
   [[ -n "${cetbuildtools_ver}" ]] && { ensure_cetbuildtools ${cetbuildtools_ver} || return $?; }
@@ -1048,6 +1050,16 @@ function prep_bundle() {
 # Global variables.
 current_os=$(uname)
 [[ "${current_os}" == Darwin ]] && (( darwin = 1 ))
+# We are going to set a "build git" flag
+# This is experimental
+# Build git on Scientific Linux, not on Darwin or Ubuntu
+build_git=1
+[[ "${current_os}" == Darwin ]] && (( build_git = 0 ))
+if [ -e /usr/bin/lsb_release ]
+then
+  current_id=`lsb_release -is`
+  [[ "${current_id}" == Ubuntu ]] && (( build_git = 0 ))
+fi
 
 logdir=$(/bin/pwd)
 scriptdir=$(find_scriptdir)
@@ -1191,7 +1203,7 @@ case ${version_set} in
         ifdh_version_set=""
 esac
 
-ups_version=v5_1_2
+ups_version=v5_1_3
 ups_dotversion=`echo ${ups_version} | sed -e 's/_/./g' | sed -e 's/^v//'`
 bootstrap_ups
 
