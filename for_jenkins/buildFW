@@ -101,6 +101,7 @@
 #
 usage()
 {
+  print_version
   cat 1>&2 <<EOF
 Usage: $(basename ${0}) [-h]
        $(basename ${0}) <options> <product_topdir> <build-spec> <bundle-spec>
@@ -126,6 +127,11 @@ Arguments:
                 art-1.12.00 (e.g.)
                 
 EOF
+}
+
+print_version()
+{
+  echo "$(basename ${0}) 1.00.00"
 }
 
 ########################################################################
@@ -1050,16 +1056,14 @@ function prep_bundle() {
 # Global variables.
 current_os=$(uname)
 [[ "${current_os}" == Darwin ]] && (( darwin = 1 ))
-# We are going to set a "build git" flag
-# This is experimental
-# Build git on Scientific Linux, not on Darwin or Ubuntu
-build_git=1
-[[ "${current_os}" == Darwin ]] && (( build_git = 0 ))
+# Build certain products on Scientific Linux, not on Darwin or Ubuntu
+build_slf_extras=0
 if [ -e /usr/bin/lsb_release ]
 then
   current_id=`lsb_release -is`
-  [[ "${current_id}" == Ubuntu ]] && (( build_git = 0 ))
+  [[ "${current_id}" == ScientificFermi ]] && (( build_slf_extras = 1 ))
 fi
+build_git=${build_slf_extras}
 
 logdir=$(/bin/pwd)
 scriptdir=$(find_scriptdir)
@@ -1202,6 +1206,8 @@ case ${version_set} in
     *)
         ifdh_version_set=""
 esac
+
+print_version
 
 ups_version=v5_1_3
 ups_dotversion=`echo ${ups_version} | sed -e 's/_/./g' | sed -e 's/^v//'`
