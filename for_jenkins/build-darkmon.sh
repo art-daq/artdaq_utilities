@@ -23,7 +23,7 @@ build_type=${BUILDTYPE}
 case ${qual_set} in
   e6) 
      basequal=e6
-     artver=v1_12_05
+     artver=v1_13_01
   ;;
   e5) 
      basequal=e5
@@ -111,26 +111,6 @@ fi
 if [ `ls -1 ${blddir}/darkmon*.tar.bz2 | wc -l 2>/dev/null` -gt 0 ]; then
   rm -fv ${blddir}/darkmon*.tar.bz2
 fi
-
-# pull cetbuildtools versions specially
-cd ${blddir} || exit 1
-mytar="cetbuildtools-4.05.00-noarch.tar.bz2"
-mydist="http://scisoft.fnal.gov/scisoft/packages/cetbuildtools/v4_05_00/${mytar}"
-echo "pull ${mytar}"
-curl --fail --silent --location --insecure -O ${mydist}
-tar -xf ${mytar}
-cd ${blddir} || exit 1
-mytar="cetbuildtools-4.07.02-noarch.tar.bz2"
-mydist="http://scisoft.fnal.gov/scisoft/packages/cetbuildtools/v4_07_02/${mytar}"
-echo "pull ${mytar}"
-curl --fail --silent --location --insecure -O ${mydist}
-tar -xf ${mytar}
-cd ${blddir} || exit 1
-mytar="cetbuildtools-4.07.03-noarch.tar.bz2"
-mydist="http://scisoft.fnal.gov/scisoft/packages/cetbuildtools/v4_07_03/${mytar}"
-echo "pull ${mytar}"
-curl --fail --silent --location --insecure -O ${mydist}
-tar -xf ${mytar}
 
 echo
 echo "begin build"
