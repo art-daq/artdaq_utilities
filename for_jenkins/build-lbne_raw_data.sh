@@ -157,19 +157,10 @@ tar -xf ${mytar}
 echo
 echo "begin build"
 echo
-if [ "${target_env}" == "offline" ]; then
-  mv buildFW buildFW.orig
-  cp ../artdaq-utilities/for_jenkins/buildFW .
-  ./buildFW -t -b ${basequal}:nu -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
-   { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-     exit 1 
-   }
-else
-  ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
-   { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-     exit 1 
-   }
-fi
+./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} lbne_raw_data-${version} || \
+ { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+   exit 1 
+ }
 
 echo
 echo "move files"
