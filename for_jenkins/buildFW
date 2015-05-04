@@ -483,8 +483,10 @@ function do_pull_detail() {
     qualdir=""
     fullqual=""
   else
-    qualdir="-${xqual}-${build_type}"
-    fullqual="${xqual}:${build_type}"
+    #qualdir="-${xqual}-${build_type}"
+    #fullqual="${xqual}:${build_type}"
+    qualdir="-${xqual}"
+    fullqual="${xqual}"
   fi
   # cannot use prep_build with do_pull
   #prep_build "${farg[@]}" ${product} ${version} ${fullqual} || return 0
