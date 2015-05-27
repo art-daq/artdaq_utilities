@@ -131,7 +131,7 @@ EOF
 
 print_version()
 {
-  echo "$(basename ${0}) 1.00.04"
+  echo "$(basename ${0}) 1.00.08"
 }
 
 ########################################################################
@@ -1193,6 +1193,12 @@ esac
 
 # ifdh uses p276, p278, p279
 case ${version_set} in
+    s11)
+        ifdh_version_set=p279
+        ;;
+    s10)
+        ifdh_version_set=p279
+        ;;
     s8)
         ifdh_version_set=p279
         ;;
@@ -1217,7 +1223,7 @@ esac
 
 print_version
 
-ups_version=v5_1_4
+ups_version=v5_1_5
 ups_dotversion=`echo ${ups_version} | sed -e 's/_/./g' | sed -e 's/^v//'`
 bootstrap_ups
 
@@ -1244,7 +1250,7 @@ echo "INFO: build will use ${CETPKG_J} cores"
 
 echo "INFO: Assembling bundle \"$bundle\"."
 
-source ${scriptdir}/${bundle} ${bqual}
+source ${scriptdir}/${bundle} ${bqual} || exit $?
 
 echo "INFO: Bundle \"$bundle\" complete."
 
