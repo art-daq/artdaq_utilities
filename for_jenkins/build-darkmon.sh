@@ -25,9 +25,9 @@ case ${qual_set} in
      basequal=e6
      artver=v1_13_01
   ;;
-  e5) 
-     basequal=e5
-     artver=v1_12_05
+  e7) 
+     basequal=e7
+     artver=v1_14_02
   ;;
   *)
     echo "unexpected qualifier set ${qual_set}"
