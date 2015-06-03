@@ -122,6 +122,7 @@ function deserializeXML( fileName ) {
 ac.MasterInitFunction = function ( workerData ) {
     workerData["artdaq-configuration"] = "ac";
 };
+ac.WorkerInitFunction = function () { return null; };
 
 function getFiles( mask,dir ) {
     dir = typeof ( dir ) !== 'undefined' ? dir : __dirname;
@@ -176,6 +177,10 @@ ac.RW_saveConfig = function ( POST ) {
     var success = false;
     console.log( "Request to save configuration recieved. Configuration data:" );
     var config = JSON.parse( POST.config );
+    if ( config.configName.search("\\.\\.") >= 0 ) {
+	console.log("Possible break-in attempt! NOT Proceeding!");
+        return { Success: false };
+    }
     console.log( util.inspect( config,false,null ) );
     
     success = serializeXML( config,POST.who,path.join( __dirname,config.configName + ".xml" ) );
@@ -186,6 +191,9 @@ ac.RO_LoadNamedConfig = function ( POST ) {
     console.log( "Request for configuration with file name \"" + POST.configFile + "\" received." );
     if ( POST.configFile === "Default" ) {
         return generateDefaultConfig( );
+    } else if ( POST.configFile.search("\\.\\.") >= 0 ) {
+	console.log("Possible break-in attempt! NOT Proceeding!");
+        return "";
     }
     var output = deserializeXML( path.join( __dirname,POST.configFile ) );
     console.log( "Deserialized XML:" );
