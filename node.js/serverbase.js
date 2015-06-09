@@ -1,6 +1,6 @@
-// serverbase.js : v0.4 : Node HTTPS Server
+// serverbase.js : v0.5 : Node HTTPS Server
 // Author: Eric Flumerfelt, FNAL RSI
-// Last Modified: December 23, 2014
+// Last Modified: June 3, 2015
 // Modified By: Eric Flumerfelt
 //
 // serverbase sets up a basic HTTPS server and directs requests
@@ -24,6 +24,18 @@ console.log = function ( d ) { //
     log_file.write( util.format( d ) + '\n' );
     log_stdout.write( util.format( d ) + '\n' );
 };
+
+function LoadCerts( path )
+{
+    var output = [];
+    var files = fs.readdirSync( path );
+    for( var i  = 0; i < files.length; i++ ) {
+	if(files[i].search(".pem") > 0 || files[i].search(".crt") > 0) {
+	    output.push(fs.readFileSync(path + "/" + files[i]));
+	}
+    }
+    return output;
+}
 
 // Sub-Module files
 // From: http://stackoverflow.com/questions/10914751/loading-node-js-modules-dynamically-based-on-route
@@ -53,7 +65,20 @@ if ( cluster.isMaster ) {
     
     function messageHandler( msg ) {
         //console.log("Got Message from worker!");
-        workerData = msg;
+         //console.log(msg.name);
+        //console.log(msg.data);
+        if(!msg["name"]) {
+            workerData = msg;
+        }
+        else if(!msg["target"]) {
+	    workerData[msg.name] = msg.data;
+        } else if (!msg["method"]) {
+            //console.log("setting workerData["+msg.name+"]["+msg.target+"] to " + msg.data);
+            workerData[msg.name][msg.target] = msg.data;
+        }
+        else if(msg["method"] === "push") {
+            workerData[msg.name][msg.target].push(msg.data);
+        }
         Object.keys( cluster.workers ).forEach( function ( id ) {
             cluster.workers[id].send( workerData );
         } );
@@ -62,6 +87,7 @@ if ( cluster.isMaster ) {
     // Call Master Init functions
     for ( var name in module_holder ) {
         module_holder[name].MasterInitFunction( workerData );
+        module_holder[name].on("message", messageHandler );
     }
     fs.createWriteStream( __dirname + '/server.log',{ flags : 'w' } );
     
@@ -93,9 +119,9 @@ if ( cluster.isMaster ) {
     
     for ( var name in module_holder ) {
         module_holder[name].on( "message",function ( data ) {
-            workerData[name] = data;
-            process.send( workerData );
+            process.send( data );
         } );
+        module_holder[name].WorkerInitFunction( workerData );
     }
     
     function serve( req,res,readOnly,username ) {
@@ -114,21 +140,27 @@ if ( cluster.isMaster ) {
             dnsDone = true;
             if ( !err ) {
                 if ( functionName.search( ".min.map" ) < 0 ) {
-                    console.log( "Recieved " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
+                    console.log( "Received " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
                 }
                 return domains[0];
             } else {
                 if ( functionName.search( ".min.map" ) < 0 ) {   
-                    console.log( "Recieved " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
+                    console.log( "Received " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
                 }
                 return "";
             }
         } );
-        
+        if (moduleName === ".." || functionName.search("\\.\\.") >= 0) {
+            console.log("Possible break-in attempt!: " + pathname);
+            res.writeHeader(404, { 'Content-Type': 'text/html' });
+            res.end("Error");
+            return "";
+        }
+
         res.setHeader( "Content-Type","application/json" );
         res.statusCode = 200;
         // Log to console...
-        //console.log("Recieved " + req.method + " for " + pathname);
+        //console.log("Received " + req.method + " for " + pathname);
         //console.log("Proceeding...");
         
         // If we're recieving a POST to /runcommand (As defined in the module),
@@ -143,7 +175,14 @@ if ( cluster.isMaster ) {
             
             req.on( 'end',function () {
                 // Get the content of the POST request 
-                var POST = qs.parse( body );
+                    var POST = {};
+		    try { 
+                        POST = JSON.parse(body); 
+                        //console.log("JSON Query Detected");  
+		    } catch (e) { 
+                        POST = qs.parse( body ); 
+                        //console.log("QueryString Query Detected");
+                    }
                 POST.who = username;
                 
                 if ( module_holder[moduleName] != null ) {
@@ -277,11 +316,11 @@ if ( cluster.isMaster ) {
     var options = {
         key: fs.readFileSync( './certs/server.key' ),
         cert: fs.readFileSync( './certs/server.crt' ),
-        ca: fs.readFileSync( './certs/ca.crt' ),
+        ca: LoadCerts("./certs/certificates"),
         requestCert: true,
         rejectUnauthorized: false
     };
-    var k5login = " " + fs.readFileSync( process.env.HOME + "/.k5login" );
+    var authlist = " " + fs.readFileSync( "./certs/authorized_users" );
     console.log( "Done setting up options" );
     
     // Make an http server
@@ -292,9 +331,7 @@ if ( cluster.isMaster ) {
         if ( req.client.authorized ) {
             username = clientCertificate.subject.CN[0];
             var useremail = clientCertificate.subject.CN[1].substr( 4 );
-            var userFNAL = useremail + "@FNAL.GOV";
-            var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
-            if ( k5login.search( userFNAL ) >= 0 || k5login.search( userWIN ) >= 0 ) {
+            if ( authlist.search(username) > 0 || authlist.search(useremail) > 0 ) {
                 readOnly = false;
             }
         }
