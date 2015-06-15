@@ -131,7 +131,7 @@ EOF
 
 print_version()
 {
-  echo "$(basename ${0}) 1.00.08"
+  echo "$(basename ${0}) 1.02.00"
 }
 
 ########################################################################
@@ -464,17 +464,44 @@ function prep_pull() {
 ########################################################################
 # do_pull
 #
-# For a few special cases - should be temporary
+# For a few special cases 
+# Used by artdaq and ds50daq for TRACE
 function do_pull() {
-  do_pull_detail "$@"
+  while getopts :n OPT; do
+    case $OPT in
+      n)
+        (( no_build_type=1 ))
+        ;;
+      *)
+        echo "usage: ${0##*/} [-n] product version [basequal]"
+        exit 2
+    esac
+  done
+  shift $(( OPTIND - 1 ))
+  OPTIND=1
+
+  do_pull_detail ${no_build_type:+-n} "$@"
   passfail
 }
 
 ########################################################################
 # do_pull_detail
 #
-# For a few special cases - should be temporary
+# For a few special cases 
 function do_pull_detail() {
+  while getopts :n OPT; do
+    case $OPT in
+      n)
+        (( no_build_type=1 ))
+        ;;
+      *)
+        echo "usage: ${0##*/} [-n] product version [basequal]"
+        exit 2
+    esac
+  done
+  shift $(( OPTIND - 1 ))
+  OPTIND=1
+
   local product=${1}; shift
   local version=${1}; shift
   local xqual=${1}
@@ -483,10 +510,13 @@ function do_pull_detail() {
     qualdir=""
     fullqual=""
   else
-    #qualdir="-${xqual}-${build_type}"
-    #fullqual="${xqual}:${build_type}"
-    qualdir="-${xqual}"
-    fullqual="${xqual}"
+    if (( ${no_build_type:-0} == 0 )); then
+      qualdir="-${xqual}-${build_type}"
+      fullqual="${xqual}:${build_type}"
+    else
+      qualdir="-${xqual}"
+      fullqual="${xqual}"
+    fi
   fi
   # cannot use prep_build with do_pull
   #prep_build "${farg[@]}" ${product} ${version} ${fullqual} || return 0
@@ -552,6 +582,70 @@ function bootstrap_cet() {
      ( cd .. && rm -rf src )
      exit 1;
    }
+}
+
+########################################################################
+# build_with_cmake_detail
+#
+# Actually ensure the presence of a particular support package (wrapped
+# to ensure good pass-fail semantics).
+function build_with_cmake_detail() {
+  while getopts :f: OPT; do
+    case $OPT in
+      f)
+       local farg=(-f "$OPTARG")
+        ;;
+      *)
+        echo "usage: ${0##*/} [+-f ARG} [--] ARGS..."
+        exit 2
+    esac
+  done
+  shift $(( OPTIND - 1 ))
+  OPTIND=1
+  local cetprod=${1}
+  local cetver=${2}
+  local compext=.bz2
+  bootstrap_cet ${cetprod} ${cetver} || return $?
+  prep_build "${farg[@]}" ${cetprod} ${cetver} || return 0
+  local sourcedir="${product_topdir}/${pname}/${pver}/src"
+  local builddir="${product_topdir}/${pname}/${pver}/build/"
+  mkdir -p "${builddir}" || \
+   { echo "ERROR: Unable to make build directory ${builddir}" 1>&2; return 1; }
+  echo "INFO: Installing ${cetprod} ${cetver}."
+  ( cd ${builddir} && \
+    cmake -DCMAKE_INSTALL_PREFIX="${product_topdir}" "${sourcedir}" || exit $?
+    make install || exit $?
+    if [[ -n "${maketar}" ]]; then
+      make package && \
+       mv "${pname}-"*.tar${compext} "${product_topdir}"
+    fi
+  ) > "${logfile}" 2>&1
+}
+
+########################################################################
+# build_with_cmake
+#
+# build a package with cmake directly
+# e.g., cosmosis_ups
+function build_with_cmake() {
+  while getopts :f: OPT; do
+    case $OPT in
+      f)
+       local farg=(-f "$OPTARG")
+        ;;
+      *)
+        echo "usage: ${0##*/} [+-f ARG} [--] ARGS..."
+        exit 2
+    esac
+  done
+  shift $(( OPTIND - 1 ))
+  OPTIND=1
+  local cetprod=${1}
+  local cetver=${2}
+  in_manifest ${cetprod} ${cetver} && return
+  local start=$(date +%s)
+  build_with_cmake_detail "${farg[@]}" "${@}"; passfail
+  maybe_report_time ${start} ${cetprod} ${cetver}
 }
 
 ########################################################################
@@ -1065,6 +1159,7 @@ then
   current_id=`lsb_release -is`
   [[ "${current_id}" == ScientificFermi ]] && (( build_slf_extras = 1 ))
   [[ "${current_id}" == ScientificSLF ]] && (( build_slf_extras = 1 ))
+  [[ "${current_id}" == ScientificCERNSLC ]] && (( build_slf_extras = 1 ))
 fi
 build_git=${build_slf_extras}
 
