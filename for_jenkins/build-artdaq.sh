@@ -127,8 +127,6 @@ fi
 echo
 echo "begin build"
 echo
-mv buildFW buildFW.orig
-cp ../artdaq-utilities/for_jenkins/buildFW .
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
