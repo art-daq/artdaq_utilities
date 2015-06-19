@@ -89,11 +89,24 @@ function update( dataJSON ) {
     manageButtons( data.state,data.commandRunning,data.systemRunning );
     
     $( "#configs" ).val( data.config );
+
+    var out = $("#systemOut")[0];
+    var err = $("#systemErr")[0];
+    var outAtBottom = out.scrollTop + out.clientHeight >= out.scrollHeight - 10;
+    var errAtBottom = err.scrollTop + err.clientHeight >= err.scrollHeight - 10;
     $( "#systemOut" ).val( data.systemOutputBuffer );
     $( "#systemErr" ).val( data.systemErrorBuffer );
+    if(outAtBottom) { out.scrollTop = out.scrollHeight };
+    if(errAtBottom) { err.scrollTop = err.scrollHeight };
+    
+    out = $("#commOut")[0];
+    err = $("#commErr")[0];
+    outAtBottom = out.scrollTop + out.clientHeight >= out.scrollHeight - 10;
+    errAtBottom = err.scrollTop + err.clientHeight >= err.scrollHeight - 10;
     $( "#commOut" ).val( data.commandOutputBuffer );
     $( "#commErr" ).val( data.commandErrorBuffer );
-    
+    if(outAtBottom) { out.scrollTop = out.scrollHeight };
+    if(errAtBottom) { err.scrollTop = err.scrollHeight };    
     
     if ( data.WFPlotsUpdated && $( "#monitoringEnabled" ).is( ":checked" ) ) {
         var updateDate = data.WFPlotsUpdated;

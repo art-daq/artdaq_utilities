@@ -15,7 +15,7 @@
 }
 
 textarea {
-    width: 24%;
+    width: 74%;
     height: 400px;
 }
 
@@ -78,5 +78,6 @@ span {
 }
 
 .error {
+    width: 24%;
     color: red;
 }
