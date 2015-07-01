@@ -33,7 +33,7 @@ if [[ "$#" < "2" || "$#" > "4" ]]; then
     exit 0
 fi
 
-if [[ "$PRODUCTS" == "" ]]; then
+if [[ -z $PRODUCTS ]]; then
     echo "You don't appear to have any products directories set up"
     echo "All packages (including $1) must be installed in the products directories; exiting..."
     exit 1
@@ -73,6 +73,22 @@ package_all_quals_spacedelim=
 
 function main() {
 
+# Set up a pre-existing products directory (will use for "ups depend")
+
+# Recall that we check at the start of the script to make sure PRODUCTS is set...
+existing_products_dir=$( echo $PRODUCTS | tr ":" "\n" | head -1 )
+	
+if [[ -z $existing_products_dir ]]; then
+    echo "Unable to locate a products directory!"
+    exit 1
+elif [[ ! -e $existing_products_dir ]]; then
+    echo "Problem locating $existing_products_dir from $PWD"
+    exit 1
+fi
+
+source $existing_products_dir/setup
+
+
 # Check out the target package if it's not already there, and use
 # parse_package_info to either deduce the version and build qualifiers
 # from the ups/product_deps file at the head of the master branch, or
@@ -96,6 +112,9 @@ parse_package_info $packagename
 
 echo "I think you want a Jenkins build of $packagename $packageversion," \
 "build qualifiers $package_all_quals_spacedelim (or, $package_all_quals_colondelim )"
+
+echo
+echo "If I'm wrong, you have 5 seconds to hit ctrl-C"
 
 sleep 5
 
@@ -156,7 +175,7 @@ edit_buildfile
 
 if [[ ! -e build-framework ]]; then
 
-    # Developer checkout only - don't yet have write access to build-framework!
+    # Read-only checkout - don't yet have write access to build-framework!
 
     git clone http://cdcvs.fnal.gov/projects/build-framework
 fi
@@ -184,8 +203,11 @@ while read line ; do
     package=$( echo $line | awk '{print $1}' )
     version=$( echo $line | awk '{print $2}' )
 
+    echo $package $version
+
     if [[ "$package" != "$upspackagename" ]]; then
-	grepstring="create_product_variables\s*\(\s*$package\s*$version"
+
+	grepstring="create_product_variables\s*\(\s*$package\s*"
 	res=$( egrep "$grepstring" CMakeLists.txt )
 
 	if [[ "$res" == "" ]]; then
@@ -193,9 +215,14 @@ while read line ; do
 	    cleanup
 	    exit 1
 	fi
+
+	sedstring="s/(.*create_product_variables.*)${package}\s+\S+(.*)/\1${package}  ${version}\2/";
+
+	sed -ri "$sedstring" CMakeLists.txt 2>&1 > /dev/null
+	    
     fi
 
-done < $basedir/$packagedepsfile
+done < $packagedepsfile
 
 # Since all the packages listed in CMakeLists.txt that the target
 # package depends on are the versions we expect, now update the target
@@ -219,11 +246,15 @@ cmake ../build-framework
 
 cleanup
 
+cd $basedir
+
+ls -ltr build_build-framework/art_externals/${upspackagename}*
+
 }
 
 function cleanup() {
     rm -f $packagedepsfile
-    rm -f $edit_buildfile
+    rm -f $edited_buildfile
     rm -f $basedir/nu-*.html
 }
 
@@ -310,11 +341,11 @@ function edit_buildfile() {
 
     found_nutools="0"
 
+    # This wget gets the index.html file, which we'll parse for available nutools versions
     wget http://scisoft.fnal.gov/scisoft/bundles/nu/
 
     nutools_versions=$basedir/$(uuidgen)
     
-    #nutools_version=$( grep "v._.._.." index.html | tail -1 | sed -r 's/.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/')
     grep "v._.._.." index.html | sed -r 's/.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/' > $nutools_versions
 
     while read nutools_version ; do
@@ -334,7 +365,6 @@ function edit_buildfile() {
 	exit 1
     else
 	echo "Desired nutools version is $nutools_version"
-	exit 0
     fi
 
 
@@ -357,12 +387,11 @@ EOF
 
     tail -${tail_lines} $buildfile >> $edited_buildfile
 
-    echo "THE FOLLOWING EDIT WAS MADE: "
+    echo "THE FOLLOWING EDIT WILL BE MADE TO $buildfile UNLESS YOU HIT ctrl-C IN THE NEXT 5 SECONDS: "
 
     diff $buildfile $edited_buildfile
+    sleep 5
     cp $edited_buildfile $buildfile
-    sleep 2
-
 }
 
 function get_art_from_nutools() {
@@ -384,19 +413,6 @@ function install_package() {
     
     cd $basedir
 
-    # Recall that we check at the start of the script to make sure PRODUCTS is set...
-    existing_products_dir=$( echo $PRODUCTS | tr ":" "\n" | head -1 )
-	
-    if [[ -z $existing_products_dir ]]; then
-	echo "Unable to locate a products directory!"
-	exit 1
-    elif [[ ! -e $existing_products_dir ]]; then
-	echo "Problem locating $existing_products_dir from $PWD"
-	exit 1
-    fi
-
-    . $existing_products_dir/setup
-
     if [[ ! -e products ]]; then
 
 	mkdir products
@@ -412,6 +428,12 @@ function install_package() {
     cd build_${packagename}
     . ../$packagename/ups/setup_for_development -p ${package_all_quals_spacedelim}
     buildtool -c -j 40 -i -I ../products
+
+    if [[ "$?" != "0" ]]; then
+	echo "There was a problem trying to build $packagename"
+	cleanup
+	exit 1
+    fi
 }
 
 
