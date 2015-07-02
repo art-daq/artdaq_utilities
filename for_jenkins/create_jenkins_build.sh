@@ -415,9 +415,13 @@ function install_package() {
 
     if [[ ! -e products ]]; then
 
-	mkdir products
-	cp -R $existing_products_dir/.upsfiles products
-	export PRODUCTS=./products:${PRODUCTS}
+	mkdir $basedir/products
+	cp -R $existing_products_dir/.upsfiles $basedir/products
+	cp -p $existing_products_dir/setup $basedir/products
+
+	source $basedir/products/setup
+
+	export PRODUCTS=$basedir/products:${PRODUCTS}
 	echo "PRODUCTS = $PRODUCTS"
     fi
 
@@ -428,6 +432,7 @@ function install_package() {
     cd build_${packagename}
     . ../$packagename/ups/setup_for_development -p ${package_all_quals_spacedelim}
     buildtool -c -j 40 -i -I ../products
+    cd $basedir
 
     if [[ "$?" != "0" ]]; then
 	echo "There was a problem trying to build $packagename"
