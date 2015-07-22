@@ -8,7 +8,7 @@ function getUrlParameter( sParam ) {
     var sURLVariables = sPageURL.split( '&' );
     for ( var i = 0; i < sURLVariables.length; i++ ) {
         var sParameterName = sURLVariables[i].split( '=' );
-        if ( sParameterName[0] == sParam ) {
+        if ( sParameterName[0].search(sParam) > 0 ) {
             return sParameterName[1];
         }
     }
@@ -42,6 +42,10 @@ var addBR = function ( id,br ) {
                     
                     for ( var key in brs[id].typeConfig ) {
                         $( "#" + key,"#brcfg" + id + " #typeConfig" ).val( brs[id].typeConfig[key] );
+			if($( ":radio[name=" + key + "]", "#brcfg" + id + " #typeConfig").is(":radio")) { 
+			    var radioButton = $(":radio[value=" + brs[id].typeConfig[key] + "]","#brcfg" + id + " #typeConfig");
+			    $(":radio[value=" + brs[id].typeConfig[key] + "]","#brcfg" + id + " #typeConfig").prop("checked", true).checkboxradio('refresh');
+			}
                     }
                     checkExpertMode( );
                 } );
@@ -106,11 +110,17 @@ var saveConfiguration = function () {
         br.type = selected.text( );
         br.hostname = $( "#hostname",this ).val( );
         br.name = $( "#name",this ).val( );
+        br.enabled = $("#enabled", this).is(":checked");
         br.typeConfig = {};
+        $( "#typeConfig input:radio", this).each(function(innerIndex, innerElement) {
+		if($( innerElement ).is(":checked") ) {
+		    br.typeConfig[innerElement.name] = $(innerElement).val();
+		}
+	    });
         $( "#typeConfig input",this ).each( function ( innerIndex,innerElement ) {
             if ( $( innerElement ).is( ":checkbox" ) ) {
                 br.typeConfig[innerElement.id] = $( innerElement ).is( ":checked" );
-            } else {
+            } else if ( ! $(innerElement ).is( ":radio" ) ) {
                 br.typeConfig[innerElement.id] = $( innerElement ).val( );
             }
         } );
@@ -178,9 +188,11 @@ var updateHeader = function ( error,text ) {
 
 var loadConfigs = function () {
     AjaxGet( "/artdaq-configuration/NamedConfigs",function ( data ) {
-        $( "#configs" ).html( data ).trigger( 'create' ).selectmenu( 'refresh' );
+	    $( "#configs" ).html( data.join("") ).trigger( 'create' ).selectmenu( 'refresh' );
         var config = getUrlParameter( "configs" );
+	    if(config !== undefined) {
         $( "#configs" ).val( config );
+	    }
         $( "#loadConfigButton" ).trigger( 'click' );
     } );
 }

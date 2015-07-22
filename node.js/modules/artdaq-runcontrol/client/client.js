@@ -1,6 +1,7 @@
+var partition = -1;
+var onmonStarted = false;
 var hpainter;
 var lastUpdate = 0;
-var partition = -1;
 
 function openCanvasWindow( pad,width,height ) {
     var thisWindow = window.open( "/artdaq-runcontrol/viewer.html?pad=" + pad + "&partition=" + partition,"ROOT Pad Inspector","width=" + width + ", height=" + height );
@@ -106,8 +107,8 @@ function update( dataJSON ) {
     $( "#commOut" ).val( data.commandOutputBuffer );
     $( "#commErr" ).val( data.commandErrorBuffer );
     if(outAtBottom) { out.scrollTop = out.scrollHeight };
-    if(errAtBottom) { err.scrollTop = err.scrollHeight };    
-    
+    if(errAtBottom) { err.scrollTop = err.scrollHeight };
+
     if ( data.WFPlotsUpdated && $( "#monitoringEnabled" ).is( ":checked" ) ) {
         var updateDate = data.WFPlotsUpdated;
         if ( updateDate > lastUpdate ) {
@@ -118,7 +119,13 @@ function update( dataJSON ) {
         hpainter = null;
         $( "#wd0div" ).html( "" );
     }
-}
+
+    if((!onmonStarted) && data.okToStartOnMon)
+	{
+	    Onmon("#onmonDiv", partition, "artdaq-runcontrol");
+            onmonStarted = true;
+	}
+ }
 
 
 function shutdownSystem() {
@@ -187,8 +194,8 @@ $( document ).ready( function () {
     } );
     $( "#monitoringEnabled" ).change( function () {
         if ( $( "#monitoringEnabled" ).is( ":checked" ) ) {
-            updateGUI( );
-        }
+	    updateGUI( );
+	}
     } );
     
     getConfigs( );

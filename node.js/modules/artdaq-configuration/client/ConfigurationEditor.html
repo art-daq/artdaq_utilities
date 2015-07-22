@@ -114,14 +114,22 @@
                     </fieldset>
                     <fieldset data-role="collapsible">
                         <legend>System</legend>
+                        <div data-role="fieldcontain" class="expert">
                         <label for="artdaqDir">ARTDAQ Base Directory</label>
-                        <input type="text" name="artdaqDir" id="artdaqDir" class="triggersModified" value="~/artdaq-demo-base">
+                        <input type="text" name="artdaqDir" id="artdaqDir" class="triggersModified" value="$HOME/artdaq-demo-base">
+                        </div>
+                        <div data-role="fieldcontain">
                         <label for="artdaqDataDir">ARTDAQ Data Directory</label>
                         <input type="text" name="artdaqDataDir" id="artdaqDataDir" class="triggersModified" value="/tmp">
+                        </div>
+                        <div data-role="fieldcontain">
                         <label for="artdaqLogDir">ARTDAQ Log Directory</label>
                         <input type="text" name="artdaqLogDir" id="artdaqLogDir" class="triggersModified" value="/tmp">
+                        </div>
+                        <div data-role="fieldcontain" class="expert">
                         <label for="artdaqSetupScript">ARTDAQ Setup Script Name</label>
                         <input type="text" name="artdaqSetupScript" id="artdaqSetupScript" class="triggersModified" value="setupARTDAQDEMO">
+                        </div>
                     </fieldset>
                 </div>
             </form>

@@ -11,7 +11,7 @@ function generateDefaultConfig() {
     var output = {};
     output.expertMode = false;
     output.configName = "Default";
-    output.artdaqDir = "~/artdaq-demo-base";
+    output.artdaqDir = "$HOME/artdaq-demo-base";
     output.setupScript = "setupARTDAQDEMO";
     output.needsRestart = false;
     output.dataDir = "/tmp";
@@ -25,7 +25,7 @@ function generateDefaultConfig() {
     output.dataLogger.hostname = "localhost"
     output.dataLogger.name = "DataLogger"
     output.onlineMonitor = {};
-    output.onlineMonitor.enabled = true;
+    output.onlineMonitor.enabled = false;
     output.onlineMonitor.viewerEnabled = false;
     output.onlineMonitor.hostname = "localhost"
     output.onlineMonitor.name = "OnlineMonitor"

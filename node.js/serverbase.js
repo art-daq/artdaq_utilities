@@ -64,24 +64,33 @@ LoadModules( DIR );
 if ( cluster.isMaster ) {
     
     function messageHandler( msg ) {
-        //console.log("Got Message from worker!");
-         //console.log(msg.name);
-        //console.log(msg.data);
+	//console.log("Received message from worker");
         if(!msg["name"]) {
-            workerData = msg;
+            //workerData = msg;
+	    console.log("Depreciated message recieved!");
         }
-        else if(!msg["target"]) {
-	    workerData[msg.name] = msg.data;
-        } else if (!msg["method"]) {
-            //console.log("setting workerData["+msg.name+"]["+msg.target+"] to " + msg.data);
-            workerData[msg.name][msg.target] = msg.data;
-        }
-        else if(msg["method"] === "push") {
-            workerData[msg.name][msg.target].push(msg.data);
-        }
-        Object.keys( cluster.workers ).forEach( function ( id ) {
-            cluster.workers[id].send( workerData );
-        } );
+	if(msg["name"]) {
+	    if(!msg["target"]) {
+	    console.log("Depreciated message recieved!");
+		//console.log("Recieved message from worker: Setting workerData[" + msg.name + "].");
+		//workerData[msg.name] = msg.data;
+		//Object.keys( cluster.workers ).forEach( function ( id ) {
+		//   cluster.workers[id].send( {name:msg.name, data:workerData[msg.name]} );
+		//} );
+	    } else {
+		if (!msg["method"]) {
+		    //console.log("Recieved message from worker: Setting workerData[" + msg.name + "]["+msg.target+"].");
+		    workerData[msg.name][msg.target] = msg.data;
+		}
+		else if(msg["method"] === "push") {
+		    //console.log("Recieved message from worker: Adding to workerData[" + msg.name + "]["+msg.target+"].");
+		    workerData[msg.name][msg.target].push(msg.data);
+		}
+		Object.keys( cluster.workers ).forEach( function ( id ) {
+			cluster.workers[id].send( {name: msg.name, target:msg.target, data:workerData[msg.name][msg.target]} );
+		} );
+	    }
+	}
     }
     
     // Call Master Init functions
@@ -113,12 +122,27 @@ if ( cluster.isMaster ) {
     var url = require( 'url' );
     var qs = require( 'querystring' );
     
-    process.on( 'message',function ( data ) {
-        workerData = data;
-    } )
+
+    function workerMessageHandler( msg ) {
+	if(!msg["name"]) {
+	    //console.log("Received Data Dump from Master!");
+	    workerData = msg;
+	} else {
+	    if(!msg["target"]) {
+		//console.log("Received message from master: Setting workerData[" + msg.name + "].");
+		workerData[msg.name] = msg.data;
+	    } else {
+		//console.log("Received message from master: Setting workerData[" + msg.name + "][" + msg.target + "].");
+		workerData[msg.name][msg.target] = msg.data;
+	    }
+	}
+    }
+    
+    process.on( 'message',  workerMessageHandler );
     
     for ( var name in module_holder ) {
         module_holder[name].on( "message",function ( data ) {
+		//console.log("Received message from module " + data.name);
             process.send( data );
         } );
         module_holder[name].WorkerInitFunction( workerData );
@@ -150,7 +174,7 @@ if ( cluster.isMaster ) {
                 return "";
             }
         } );
-        if (moduleName === ".." || functionName.search("\\.\\.") >= 0) {
+        if (moduleName == ".." || functionName.search("\\.\\.") >= 0) {
             console.log("Possible break-in attempt!: " + pathname);
             res.writeHeader(404, { 'Content-Type': 'text/html' });
             res.end("Error");
@@ -194,7 +218,7 @@ if ( cluster.isMaster ) {
                     } );
                     module_holder[moduleName].removeAllListeners( 'end' ).on( 'end',function ( data ) {
                         //console.log("Sending Message!");
-                        process.send( workerData );
+                        //process.send( workerData );
                         res.end( JSON.stringify( dataTemp + data ) );
                     } );
                     if ( readOnly ) {
@@ -215,11 +239,11 @@ if ( cluster.isMaster ) {
                             if ( data != null ) {
                                 res.end( JSON.stringify( data ) );
                                 //console.log("Sending Message!");
-                                process.send( workerData );
+                                //process.send( workerData );
                             }
                         } catch ( err ) {
-                            console.log("Error caught; text:");
-                            console.log(err);
+                            //console.log("Error caught; text:");
+                            //console.log(err);
                             if ( err instanceof TypeError ) {
                                 //RW_ version not available, try read-only version:
                                 var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
@@ -338,7 +362,8 @@ if ( cluster.isMaster ) {
         serve( req,res,readOnly,username );
     } );
     var insecureServer = http.createServer( function ( req,res ) {
-        serve( req,res,true,"HTTP User" );
+	//     serve( req,res,true,"HTTP User" );
+        serve( req,res,false,"HTTP User" );
     } );
     
     var baseport = 8080;

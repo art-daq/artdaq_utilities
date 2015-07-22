@@ -13,6 +13,7 @@ var emitter = require('events').EventEmitter;
 var base = new emitter();
 
 base.MasterInitFunction = function () { return null; };
+base.WorkerInitFunction = function () { return null; };
 
 base.GET_ReadLog = function () {
     console.log("Reading " + (__dirname + "/../../../server.log"));

@@ -1,6 +1,6 @@
 // artdaq-runcontrol_module.js
 // Author: Eric Flumerfelt, FNAL RSI
-// Modified: December 30, 2014
+// Modified: May 8, 2015
 //
 // This module implements a basic Run Control system for the artdaq-demo
 //
@@ -8,7 +8,11 @@
 var spawn = require( 'child_process' ).spawn;
 var emitter = require( 'events' ).EventEmitter;
 var fs = require( 'fs' );
+var os = require( 'os');
 var arc = new emitter( );
+var xml = require( 'xml2js' );
+var parser = new xml.Parser( {explicitArray: false});
+var xmlrpc = require( 'xmlrpc' );
 
 // System Status
 var Status = function ( partition ) {
@@ -28,6 +32,8 @@ var Status = function ( partition ) {
     this.WFFileMtime = 0;
     this.partition = partition;
     this.config = "";
+    this.okToStartOnMon = false;
+    //this.events = [];
 };
 
 var configuration = {};
@@ -41,30 +47,13 @@ function readConfiguration( systemStatus ) {
     if ( fs.existsSync( fileName ) ) {
         var res = true;
         var config = "" + fs.readFileSync( fileName );
+	var xmlObj;
+	parser.parseString( config, function(err,result) {xmlObj = result;});
         
-        var matches = config.match( /<artdaqDir>(.*?)<\/artdaqDir>/i );
-        if ( matches.length > 1 ) {
-            configuration.artdaqDir = matches[1];
-        } else {
-            console.log( "ARTDAQ Dir not found!" );
-            res = false;
-        }
-        
-        matches = config.match( /<setupScript>(.*?)<\/setupScript>/i );
-        if ( matches.length > 1 ) {
-            configuration.setupScript = matches[1];
-        } else {
-            console.log( "Setup script not found!" );
-            res = false;
-        }
-        
-        matches = config.match( /<runValue>(.*?)<\/runValue>/i );
-        if ( matches.length > 1 ) {
-            configuration.runValue = parseInt( matches[1] );
-        } else {
-            console.log( "Run Value not found!" );
-            res = false;
-        }
+        configuration.artdaqDir = xmlObj['artdaq-configuration'].artdaqDir;
+        configuration.setupScript = xmlObj['artdaq-configuration'].setupScript;
+        configuration.runValue = xmlObj['artdaq-configuration'].dataLogger.runValue;
+
         return res;
     }
     console.log( "Configuration file not found!" );
@@ -77,6 +66,14 @@ arc.MasterInitFunction = function ( workerData ) {
     output.p1 = new Status( 1 );
     output.p2 = new Status( 2 );
     output.p3 = new Status( 3 );
+    output.p0evt = [];
+    output.p1evt = [];
+    output.p2evt = [];
+    output.p3evt = [];
+    output.p0onmon = false;
+    output.p1onmon = false;
+    output.p2onmon = false;
+    output.p3onmon = false;
     
     if ( !fs.existsSync( __dirname + "/../client/P0" ) ) {
         fs.mkdirSync( __dirname + "/../client/P0" );
@@ -97,6 +94,7 @@ arc.MasterInitFunction = function ( workerData ) {
     
     workerData["artdaq-runcontrol"] = output;
 };
+arc.WorkerInitFunction = function () { return null; };
 
 function checkCommand( systemStatus ) {
     if ( systemStatus.commandPID !== null ) {
@@ -151,8 +149,37 @@ function startSystem( systemStatus ) {
         console.log( "Starting System, Partition " + systemStatus.partition );
         var port = ( systemStatus.partition * 100 ) + 5600;
         var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
-        
-        var commandArray = [systemStatus.config, configName,port,"startSystem.sh","-c",configName];
+        var xmlObj;
+        parser.parseString( "" + fs.readFileSync( configName ), function(err, result) { xmlObj = result; });        
+        var logRoot = xmlObj['artdaq-configuration'].logDir;
+        var eventBuilderHostnames = xmlObj['artdaq-configuration'].eventBuilders.hostnames.hostname;
+        var aggregatorHostname = xmlObj['artdaq-configuration'].dataLogger.hostname;
+        var boardReaderHostnames = xmlObj['artdaq-configuration'].boardReaders.boardReader.hostname;
+
+        console.log("Making PMT Log Directories");
+        spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/pmt"]);
+        spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/masterControl"]);
+        if(aggregatorHostname != "localhost" && aggregatorHostname != os.hostname()) {
+	    spawn("/usr/bin/ssh", [aggregatorHostname, "/bin/mkdir -p -m 0777 " + logRoot + "/aggregator"]);
+	} else {
+	    spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/aggregator"]);
+	}
+	for(var hn in eventBuilderHostnames) {
+	    if(hn != "localhost" && hn != os.hostname()) {
+		spawn("/usr/bin/ssh", [hn, "/bin/mkdir -p -m 0777 " + logRoot + "/eventbuilder"]);
+	    } else {
+		spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/eventbuilder"]);
+	    }
+	}
+	for(var hn in boardReaderHostnames) {
+	    if(hn != "localhost" && hn != os.hostname()) {
+		spawn("/usr/bin/ssh", [hn, "/bin/mkdir -p -m 0777 " + logRoot + "/boardreader"]);
+	    } else {
+		spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/boardreader"]);
+	    }
+	}
+
+        var commandArray = [systemStatus.config, configName,port,"pmt.rb","-p ${ARTDAQ_BASE_PORT} -C",configName,"--logpath", logRoot, "--display ${DISPLAY}"];
         
         var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/out.log",'w' );
         var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/err.log",'w' );
@@ -177,8 +204,7 @@ function initialize( systemStatus ) {
     }
     else {
         var onmonDir = __dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root";
-        
-        var args = ["-M",onmonDir,"init"];
+        var args = ["-M", onmonDir, "-D", 35555 + systemStatus.partition, "init"];
         startCommand( args,systemStatus );
         systemStatus.state = "Initialized";
     }
@@ -264,6 +290,12 @@ function shutdownSystem( systemStatus ) {
 
 function getStatus( systemStatuses,partition ) {
     var systemStatus = systemStatuses["p" + partition];
+    //console.log("okToStartOnMon is " + systemStatuses["p" + partition + "onmon"]);
+    systemStatus.okToStartOnMon = systemStatuses["p" + partition + "onmon"];
+    while(systemStatuses["p"+partition+"evt"].length > 120) {
+        systemStatuses["p"+partition+"evt"].shift();
+    }
+
     checkCommand( systemStatus );
     checkSystem( systemStatus );
     if ( fs.existsSync( __dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root" ) ) {
@@ -297,6 +329,9 @@ function getStatus( systemStatuses,partition ) {
     if ( systemStatus.stopPending && !systemStatus.commandRunning ) {
         systemStatus.state = "Initialized";
     }
+    systemStatuses["p"+partition] = systemStatus;
+    arc.emit( 'message', {name:"artdaq-runcontrol",data:systemStatus, target:"p"+partition} );
+    //console.log(JSON.stringify(systemStatus));
     arc.emit( 'end',JSON.stringify( systemStatus ) );
 }
 
@@ -316,7 +351,44 @@ arc.GET_P3 = function ( systemStatuses ) {
     getStatus( systemStatuses,3 );
 };
 
+arc.RO_GetEvent = function( POST, systemStatuses ){
+    //return systemStatuses["p" + POST.partition].events[POST.event];z
+    //console.log(POST);
+    var events = systemStatuses["p"+POST.partition+"evt"];
+    if(events[0]) {
+	//console.log("First event in buffer: " + events[0].event + ", last event in buffer: " + events[events.length - 1].event + ", Requested event: " + POST.event);
+
+	if(POST.event == 0 || POST.event < events[0].event) {
+	    var data = events[0];
+	    //console.log("Sending client event " + events[0].event);
+	    data.lastEvent = events[events.length - 1].event;
+	    return JSON.stringify(data);
+	} else {
+	    for(var event in events) {
+		//console.log(events[event]);
+		//console.log("This event: " + events[event].event + ", requested: " + POST.event);
+		if(events[event].event == POST.event) {
+		    //console.log("Sending client event " + events[event].event);
+		    var data = events[event];
+		    data.lastEvent = events[events.length - 1].event;
+		    return JSON.stringify(data);
+		}
+	    }
+	    if(POST.event < events[events.length -1 ].event) {
+		return "ENOEVT";
+	    }
+	}
+    }
+    
+    return "";
+};
+
+arc.RW_GetEvent = function( POST, systemStatuses) {
+    return arc.RO_GetEvent(POST, systemStatuses);
+};
+
 arc.RW_Start = function ( POST,systemStatuses ) {
+    systemStatuses["p" + POST.partition + "evt"] = [];
     systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Shutdown" ) {
         startSystem( systemStatuses["p" + POST.partition] );
@@ -358,6 +430,7 @@ arc.RW_Resume = function ( POST,systemStatuses ) {
 };
 
 arc.RW_End = function ( POST,systemStatuses ) {
+    systemStatuses["p" + POST.partition + "onmon"] = false;
     systemStatuses["p" + POST.partition].config = POST.config;
     if ( systemStatuses["p" + POST.partition].state === "Running" || systemStatuses["p" + POST.partition].state === "Paused" ) {
         endRun( systemStatuses["p" + POST.partition] );
