@@ -20,9 +20,7 @@ product		version		optional
 TRACE		v3_05_00
 art		v1_15_02	s15
 art		v1_14_02	s11
-art		v1_14_01	s10
 art             v1_13_02        s8
-art             v1_13_01        s7
 cetbuildtools	v4_12_06	-	only_for_build
 end_product_list
 
@@ -39,22 +37,10 @@ e7:s11:debug            e7 		   e7:debug        -std=c++1y
 e7:s11:prof             e7 		   e7:prof         -std=c++1y
 e6:s11:debug            e6 		   e6:debug        -std=c++1y
 e6:s11:prof             e6 		   e6:prof         -std=c++1y
-e7:s10:debug            e7 		   e7:debug        -std=c++1y
-e7:s10:prof             e7 		   e7:prof         -std=c++1y
-e6:s10:debug            e6 		   e6:debug        -std=c++1y
-e6:s10:prof             e6 		   e6:prof         -std=c++1y
 e7:s8:debug             e7 		   e7:debug        -std=c++1y
 e7:s8:prof              e7		   e7:prof         -std=c++1y
 e6:s8:debug             e6		   e6:debug        -std=c++1y
 e6:s8:prof              e6		   e6:prof         -std=c++1y
-e7:s7:debug             e7		   e7:debug        -std=c++1y
-e7:s7:prof              e7		   e7:prof         -std=c++1y
-e6:s7:debug             e6		   e6:debug        -std=c++1y
-e6:s7:prof              e6		   e6:prof         -std=c++1y
-e7:s7:debug             e7		   e7:debug        -std=c++1y
-e7:s7:prof              e7		   e7:prof         -std=c++1y
-e6:s7:debug             e6		   e6:debug        -std=c++1y
-e6:s7:prof              e6		   e6:prof         -std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
