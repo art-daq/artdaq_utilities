@@ -1,0 +1,19 @@
+﻿<fieldset data-role="collapsible" id="brcfg%id%">
+    <legend id="legend">BR %id%</legend>
+    <label><input type="checkbox" name="enabled" id="enabled" checked>Enabled</label>
+    <div data-role="fieldcontain">
+        <label for="name">Nickname:</label>
+        <input type="text" class="triggersModified" name="text" id="name" value="Board reader">
+    </div>
+    <div data-role="fieldcontain" class="expert">
+        <label for="hostname">Hostname:</label>
+        <input id="hostname" name="hostname" value="localhost" class="triggersModified triggersRestart">
+    </div>
+    <div data-role="fieldcontain">
+        <label for="type">Type:</label>
+        <select name="type" class="triggersModified" id="type">
+        </select>
+    </div>
+    <form id="typeConfig" data-role="fieldcontain"></form>
+    <button type="button" class="triggersModified" id="deletebr%id%">Delete</button>
+</fieldset>

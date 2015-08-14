@@ -2,12 +2,15 @@
 <html>
 <head>
     <title>ARTDAQ Run Control Test</title>
+    <meta charset="UTF-8">
     <style>
         @import url(client.css);
     </style>
     <script src="/base/jquery.min.js"></script>
+    <script src="/base/d3.v3.min.js"></script>
     <script src="/base/AjaxPostAndGet.js"></script>
     <script src="/JSRootIO/scripts/JSRootCore.js" type="text/javascript"></script>
+    <script src="/artdaq-runcontrol/MakeEventGraph.js"></script>
     <script src="/artdaq-runcontrol/client.js"></script>
 </head>
 <body>
@@ -27,29 +30,18 @@
         <form>
             <fieldset>
                 <legend>ARTDAQ Parameters</legend>
-                <table>
-                    <tr>
-                        <td>Data Directory:</td>
-                        <td><input type="text" id="dataDir" value="/tmp"></td>
-                    </tr>
-                    <tr>
-                        <td>Verbose Output:</td>
-                        <td><input type="checkbox" id="verbosity"></td>
-                    </tr>
-                    <tr>
-                        <td>File Events:</td>
-                        <td><input type="number" id="fileEvents" value="0"></td>
-                        <td>(0 is infinite)</td>
-                    </tr>
-                    <tr>
-                        <td>File Size:</td>
-                        <td><input type="number" id="fileSize" value="8000">MB</td>
-                    </tr>
-                    <tr>
-                        <td>File Duration:</td>
-                        <td><input type="number" id="fileTime" value="0"> minutes</td>
-                    </tr>
-                </table>
+                <label for="partition">Partition:</label>
+                <select id="partition">
+                    <option value="0">Partition 0</option>
+                    <option value="1">Partition 1</option>
+                    <option value="2">Partition 2</option>
+                    <option value="3">Partition 3</option>
+                </select>
+                <br>
+                <label for="config">Configuration:</label>
+                <select id="config"></select>
+                <button type="button" id="editConfig">Edit</button>
+                <button type="button" id="reloadConfigs">Reload</button>
             </fieldset>
             <fieldset>
                 <legend>Run Parameters</legend>
@@ -59,18 +51,8 @@
                         <td><input type="number" id="runNumber" value="1000"></td>
                     </tr>
                     <tr>
-                        <td>Run Events:</td>
-                        <td><input type="number" id="runEvents" value="0"></td>
-                        <td>(Set to non-zero to end run at specified number of events)</td>
-                    </tr>
-                    <tr>
-                        <td>Run Duration:</td>
-                        <td><input type="number" id="runTime" value="0"> minutes</td>
-                        <td>(Set to non-zero to end run after specified duration)</td>
-                    </tr>
-                    <tr>
-                       <td>Enable Online Monitoring</td>
-                       <td><input type="checkbox" id="monitoringEnabled" checked="true"></td>
+                        <td>Enable Online Monitoring</td>
+                        <td><input type="checkbox" id="monitoringEnabled" checked></td>
                     </tr>
                 </table>
             </fieldset>
@@ -79,12 +61,12 @@
     <br>
     <div id="bottom">
         <div id="wd0div"></div>
+        <div id="onmonDiv"></div>
         <textarea readonly id="systemOut"></textarea>
         <textarea readonly id="systemErr" class="error"></textarea>
         <textarea readonly id="commOut"></textarea>
         <textarea readonly id="commErr" class="error"></textarea>
         <div id="wd1div" class="hidden"></div>
-        <input type="button" id="killSwitch" value="Kill ARTDAQ">Only press this if you absolutely have to...
     </div>
 </body>
 </html>

@@ -1,0 +1,26 @@
+﻿<fieldset data-role="collapsible" id="config">
+    <legend>UDPTFGTest Receiver Configuration</legend>
+    <div data-role="fieldcontain">
+        <label for="udpAddress">IP Address (IPv4)</label>
+        <input type="text" class="triggersModified" id="udpAddress" value="127.0.0.1" pattern="[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+">
+    </div>
+    <div data-role="fieldcontain">
+        <label for="udpPort">Port</label>
+        <input type="number" class="triggersModified" id="udpPort" min=1024 max=65535 value=3000>
+    </div>
+    <div data-role="fieldcontain" class="expert">
+        <label>Enable RAW Output<input type="checkbox" class="triggersModified" id="raw_output_enabled"></label>
+    </div>
+    <div data-role="fieldcontain" class="expert">
+        <label>RAW Output Path</label>
+        <input type="text" class="triggersModified" id="raw_output_path" name="raw_output_path" value="/tmp">
+    </div>
+    <div data-role="fieldContain">
+      <fieldset data-role="collapsible">
+	<legend>Trigger Type</legend>
+	<label><input type="radio" name="trigger_mode" id="trigger_mode_Triggered" value="Triggered" class="triggersModified">Triggered</label>
+	<label><input type="radio" name="trigger_mode" id="trigger_mode_Untriggered" value="Untriggered" class="triggersModified">Untriggered</label>
+	<label><input type="radio" name="trigger_mode" id="trigger_mode_Buffered" value="Buffered" class="triggersModified">Buffering Triggered</label>
+      </fieldset>
+    </div>
+</fieldset>

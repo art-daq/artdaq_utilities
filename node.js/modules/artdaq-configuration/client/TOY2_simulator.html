@@ -1,0 +1,19 @@
+﻿<fieldset data-role="collapsible" id="config">
+    <legend>TOY2 Config</legend>
+    <div data-role="fieldcontain">
+        <label for="throttle_usecs">Delay between Fragments (us):</label>
+        <input type="number" class="triggersModified" value=100000 step=10000 min=0 max=1000000 id="throttle_usecs">
+    </div>
+    <div data-role="fieldcontain">
+        <label for="nADCcounts">ADC Counts per Fragment:</label>
+        <input type="number" class="triggersModified" value=40 min=0 max=100 id="nADCcounts">
+    </div>
+    <div data-role="fieldcontain" class="expert">
+        <label for="generator_id">Generator to use</label>
+        <select name="generator_id" id="generator_id" class="triggersModified">
+            <option value="Uniform">Uniform</option>
+            <option value="Normal">Normal Distribution</option>
+            <option value="Pattern">Pattern</option>
+        </select>
+    </div>
+</fieldset>

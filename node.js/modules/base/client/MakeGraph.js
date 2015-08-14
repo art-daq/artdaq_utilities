@@ -9,7 +9,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
         
         // update the domains
         now = new Date();
-        x.domain([now - (n - 1 ) * duration, now ]);
+        x.domain([now - (n - 1) * duration, now]);
         
         var extent = [0x1000000, 0];
         for (var name in ids) {
@@ -96,7 +96,7 @@ function makeGraph(tag, ids) {
                 .call(y.axis = d3.svg.axis().scale(y).tickFormat(formatTick).orient("left"));
     
     var paths = svg.append("g")
-                .attr("clip-path", "url(#clip"+tag.replace('#',"")+")");
+                .attr("clip-path", "url(#clip" + tag.replace('#', "") + ")");
     
     for (var name in ids) {
         ids[name].path = paths.append('path')

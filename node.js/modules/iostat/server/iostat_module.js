@@ -9,7 +9,7 @@ var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
 var iostatem = new emitter();
 
-iostatem.MasterInitFunction = function () { };
+iostatem.MasterInitFunction = function () { return null; };
 
 // The function which runs "iostat"
 iostatem.GET_ = function () {
