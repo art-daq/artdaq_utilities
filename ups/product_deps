@@ -18,17 +18,17 @@ bindir      fq_dir      bin
 #
 product		version		optional
 TRACE		v3_05_00
-art		v1_15_02	s15
-art		v1_14_02	s11
-art             v1_13_02        s8
-cetbuildtools	v4_12_06	-	only_for_build
+fhiclcpp	v3_06_01	s15
+fhiclcpp	v3_05_02	s11
+fhiclcpp	v3_03_00	s8
+cetbuildtools	v4_12_05	-	only_for_build
 end_product_list
 
 # e6 - with gcc 4.9.1 and -std=c++1y
 # e7 - with gcc 4.9.2 and -std=c++1y
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
-qualifier		TRACE	       	   art	       	   notes
+qualifier		TRACE	       	   fhiclcpp    	   notes
 e7:s15:debug            e7		   e7:debug        -std=c++1y
 e7:s15:prof             e7		   e7:prof         -std=c++1y
 e6:s15:debug            e6		   e6:debug        -std=c++1y
