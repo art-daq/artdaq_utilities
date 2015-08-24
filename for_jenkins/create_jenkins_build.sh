@@ -216,9 +216,9 @@ while read line ; do
 	    exit 1
 	fi
 
-	sedstring="s/(.*create_product_variables.*)${package}\s+\S+(.*)/\1${package}  ${version}\2/";
+	sedstring="s/(.*create_product_variables.*\(\s*)${package}\s+\S+(.*)/\1${package}  ${version}\2/";
 
-	sed -ri "$sedstring" CMakeLists.txt 2>&1 > /dev/null
+	sed -r -i "$sedstring" CMakeLists.txt 2>&1 > /dev/null
 	    
     fi
 
@@ -228,9 +228,9 @@ done < $packagedepsfile
 # package depends on are the versions we expect, now update the target
 # package version in the CMakeLists.txt file
 
-sedstring="s/(.*create_product_variables.*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  v${packageversion}\2/";
+sedstring="s/(.*create_product_variables.*\(\s*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  v${packageversion}\2/";
 echo $sedstring
-sed -ri "$sedstring" CMakeLists.txt
+sed -r -i "$sedstring" CMakeLists.txt
 
 # Add a commit to build-framework here after a prompt?
 
@@ -270,7 +270,7 @@ function parse_package_info() {
     fi
 
     sedstring='s!^\s*parent\s+'${upspackagename}'\s+v([0-9_]+)\s*$!\1!p'
-    packageversion=$( sed -rn "$sedstring" $depsfile )
+    packageversion=$( sed -r -n "$sedstring" $depsfile )
 
     echo "packageversion = ${packageversion}"
 
@@ -279,7 +279,7 @@ function parse_package_info() {
 
     if [[ -z $package_all_quals_colondelim ]]; then
 	sedstring='s!^\s*defaultqual\s+(\S+)\s*!\1!p'
-	package_all_quals_colondelim=$( sed -rn "$sedstring" $depsfile)
+	package_all_quals_colondelim=$( sed -r -n "$sedstring" $depsfile)
     fi
 
     package_all_quals_spacedelim=$( echo $package_all_quals_colondelim | tr ":" " " )
@@ -323,7 +323,7 @@ function edit_buildfile() {
 
     sedstring='/case \$\{qual_set\} in/p'
 
-    insert_at_line=$( cat -n $buildfile | sed -rn "$sedstring" | awk '{print $1}')
+    insert_at_line=$( cat -n $buildfile | sed -r -n "$sedstring" | awk '{print $1}')
     echo "insert_at_line = $insert_at_line"
 
     head -${insert_at_line} $buildfile > $edited_buildfile
@@ -404,7 +404,7 @@ function get_art_from_nutools() {
 	echo "Problem grabbing http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/nu-${nv}.html"
     fi
 
-    nutools_art_listing=$( sed -rn 's/.*\s+art\s+.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-${nv}.html )
+    nutools_art_listing=$( sed -r -n 's/.*\s+art\s+.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-${nv}.html )
     rm -f nu-${nv}.html
     echo $nutools_art_listing
 }
