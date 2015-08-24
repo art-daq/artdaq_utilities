@@ -12,11 +12,11 @@ build_target_package="1"  # Set to "0" if this has already been done
 			  # "1" if you'd like the scripts to attempt
 			  # the build
 
-branch="for_art_v1_14" # The branch in build-framework from whose HEAD
+branch="for_art_v1_15" # The branch in build-framework from whose HEAD
 		       # we'll edit the CMakeLists.txt file
 
 
-
+upspackagename=$( echo $packagename | tr "-" "_")
 
 # Save the output from this script for posterity
 
@@ -64,18 +64,21 @@ sed -r '1d;$d' | \
 sed -r 's/^\s*(\S+).*/\1/' | \
 sed -r 's/:debug//' | \
 sed -r 's/:prof//' | \
-# grep -v ":ib" | \
+grep -v ":ib" | \
 awk 'seen[$0]++' > $qualifier_list
 
 # If you want to manually set the qualifiers, comment out the "cat" of
 # the product_deps file above, uncomment this following section, and
 # edit it accordingly
 
-#cat <<EOF > $qualifier_list
-#e7:s11:eth
-#e7:s8:eth
-#e7:s7:eth
-#EOF
+# cat <<EOF > $qualifier_list
+# e7:s8
+# e7:s11
+# e7:s15
+# e7:s8:nu
+# e7:s11:nu
+# e7:s15:nu
+# EOF
 
 failed_qualifiers=$(uuidgen)
 
@@ -86,20 +89,22 @@ while read qualifiers ; do
     if [[ "$?" != "0" ]]; then
 	echo "There was a problem trying to create the buildcfg and source files for $packagename with qualifiers $qualifiers" >&2
 	echo $qualifiers >> $failed_qualifiers
+	continue
     else
 
-	for file in build_build-framework/art_externals/${packagename}-* ; do
+	for file in build_build-framework/art_externals/${upspackagename}-*  ; do
+	    echo From $PWD , mv $file $(basename $file).${qualifiers}
 	    mv $file $(basename $file).${qualifiers}
 	done
     fi
 
 done < $qualifier_list
 
-manifest_filename=$( ls -1 $pkg*-source_MANIFEST.txt.* | head -1 | sed -r "s/($pkg.*\.txt).*$/\1/" )
-buildcfg_filename=$( ls -1 $pkg*-buildcfg* | head -1 | sed -r "s/($pkg.*)\..*/\1/" )
+manifest_filename=$( ls -1 ${upspackagename}*-source_MANIFEST.txt.* | tail -1 | sed -r "s/(${upspackagename}.*\.txt).*$/\1/" )
+buildcfg_filename=$( ls -1 ${upspackagename}*-buildcfg* | tail -1 | sed -r "s/(${upspackagename}.*)\..*/\1/" )
 
-cat ${packagename}*-source_MANIFEST.txt.* | sort -n | uniq > $manifest_filename
-cp -p $(ls -1 $pkg*-buildcfg* | head -1 ) $buildcfg_filename
+cat ${upspackagename}*-source_MANIFEST.txt.* | sort -n | uniq > $manifest_filename
+cp -p $(ls -1 ${upspackagename}*-buildcfg* | tail -1 ) $buildcfg_filename
 
 echo "Build configuration file is $buildcfg_filename"
 echo "Source manifest file is $manifest_filename"
