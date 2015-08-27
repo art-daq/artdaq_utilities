@@ -35,6 +35,12 @@ basedir=$PWD
 
 packagearray=""
 
+scriptdir=$(dirname $0)
+if [[ "$scriptdir" =~ ".." || "$scriptdir" =~ "." ]]; then
+
+    echo "I see an indication of a relative path (\".\" or \"..\") in ${scriptdir}; prepending $PWD"
+    scriptdir=$PWD/$(dirname $0)
+fi
 
 function errmsg() {
     local msg=$1
@@ -42,8 +48,10 @@ function errmsg() {
     exit 1
 }
 
-which parse_product_deps.py || \
-    errmsg "Unable to find needed \"parse_product_deps.py\" script in executable paths (check PATH variable)"
+if [[ ! -e $scriptdir/parse_product_deps.py ]]; then
+    errmsg "Expected to find \"parse_product_deps.py\" in same directory as this script (${scriptdir})"
+fi
+    
 
 function package_dep() {
 
@@ -102,7 +110,7 @@ function package_dep() {
 	errmsg "Problem performing git checkout on (possibly nonexistent) tag $version"
     cd ..
     
-    cmd="parse_product_deps.py ${no_underscore_package}/ups/product_deps $package $version $qualifiers"
+    cmd="${scriptdir}/parse_product_deps.py ${no_underscore_package}/ups/product_deps $package $version $qualifiers"
 
     while read packageinfo; do
 	
@@ -118,4 +126,12 @@ function package_dep() {
 
 package_dep $target_package $target_version $target_qualifiers
 
-echo "Final packagearray is: $packagearray"
+echo "Final packagearray is: "
+
+# Here, since packagearray is essentially a string of the form
+# "<package1> <package1 version> <package2> <package2 version> ..." I
+# massage it so that each package and version gets its own output
+# line, similar to "ups depend" or "ups active"
+
+echo $packagearray | tr " " "\n" | sed -r -n '{N;s/(.*)\n(.*)/\1 \2/p}'
+
