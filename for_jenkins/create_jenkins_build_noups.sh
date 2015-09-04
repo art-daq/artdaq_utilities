@@ -7,12 +7,11 @@
 # ./create_jenkins_build.sh \
 # <name of target package> \
 # <version of target package> \
-# <commit hash, tag or branch for the build-framework package version you want> \
 # <the colon-separated qualifier list>
 
 
-if [[ "$#" != "4" ]]; then
-    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <build-framework commit hash, tag or branch> <colon-separated qualifier list>" 
+if [[ "$#" != "3" ]]; then
+    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <colon-separated qualifier list>" 
     exit 0
 fi
 
@@ -20,9 +19,7 @@ packagename=$1
 upspackagename=$( echo $packagename | tr "-" "_")
 packageversion=$2
 
-
-build_framework_commit=$3
-package_all_quals_colondelim=$4
+package_all_quals_colondelim=$3
 
 # Since we'll be creating temporary directories, checking out
 # packages, etc., we don't want to be in the directory structure of
@@ -98,6 +95,17 @@ grep -v artdaq_ganglia_plugin | \
 grep -v artdaq_utilities | \
 awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
 
+major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
+
+if [[ "$major_art_version" == "v1_14" ]]; then
+    build_framework_branch="for_art_v1_14"
+elif [[ "$major_art_version" == "v1_15" ]]; then
+    build_framework_branch="for_art_v1_15"
+else
+    echo "Unable to determine the art version" >&2
+    exit 1
+fi
+
 # Now, check out artdaq-utilities, and edit the package's
 # corresponding build file if necessary (meaning, if the particular
 # build qualification in question isn't yet supported, automatically
@@ -135,7 +143,8 @@ if [[ "$?" != "0" ]]; then
 fi
 
 cd build-framework
-git checkout $build_framework_commit
+git reset HEAD --hard
+git checkout $build_framework_branch
 
 if [[ "$?" != "0" ]]; then
     echo "Problem with git checkout $build_framework_commit in build-framework"
