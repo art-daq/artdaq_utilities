@@ -74,6 +74,12 @@ if [[ ! -e $scriptdir/package_deps.sh ]]; then
     exit 1
 fi
 
+checkout_directory=$basedir/jenkins_product_deps_dir
+
+if [[ ! -e $checkout_directory ]]; then
+    mkdir $checkout_directory
+fi
+
 # Assumption below in the awk script which filters the output of
 # package_deps.sh is that we want to see all remaining lines in the
 # output that appears after the line containing "Final packagearray
@@ -86,7 +92,7 @@ fi
 
 tmpfile=$(uuidgen)
 
-$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim 2>&1 | \
+$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim $checkout_directory 2>&1 | \
     tee $tmpfile
 
 cat $tmpfile | \
@@ -113,12 +119,12 @@ fi
 
 if [[ ! -e artdaq-utilities ]]; then
     git clone ssh://p-artdaq-utilities@cdcvs.fnal.gov/cvs/projects/artdaq-utilities
-fi
 
-if [[ "$?" != "0" ]]; then
-    echo "Problem cloning artdaq-utilities!"
-    cleanup
-    exit 1
+    if [[ "$?" != "0" ]]; then
+	echo "Problem cloning artdaq-utilities!"
+	cleanup
+	exit 1
+    fi
 fi
 
 if [[ ! -e $buildfile ]]; then
@@ -134,13 +140,14 @@ if [[ ! -e build-framework ]]; then
     # Read-only checkout - don't yet have write access to build-framework!
 
     git clone http://cdcvs.fnal.gov/projects/build-framework
+
+    if [[ "$?" != "0" ]]; then
+	echo "Problem cloning build-framework!"
+	cleanup
+	exit 1
+    fi
 fi
 
-if [[ "$?" != "0" ]]; then
-    echo "Problem cloning build-framework!"
-    cleanup
-    exit 1
-fi
 
 cd build-framework
 git reset HEAD --hard

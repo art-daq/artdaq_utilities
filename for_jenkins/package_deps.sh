@@ -16,14 +16,15 @@
 # packages on which art depends in that file are already up-to-date.
 
 
-if [ $# != 3 ] ; then
-     echo "Usage: $0 <packagename> <version> <qualifiers (just a \"-\" if there aren't any)>"
+if (( $# < 3 || $# > 4)) ; then
+     echo "Usage: $0 <packagename> <version> <qualifiers (just a \"-\" if there aren't any)> (full path checkout directory)"
      exit 1
 fi
 
 target_package=$1
 target_version=$2
 target_qualifiers=$3
+checkout_directory=$4
 
 if [[ -n $qualifiers ]]; then
     echo "Searching for packages on which ${target_package} ${target_version} -q ${target_qualifiers} depends"
@@ -94,16 +95,26 @@ function package_dep() {
     # packages on which it immediately depends by checking out the
     # package and examining its product_deps file
 
-    tmpdir=${basedir}/$( uuidgen )
+    # If "checkout_directory" was supplied at the command line, use it
+    # for the checkouts, otherwise create a temporary directory which
+    # will be deleted at the end of this function
 
-    mkdir $tmpdir || errmsg "Problem creating $tmpdir"
+    if [[ -z $checkout_directory ]]; then
+	tmpdir=${basedir}/$( uuidgen )
 
-    cd $tmpdir
+	mkdir $tmpdir || errmsg "Problem creating $tmpdir"
+
+	cd $tmpdir
+    else
+	cd $checkout_directory || errmsg "Problem cd'ing into ${checkout_directory}; note you need to create it before calling the script"
+    fi
+
     no_underscore_package=$(echo $package | tr "_" "-") # "_"'s in package names are replaced with "_" in ups
 
-
-    git clone http://cdcvs.fnal.gov/projects/${no_underscore_package} || \
-	errmsg "Problem cloning http://cdcvs.fnal.gov/projects/$no_underscore_package"
+    if [[ ! -e ${no_underscore_package} ]]; then
+	git clone http://cdcvs.fnal.gov/projects/${no_underscore_package} || \
+	    errmsg "Problem cloning http://cdcvs.fnal.gov/projects/$no_underscore_package"
+    fi
 
     cd $no_underscore_package
     git checkout $version || \
@@ -121,7 +132,9 @@ function package_dep() {
 	package_dep $packagename $packageversion $packagequals
     done < <( $cmd )
     
-    rm -rf $tmpdir
+    if [[ -e $tmpdir ]]; then
+	rm -rf $tmpdir
+    fi
 }
 
 package_dep $target_package $target_version $target_qualifiers
