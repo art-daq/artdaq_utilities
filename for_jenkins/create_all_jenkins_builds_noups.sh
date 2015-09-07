@@ -1,7 +1,7 @@
 #!/bin/env bash
 
-if [[ "$#" != "2" ]]; then
-    echo "Usage: ./"$(basename $0)" <packagename> <packageversion>"
+if [[ "$#" < "2" || "$#" > "3" ]]; then
+    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> (qualifier list)"
     exit 0
 fi
 
@@ -9,6 +9,8 @@ packagename=$1
 upspackagename=$( echo $packagename | tr "-" "_")
 
 packageversion=$2
+
+qualifier_list=$3
 
 # Save the output from this script for posterity
 
@@ -40,10 +42,11 @@ if [[ ! -e $packagename ]]; then
 
 fi
 
-# Grab all the qualifiers in the ups/product_deps file- or set them
-# manually, farther down this script
+# Grab all the qualifiers in the ups/product_deps file if a qualifier list wasn't supplied
 
-qualifier_list=$(uuidgen)
+if [[ -z "$qualifier_list" ]]; then
+
+qualifier_list="qualifier_list_full.txt"
 
 # The following set of sed commands essentially takes all the
 # qualifiers in the first column of the block of text between
@@ -52,27 +55,19 @@ qualifier_list=$(uuidgen)
 # are no repeated qualifiers, and then stashes them in a temporary
 # file referred to here as "qualifier_list"
 
-# cat $packagename/ups/product_deps | \
-# sed -r -n '/^\s*qualifier\s+/,/\s*end_qualifier_list/p' | \
-# sed -r '1d;$d' | \
-# sed -r 's/^\s*(\S+).*/\1/' | \
-# sed -r 's/:debug//' | \
-# sed -r 's/:prof//' | \
-# #grep -v ":ib" | \
-# awk 'seen[$0]++' > $qualifier_list
+set +C
 
-# If you want to manually set the qualifiers, comment out the "cat" of
-# the product_deps file above, uncomment this following section, and
-# edit it accordingly
+cat $packagename/ups/product_deps | \
+sed -r -n '/^\s*qualifier\s+/,/\s*end_qualifier_list/p' | \
+sed -r '1d;$d' | \
+sed -r 's/^\s*(\S+).*/\1/' | \
+sed -r 's/:debug//' | \
+sed -r 's/:prof//' | \
+grep -v ":ib" | \
+awk 'seen[$0]++' > $qualifier_list
+fi
 
-cat <<EOF > $qualifier_list
-e7:s8:eth
-e7:s11:eth
-e7:s14:eth
-e6:s8:eth
-e6:s11:eth
-e6:s14:eth
-EOF
+set -C
 
 failed_qualifiers=$(uuidgen)
 
@@ -101,9 +96,16 @@ buildcfg_filename=$( ls -1 ${upspackagename}*-buildcfg* | tail -1 | sed -r "s/($
 cat ${upspackagename}*-source_MANIFEST.txt.* | sort -n | uniq > $manifest_filename
 cp -p $(ls -1 ${upspackagename}*-buildcfg* | tail -1 ) $buildcfg_filename
 
-echo "Build configuration file is $buildcfg_filename"
-echo "Source manifest file is $manifest_filename"
 
+echo
+echo "Edits (if any) performed on artdaq-utilities; please commit them so Jenkins can see them"
+cd artdaq-utilities
+git diff
+cd ..
+echo
+echo "Build configuration file is $buildcfg_filename - pls. check to ensure it supports all relevant art versions"
+echo "Source manifest file is $manifest_filename"
+echo
 
 if [[ -s $failed_qualifiers ]]; then
     echo "Unable to correctly process $packagename for the following qualifier combinations: "
@@ -113,5 +115,4 @@ if [[ -s $failed_qualifiers ]]; then
     
 fi
 
-rm -f $qualifier_list
 rm -f $failed_qualifiers

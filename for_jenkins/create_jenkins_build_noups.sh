@@ -90,16 +90,11 @@ fi
 # artdaq_ganglia_plugin/artdaq_utilities are removed as this does not
 # appear in build-framework's CMakeLists.txt file
 
-tmpfile=$(uuidgen)
-
 $scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim $checkout_directory 2>&1 | \
-    tee $tmpfile
-
-cat $tmpfile | \
-grep -v cetbuildtools | \
-grep -v artdaq_ganglia_plugin | \
-grep -v artdaq_utilities | \
-awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
+    grep -v cetbuildtools | \
+    grep -v artdaq_ganglia_plugin | \
+    grep -v artdaq_utilities | \
+    awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
 
 major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
 
