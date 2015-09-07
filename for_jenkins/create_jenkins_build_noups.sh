@@ -103,10 +103,12 @@ awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
 
 major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
 
-if [[ "$major_art_version" == "v1_14" ]]; then
-    build_framework_branch="for_art_v1_14"
-elif [[ "$major_art_version" == "v1_15" ]]; then
+if [[ "$major_art_version" == "v1_15" ]]; then
     build_framework_branch="for_art_v1_15"
+elif [[ "$major_art_version" == "v1_14" ]]; then
+    build_framework_branch="for_art_v1_14"
+elif [[ "$major_art_version" == "v1_13" ]]; then
+    build_framework_branch="for_art_v1_13"
 else
     echo "Unable to determine the art version" >&2
     exit 1
@@ -248,18 +250,7 @@ function edit_buildfile() {
     # If we're here, it means that we didn't find the build qualifier,
     # so add it to the switch statement
 
-    # First, copy the part of the original buildfile up to the line at
-    # which the case statement is located, using some sleight-of-hand
-    # which takes advantage of the "-n" option to the cat command
-
-    sedstring='/case \$\{qual_set\} in/p'
-
-    insert_at_line=$( cat -n $buildfile | sed -r -n "$sedstring" | awk '{print $1}')
-    echo "insert_at_line = $insert_at_line"
-
-    head -${insert_at_line} $buildfile > $edited_buildfile
-
-    # Next, to fill in the body of the switch statement for the target
+    # To fill in the body of the switch statement for the target
     # package, we'll deduce the relevant art package the target
     # package depends on, as well as the nutools package corresponding
     # to that art version
@@ -298,30 +289,28 @@ function edit_buildfile() {
 	echo "Desired nutools version is $nutools_version"
     fi
 
+# Now construct a sed command which will append the new qualifiers
+# after the "case ${qual_set} in" line in the build script - observe
+# that since I'm putting the command in double quotes since variables
+# need to be subbed in, I need to perform a combination of escapes for
+# both the shell and for sed (with its "-r", extended regular
+# expression, option)
 
-    cat <<EOF >> $edited_buildfile
-  ${package_s_qual}:${package_e_qual})
-     basequal=${package_e_qual}
-     squal=${package_s_qual}
-     artver=${art_version}
-     nutoolsver=${nutools_version}
-  ;;
-EOF
 
-    total_lines=$(wc -l $buildfile | awk '{print $1}' )
-    echo "total_lines = $total_lines"
-    echo "insert_at_line = $insert_at_line"
+sedstring="/case \\\$\{qual_set\} in/a\
+    ${package_s_qual}:${package_e_qual})\n\
+       basequal=${package_e_qual}\n\
+       squal=${package_s_qual}\n\
+       artver=${art_version}\n\
+       nutoolsver=${nutools_version}\n\
+       ;;\n\
+ "
 
-    let "tail_lines = $total_lines - $insert_at_line"
-    echo "tail_lines = $tail_lines"
-    
+sed -r "$sedstring" $buildfile > $edited_buildfile
 
-    tail -${tail_lines} $buildfile >> $edited_buildfile
-
-    echo "THE FOLLOWING EDIT WILL BE MADE TO $buildfile UNLESS YOU HIT ctrl-C IN THE NEXT 5 SECONDS: "
+    echo "THE FOLLOWING EDIT WILL BE MADE TO $buildfile: "
 
     diff $buildfile $edited_buildfile
-    sleep 5
     cp $edited_buildfile $buildfile
 }
 
