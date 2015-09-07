@@ -69,6 +69,9 @@ for line in inf.readlines():
         line.lstrip()
         tokens = line.split()
 
+        if len(tokens) == 0:
+            continue # Blank line
+
         # If the version of a package the target package depends
         # corresponds to a different qualifier than the target
         # package's qualifiers, skip the line
