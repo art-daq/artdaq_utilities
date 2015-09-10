@@ -89,7 +89,9 @@ while read qualifiers ; do
 
 	for file in build_build-framework/art_externals/${upspackagename}-*  ; do
 	    echo From ${PWD}, mv $file $(basename $file).${qualifiers}
+	    set +C
 	    mv $file $(basename $file).${qualifiers}
+	    set -C
 	done
     fi
 
@@ -99,8 +101,10 @@ manifest_filename=$( ls -1 ${upspackagename}*-source_MANIFEST.txt.* | tail -1 | 
 buildcfg_filename=$( ls -1 ${upspackagename}*-buildcfg* | tail -1 | sed -r "s/(${upspackagename}.*)\..*/\1/" )
 
 cat ${upspackagename}*-source_MANIFEST.txt.* | sort -n | uniq > $manifest_filename
-cp -p $(ls -1 ${upspackagename}*-buildcfg* | tail -1 ) $buildcfg_filename
 
+set +C
+cp -p $(ls -1 ${upspackagename}*-buildcfg* | tail -1 ) $buildcfg_filename
+set -C
 
 echo
 echo "Edits (if any) performed on artdaq-utilities; please commit them so Jenkins can see them"
@@ -113,10 +117,17 @@ echo "Source manifest file is $manifest_filename"
 echo
 
 echo "Successfully processed qualifier combinations (if any):"
-cat $passed_qualifiers
+
+if [[ -e $passed_qualifiers ]]; then
+    cat $passed_qualifiers
+fi
+
 echo
 echo "Unsuccessfully processed qualifier combinations (if any):" >&2
-cat $failed_qualifiers >&2
+
+if [[ -e $failed_qualifiers ]]; then
+    cat $failed_qualifiers >&2
+fi
 
 rm -f $failed_qualifiers
 rm -f $passed_qualifiers
