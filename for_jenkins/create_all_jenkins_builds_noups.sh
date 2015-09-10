@@ -60,6 +60,8 @@ set +C
 cat $packagename/ups/product_deps | \
 sed -r -n '/^\s*qualifier\s+/,/\s*end_qualifier_list/p' | \
 sed -r '1d;$d' | \
+sed -r '/^[ #\t]+/d' | \
+sed -r '/^$/d' | \
 sed -r 's/^\s*(\S+).*/\1/' | \
 sed -r 's/:debug//' | \
 sed -r 's/:prof//' | \
@@ -70,6 +72,7 @@ fi
 set -C
 
 failed_qualifiers=$(uuidgen)
+passed_qualifiers=$(uuidgen)
 
 while read qualifiers ; do
 
@@ -81,6 +84,8 @@ while read qualifiers ; do
 	echo $qualifiers >> $failed_qualifiers
 	continue
     else
+
+	echo $qualifiers >> $passed_qualifiers
 
 	for file in build_build-framework/art_externals/${upspackagename}-*  ; do
 	    echo From ${PWD}, mv $file $(basename $file).${qualifiers}
@@ -107,12 +112,11 @@ echo "Build configuration file is $buildcfg_filename - pls. check to ensure it s
 echo "Source manifest file is $manifest_filename"
 echo
 
-if [[ -s $failed_qualifiers ]]; then
-    echo "Unable to correctly process $packagename for the following qualifier combinations: "
-    cat $failed_qualifiers
-    echo
-    echo "Please find a system where $packagename is installed for these qualifiers, and run \"ups depend\" to manually determine dependencies"
-    
-fi
+echo "Successfully processed qualifier combinations (if any):"
+cat $passed_qualifiers
+echo
+echo "Unsuccessfully processed qualifier combinations (if any):" >&2
+cat $failed_qualifiers >&2
 
 rm -f $failed_qualifiers
+rm -f $passed_qualifiers

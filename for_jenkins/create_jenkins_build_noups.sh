@@ -165,20 +165,22 @@ while read line ; do
     version=$( echo $line | awk '{print $2}' )
 
     echo $package $version
+    
+    underscore_package=$( echo $package | tr "-" "_" )
 
-    if [[ "$package" != "$upspackagename" ]]; then
+    if [[ "${underscore_package}" != "$upspackagename" ]]; then
 
-	grepstring="create_product_variables\s*\(\s*$package\s*"
+	grepstring="create_product_variables\s*\(\s*${underscore_package}\s*"
 	res=$( egrep "$grepstring" CMakeLists.txt )
 
 	if [[ "$res" == "" ]]; then
-	    echo "Error: unable to find $package $version among the create_product_variables calls in $PWD/CMakeLists.txt"
-	    echo "JCF, 8/26/15 - is this actually an error?"
+	    echo "Error: unable to find ${underscore_package} $version among the create_product_variables calls in $PWD/CMakeLists.txt"
+	    #echo "JCF, 8/26/15 - is this actually an error?"
 	    cleanup
 	    exit 1
 	fi
 
-	sedstring="s/(.*create_product_variables.*\(\s*)${package}\s+\S+(.*)/\1${package}  ${version}\2/";
+	sedstring="s/(.*create_product_variables.*\(\s*)${underscore_package}\s+\S+(.*)/\1${underscore_package}  ${version}\2/";
 
 	sed -r -i "$sedstring" CMakeLists.txt 2>&1 > /dev/null
 	    
@@ -191,7 +193,6 @@ done < $packagedepsfile
 # package version in the CMakeLists.txt file
 
 sedstring="s/(.*create_product_variables.*\(\s*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  ${packageversion}\2/";
-echo $sedstring
 sed -r -i "$sedstring" CMakeLists.txt
 
 # Add a commit to build-framework here after a prompt?
