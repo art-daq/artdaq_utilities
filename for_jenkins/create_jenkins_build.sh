@@ -94,6 +94,7 @@ fi
 
 
 major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
+full_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}_[0-9]+).*/\1/p' $packagedepsfile )
 
 if [[ "$major_art_version" == "v1_15" ]]; then
     build_framework_branch="for_art_v1_15"
@@ -134,6 +135,23 @@ git reset HEAD --hard
 
 git checkout $build_framework_branch || \
     (cleanup; errmsg "Problem with git checkout $build_framework_commit in build-framework" )
+
+commits_ago="-1"
+
+for i in {0..100}; do 
+    res=$( git show HEAD~${i}:CMakeLists.txt | grep -E "\(\s*art\s+${full_art_version}" )
+    
+    if [[ -n $res ]]; then 
+	commits_ago=$i; 
+	break; 
+    fi; 
+done
+
+[[ "$commits_ago" != "-1" ]] || \
+    errmsg "Unable to determine where on the $build_framework_branch branch of build-framework the CMakeLists.txt file for art $full_art_version is"
+
+echo "Will try to descend $commits_ago commits down the $build_framework_branch of build-framework"
+git checkout HEAD~${i} || errmsg "Problem descending $commits_ago commits down the $build_framework_branch of build-framework"
 
 
 # Make sure that all packages (except the target package) are what we
