@@ -201,7 +201,7 @@ function edit_buildfile() {
     possible_qualifiers="${package_e_qual} ${package_e_qual}:${package_s_qual} ${package_s_qual}:${package_e_qual}"
 
     for qual in $possible_qualifiers; do
-	res=$( grep -r '^\s*'$qual'\s*)$' $buildfile )
+	res=$( grep -r '^\s*'$qual'\s*)\s*$' $buildfile )
 	
 	if [[ "$res" != "" ]]; then
 	    break

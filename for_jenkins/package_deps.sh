@@ -62,8 +62,8 @@ function package_dep() {
     echo
     echo "Inside package_dep for $package $version ${qualifiers}, have packagearray = \"$packagearray\""
 
-    if [[ "$packagearray" =~ " $package " ]] && ! [[ "$packagearray" =~ " $version " ]]; then
-        errmsg "Error in package_deps.sh: version conflict found for package $package (a version other than $version has already been stored)"
+    if [[ "$package" != "cetbuildtools" ]] && [[ "$packagearray" =~ " $package " ]] && ! [[ "$packagearray" =~ " $version " ]]; then
+        errmsg "Error in package_deps.sh: version conflict found for package $package (a version other than $version has already been stored); packagearray is $packagearray"
 
     elif [[ "$packagearray" =~ " $package " ]]; then
 	echo "$package has already been processed"
@@ -80,7 +80,7 @@ function package_dep() {
 
     # NOTE THE WHITESPACE BEFORE THE FIRST TOKEN AND AFTER THE LAST
 
-    local irreducible_list=" art mpich mvapich2 artdaq_ganglia_plugin TRACE smc_compiler cetbuildtools xmlrpc_c artdaq_utilities "
+    local irreducible_list=" art mpich mvapich2 artdaq_ganglia_plugin TRACE smc_compiler cetbuildtools xmlrpc_c artdaq_utilities pqxx "
 
     if [[ "$irreducible_list" =~ " $package " ]]; then
 	echo "Found match for $package in $irreducible_list"
