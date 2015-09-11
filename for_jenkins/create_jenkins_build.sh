@@ -1,15 +1,5 @@
 #!/bin/env bash
 
-# Expectations in this script are as follows:
-
-# 1) Usage is:
-
-# ./create_jenkins_build.sh \
-# <name of target package> \
-# <version of target package> \
-# <the colon-separated qualifier list>
-
-
 if [[ "$#" != "3" ]]; then
     echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <colon-separated qualifier list>" 
     exit 0
@@ -21,17 +11,9 @@ packageversion=$2
 
 package_all_quals_colondelim=$3
 
-# Since we'll be creating temporary directories, checking out
-# packages, etc., we don't want to be in the directory structure of
-# the artdaq-utilities package itself
+source "$(dirname "$0")"/utils.sh
 
-res=$( echo $PWD | sed -r -n '/\/artdaq-utilities\//p' )
-
-if [[ -n "$res" ]]; then
-    echo "Directory you're in (${PWD}) appears to be part of the artdaq-utilities package itself; please execute this script outside of the package so as not to confuse git" >&2
-    exit 1
-fi
-
+safety_check
 
 basedir=$PWD
 
@@ -69,10 +51,7 @@ package_s_qual=$( echo $package_all_quals_colondelim | sed -r 's/.*(s[0-9]+).*/\
 echo "I think you want a Jenkins build of $packagename $packageversion," \
     "build qualifiers $package_all_quals_colondelim"
 
-if [[ ! -e $scriptdir/package_deps.sh ]]; then
-    echo "Unable to find package_deps.sh in $scriptdir" >&2
-    exit 1
-fi
+[[ -e $scriptdir/package_deps.sh ]] || errmsg "Unable to find package_deps.sh in $scriptdir"
 
 checkout_directory=$basedir/jenkins_product_deps_dir
 
@@ -90,11 +69,29 @@ fi
 # artdaq_ganglia_plugin/artdaq_utilities are removed as this does not
 # appear in build-framework's CMakeLists.txt file
 
-$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim $checkout_directory 2>&1 | \
-    grep -v cetbuildtools | \
-    grep -v artdaq_ganglia_plugin | \
-    grep -v artdaq_utilities | \
-    awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
+# Finally: note that the output of package_deps.sh is sent into a
+# temporary file rather than directly into bunch of pipes; this is
+# because we want to test its error code, not the error code of the
+# last pipe'd command
+
+cmd="$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim $checkout_directory"
+
+tmpfile=$(uuidgen)
+$cmd 2>&1 > $tmpfile
+
+if [[ "$?" == "0" ]]; then 
+    cat $tmpfile | \
+	grep -v cetbuildtools | \
+	grep -v artdaq_ganglia_plugin | \
+	grep -v artdaq_utilities | \
+	awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
+    rm -f $tmpfile
+else
+    rm -f $tmpfile
+    cleanup
+    errmsg "Problem executing \"$cmd\""
+fi
+
 
 major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
 
@@ -105,8 +102,8 @@ elif [[ "$major_art_version" == "v1_14" ]]; then
 elif [[ "$major_art_version" == "v1_13" ]]; then
     build_framework_branch="for_art_v1_13"
 else
-    echo "Unable to determine the art version" >&2
-    exit 1
+    cleanup
+    errmsg "Unable to determine the art version"
 fi
 
 # Now, check out artdaq-utilities, and edit the package's
@@ -115,20 +112,12 @@ fi
 # add a code snippet which WILL support it)
 
 if [[ ! -e artdaq-utilities ]]; then
-    git clone ssh://p-artdaq-utilities@cdcvs.fnal.gov/cvs/projects/artdaq-utilities
 
-    if [[ "$?" != "0" ]]; then
-	echo "Problem cloning artdaq-utilities!"
-	cleanup
-	exit 1
-    fi
+    git clone ssh://p-artdaq-utilities@cdcvs.fnal.gov/cvs/projects/artdaq-utilities || \
+	( cleanup; errmsg "Problem cloning artdaq-utilities!" )
 fi
 
-if [[ ! -e $buildfile ]]; then
-    echo "Unable to find ${buildfile}!"
-    cleanup
-    exit 1
-fi
+[[ -e $buildfile ]] || (cleanup; errmsg "Unable to find ${buildfile}!")
 
 edit_buildfile
 
@@ -136,25 +125,16 @@ if [[ ! -e build-framework ]]; then
 
     # Read-only checkout - don't yet have write access to build-framework!
 
-    git clone http://cdcvs.fnal.gov/projects/build-framework
-
-    if [[ "$?" != "0" ]]; then
-	echo "Problem cloning build-framework!"
-	cleanup
-	exit 1
-    fi
+    git clone http://cdcvs.fnal.gov/projects/build-framework || \
+	( cleanup; errmsg "Problem cloning build-framework!" )
 fi
-
 
 cd build-framework
 git reset HEAD --hard
-git checkout $build_framework_branch
 
-if [[ "$?" != "0" ]]; then
-    echo "Problem with git checkout $build_framework_commit in build-framework"
-    cleanup
-    exit 1
-fi
+git checkout $build_framework_branch || \
+    (cleanup; errmsg "Problem with git checkout $build_framework_commit in build-framework" )
+
 
 # Make sure that all packages (except the target package) are what we
 # expect them to be in build-framework's CMakeLists.txt file
@@ -166,24 +146,19 @@ while read line ; do
 
     echo $package $version
     
-    underscore_package=$( echo $package | tr "-" "_" )
+    underscored_package=$( echo $package | tr "-" "_" )
 
-    if [[ "${underscore_package}" != "$upspackagename" ]]; then
+    if [[ "${underscored_package}" != "$upspackagename" ]]; then
 
-	grepstring="create_product_variables\s*\(\s*${underscore_package}\s*"
-	res=$( egrep "$grepstring" CMakeLists.txt )
+	grepstring="create_product_variables\s*\(\s*${underscored_package}\s*"
+	res=$( grep -E "$grepstring" CMakeLists.txt )
 
-	if [[ "$res" == "" ]]; then
-	    echo "Error: unable to find ${underscore_package} $version among the create_product_variables calls in $PWD/CMakeLists.txt"
-	    #echo "JCF, 8/26/15 - is this actually an error?"
-	    cleanup
-	    exit 1
-	fi
+	[[ "$res" != "" ]] || \
+	    ( cleanup; errmsg "Error: unable to find ${underscored_package} $version among the create_product_variables calls in $PWD/CMakeLists.txt" )
 
-	sedstring="s/(.*create_product_variables.*\(\s*)${underscore_package}\s+\S+(.*)/\1${underscore_package}  ${version}\2/";
+	sedstring="s/(.*create_product_variables.*\(\s*)${underscored_package}\s+\S+(.*)/\1${underscored_package}  ${version}\2/";
 
 	sed -r -i "$sedstring" CMakeLists.txt 2>&1 > /dev/null
-	    
     fi
 
 done < $packagedepsfile
@@ -195,17 +170,14 @@ done < $packagedepsfile
 sedstring="s/(.*create_product_variables.*\(\s*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  ${packageversion}\2/";
 sed -r -i "$sedstring" CMakeLists.txt
 
-# Add a commit to build-framework here after a prompt?
-
 # Now that we've got build-framework's CMakeLists.txt file, run cmake
 
 cd ..
 mkdir -p build_build-framework
 
-# Is it necessary to explicitly check whether cmake actually works?
-
 cd build_build-framework
-cmake ../build-framework
+cmake ../build-framework || \
+    (cleanup; errmsg "Problem running cmake on build-framework!")
 
 cleanup
 
@@ -229,7 +201,6 @@ function edit_buildfile() {
     possible_qualifiers="${package_e_qual} ${package_e_qual}:${package_s_qual} ${package_s_qual}:${package_e_qual}"
 
     for qual in $possible_qualifiers; do
-	echo "Checking $qual"
 	res=$( grep -r '^\s*'$qual'\s*)$' $buildfile )
 	
 	if [[ "$res" != "" ]]; then

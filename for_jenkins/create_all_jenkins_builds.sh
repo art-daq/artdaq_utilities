@@ -12,6 +12,10 @@ packageversion=$2
 
 qualifier_list=$3
 
+source "$(dirname "$0")"/utils.sh
+
+safety_check
+
 # Save the output from this script for posterity
 
 alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
@@ -23,30 +27,22 @@ exec 2> >(tee $stderr_file)
 
 if [[ ! -e $packagename ]]; then
     echo "I don't see $packagename so I'll git clone it"
-    git clone ssh://p-${packagename}@cdcvs.fnal.gov/cvs/projects/${packagename}
+    git clone ssh://p-${packagename}@cdcvs.fnal.gov/cvs/projects/${packagename} || \
+	errmsg "Error: problem cloning $packagename" 
     
-    if [[ "$?" != "0" ]]; then
-	echo "Error: problem cloning $packagename" >&2 
-	exit 1
-    fi
-
     cd $packagename
-    git checkout $packageversion
-
-    if [[ "$?" != "0" ]]; then
-	echo "Error: problem with checkout of $packageversion in $packagename ; could it be the tag doesn't exist?" >&2
-	exit 1
-    fi
+    git checkout $packageversion || \
+	errmsg "Error: problem with checkout of $packageversion in $packagename ; could it be the tag doesn't exist?"
 
     cd ..
-
 fi
 
-# Grab all the qualifiers in the ups/product_deps file if a qualifier list wasn't supplied
+# Grab all the qualifiers in the ups/product_deps file if a qualifier
+# list wasn't supplied
 
 if [[ -z "$qualifier_list" ]]; then
 
-qualifier_list="qualifier_list_full.txt"
+qualifier_list="qualifier_list_"$(uuidgen)".txt"
 
 # The following set of sed commands essentially takes all the
 # qualifiers in the first column of the block of text between
@@ -65,7 +61,7 @@ sed -r '/^$/d' | \
 sed -r 's/^\s*(\S+).*/\1/' | \
 sed -r 's/:debug//' | \
 sed -r 's/:prof//' | \
-grep -v ":ib" | \
+#grep -v ":ib" | \
 awk 'seen[$0]++' > $qualifier_list
 fi
 
@@ -76,7 +72,10 @@ passed_qualifiers=$(uuidgen)
 
 while read qualifiers ; do
 
+    echo
     echo "QUALIFIER SET: $qualifiers"
+    echo
+
     $(dirname $0)/create_jenkins_build.sh $packagename $packageversion $qualifiers
 
     if [[ "$?" != "0" ]]; then
@@ -97,17 +96,21 @@ while read qualifiers ; do
 
 done < $qualifier_list
 
+rm -f $qualifier_list
+
 manifest_filename=$( ls -1 ${upspackagename}*-source_MANIFEST.txt.* | tail -1 | sed -r "s/(${upspackagename}.*\.txt).*$/\1/" )
 buildcfg_filename=$( ls -1 ${upspackagename}*-buildcfg* | tail -1 | sed -r "s/(${upspackagename}.*)\..*/\1/" )
 
+set +C
 cat ${upspackagename}*-source_MANIFEST.txt.* | sort -n | uniq > $manifest_filename
+set -C
 
 set +C
 cp -p $(ls -1 ${upspackagename}*-buildcfg* | tail -1 ) $buildcfg_filename
 set -C
 
 echo
-echo "Edits (if any) performed on artdaq-utilities; please commit them so Jenkins can see them"
+echo "Edits (if any) performed on artdaq-utilities; please commit them so Jenkins can see them: "
 cd artdaq-utilities
 git diff
 cd ..

@@ -21,6 +21,10 @@ if (( $# < 3 || $# > 4)) ; then
      exit 1
 fi
 
+source "$(dirname "$0")"/utils.sh
+
+safety_check
+
 target_package=$1
 target_version=$2
 target_qualifiers=$3
@@ -43,12 +47,6 @@ if [[ "$scriptdir" =~ ".." || "$scriptdir" =~ "." ]]; then
     scriptdir=$PWD/$(dirname $0)
 fi
 
-function errmsg() {
-    local msg=$1
-    echo $msg >&2
-    exit 1
-}
-
 if [[ ! -e $scriptdir/parse_product_deps.py ]]; then
     errmsg "Expected to find \"parse_product_deps.py\" in same directory as this script (${scriptdir})"
 fi
@@ -65,8 +63,8 @@ function package_dep() {
     echo "Inside package_dep for $package $version ${qualifiers}, have packagearray = \"$packagearray\""
 
     if [[ "$packagearray" =~ " $package " ]] && ! [[ "$packagearray" =~ " $version " ]]; then
-        echo "Error in package_deps.sh: version conflict found for package $package (a version other than $version has already been stored)" >&2
-        exit 1
+        errmsg "Error in package_deps.sh: version conflict found for package $package (a version other than $version has already been stored)"
+
     elif [[ "$packagearray" =~ " $package " ]]; then
 	echo "$package has already been processed"
 	return
