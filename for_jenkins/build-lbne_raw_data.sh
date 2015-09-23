@@ -136,14 +136,14 @@ chmod +x pullProducts
 
 # source code tarballs MUST be pulled first
 if [ "${target_env}" == "offline" ]; then
-  ./pullProducts ${blddir} source nu-${nutoolsver} || \
+  ./pullProducts -f ${blddir} source nu-${nutoolsver} || \
       { cat 1>&2 <<EOF
 ERROR: pull of nu-${nutoolsver} failed
 EOF
         exit 1
       }
 fi
-./pullProducts ${blddir} source lbne_raw_data-${version} || \
+./pullProducts -f ${blddir} source lbne_raw_data-${version} || \
       { cat 1>&2 <<EOF
 ERROR: pull of lbne_raw_data-${version} failed
 EOF
@@ -154,12 +154,17 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
+
+# JCF, 9/23/15
+
+# Largely as a diagnostic, force a pull of everything
+
 if [ "${target_env}" == "offline" ]; then
-  ./pullProducts ${blddir} ${flvr} nu-${nutoolsver} ${squal}-${basequal} ${build_type}
-  ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal}-nu ${build_type}
+  ./pullProducts -f ${blddir} ${flvr} nu-${nutoolsver} ${squal}-${basequal} ${build_type}
+  ./pullProducts -f ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal}-nu ${build_type}
 else
-  ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-  ./pullProducts ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
+  ./pullProducts -f ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+  ./pullProducts -f ${blddir} ${flvr} lbne_raw_data-${version} ${squal}-${basequal} ${build_type}
 fi
 # remove any lbne_raw_data entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/lbne_raw_data ]; then
