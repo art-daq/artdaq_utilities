@@ -24,3 +24,4 @@ simple_plugin("graphite" "metric"
 
 install_headers()
 install_source()
+install_fhicl(LIST fcl/graphite_metric.fcl fcl/file_metric.fcl)
