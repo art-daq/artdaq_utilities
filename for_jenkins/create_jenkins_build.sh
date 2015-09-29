@@ -1,71 +1,43 @@
 #!/bin/env bash
 
-# Expectations in this script are as follows:
-
-# 1) Usage is:
-
-# ./create_jenkins_build.sh \
-# <name of target package> \
-# <commit hash, tag or branch for the build-framework package version you want> \
-# (optionally, a nonzero value indicating you want to build and install the target package in a local ./products directory)
-# (optionally, a colon-separated qualifier list meant to override the default qualifier list in ups/product_deps)
-
-# Furthermore:
-
-# 2) The head of the master branch for the target package contains the
-# version for which we want to perform a Jenkins build
-
-# 3) ups is setup s.t. the packages the target package depends on are
-# all installed in the directories found in the $PRODUCTS environment
-# variable
-
-# 4) If the target package isn't also already installed in one of
-# those products directories, the user should supply a nonzero value
-# (conventionally "1") as the third argument to the script
-
-# 5) If the default qualifier list at the top of the ups/product_deps
-# file isn't what's desired, then override it with colon-separated
-# qualifiers as the fourth argument
-
-
-if [[ "$#" < "2" || "$#" > "4" ]]; then
-    echo "Usage: ./"$(basename $0)" <packagename> <build-framework commit hash, tag or branch> (nonzero value => build and install target package first) (colon-separated qualifier list override)" 
+if [[ "$#" != "3" ]]; then
+    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <colon-separated qualifier list>" 
     exit 0
 fi
 
-if [[ -z $PRODUCTS ]]; then
-    echo "You don't appear to have any products directories set up"
-    echo "All packages (including $1) must be installed in the products directories; exiting..."
-    exit 1
-fi
+packagename=$1
+upspackagename=$( echo $packagename | tr "-" "_")
+packageversion=$2
+
+package_all_quals_colondelim=$3
+
+source "$(dirname "$0")"/utils.sh
+
+safety_check
 
 basedir=$PWD
 
-packagename=$1
-upspackagename=$( echo $packagename | tr "-" "_")
+scriptdir=$(dirname $0)
+if [[ "$scriptdir" =~ ".." || "$scriptdir" =~ "." ]]; then
 
-build_framework_commit=$2
+    echo "I see an indication of a relative path (\".\" or \"..\") in ${scriptdir}; prepending $PWD"
+    scriptdir=$PWD/$(dirname $0)
+fi
 
-install_target_package=$3
 
 buildfile=artdaq-utilities/for_jenkins/build-${upspackagename}.sh
 edited_buildfile=${basedir}/$(uuidgen)
 
-# This file will contain the result of the "ups depend" command run on
-# the target package
+# This file will contain the list of packages (and their versions)
+# which the target package depends on
 
 packagedepsfile=${basedir}/$(uuidgen)
 
 # The version and qualifier variables for the target package are filled via the
 # "parse_package_info" function
 
-packageversion=
 package_e_qual=
 package_s_qual=
-package_all_quals_colondelim=$4
-package_all_quals_spacedelim=
-
-
 
 # Using a "main" function to store the main program flow is basically
 # a way to use functions which haven't yet been defined, making this
@@ -73,81 +45,66 @@ package_all_quals_spacedelim=
 
 function main() {
 
-# Set up a pre-existing products directory (will use for "ups depend")
-
-# Recall that we check at the start of the script to make sure PRODUCTS is set...
-existing_products_dir=$( echo $PRODUCTS | tr ":" "\n" | head -1 )
-	
-if [[ -z $existing_products_dir ]]; then
-    echo "Unable to locate a products directory!"
-    exit 1
-elif [[ ! -e $existing_products_dir ]]; then
-    echo "Problem locating $existing_products_dir from $PWD"
-    exit 1
-fi
-
-source $existing_products_dir/setup
-
-
-# Check out the target package if it's not already there, and use
-# parse_package_info to either deduce the version and build qualifiers
-# from the ups/product_deps file at the head of the master branch, or
-# from the optional qualifier override list passed to the script
-
-if [[ ! -e $packagename ]]; then
-    git clone http://cdcvs.fnal.gov/projects/$packagename
-fi
-
-if [[ "$?" != "0" ]]; then
-    echo "Problem attempting git clone of $packagename" >&2
-    cleanup
-    exit 1
-fi
-
-cd $packagename
-git checkout master
-cd ..
-
-parse_package_info $packagename
-
+package_e_qual=$( echo $package_all_quals_colondelim | sed -r 's/.*(e[0-9]+).*/\1/' )
+package_s_qual=$( echo $package_all_quals_colondelim | sed -r 's/.*(s[0-9]+).*/\1/' )
+    
 echo "I think you want a Jenkins build of $packagename $packageversion," \
-"build qualifiers $package_all_quals_spacedelim (or, $package_all_quals_colondelim )"
+    "build qualifiers $package_all_quals_colondelim"
 
-echo
-echo "If I'm wrong, you have 5 seconds to hit ctrl-C"
+[[ -e $scriptdir/package_deps.sh ]] || errmsg "Unable to find package_deps.sh in $scriptdir"
 
-sleep 5
+checkout_directory=$basedir/jenkins_product_deps_dir
 
-# Build and install the target package into a local ./products
-# directory if that option was chosen at the command line
-
-if [[ -n $install_target_package && "$install_target_package" != "0" ]]; then
-    install_package    
+if [[ ! -e $checkout_directory ]]; then
+    mkdir $checkout_directory
 fi
 
-# Use the "ups depend" command to find all the versions of the
-# packages, and then save them in a temporary file. Please note that
-# if ups depend doesn't find versions of the needed packages, it
-# doesn't return nonzero -- thus we need to search the output for the
-# token "ERROR"
+# Assumption below in the awk script which filters the output of
+# package_deps.sh is that we want to see all remaining lines in the
+# output that appears after the line containing "Final packagearray
+# is"
 
-# The various piped commands below translate from the usual output of
-# the "ups depend" command to output that looks like:
+# Also, cetbuildtools is removed as this is not properly a package on
+# which the target package will depend, and
+# artdaq_ganglia_plugin/artdaq_utilities are removed as this does not
+# appear in build-framework's CMakeLists.txt file
 
-# <package1> <version1>
-# <package2> <version2>
-# ...ETC...
+# Finally: note that the output of package_deps.sh is sent into a
+# temporary file rather than directly into bunch of pipes; this is
+# because we want to test its error code, not the error code of the
+# last pipe'd command
 
-ups depend $upspackagename v$packageversion -q prof:${package_all_quals_colondelim} 2>&1 | 
-sed -r 's/^[_| ]+(\S+)\s+(\S+).*/\1 \2/' | 
-awk '!seen[$0]++'  | 
-tee $packagedepsfile
+cmd="$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_colondelim $checkout_directory"
 
-if [[ "$( grep ERROR $packagedepsfile )" != "" ]]; then
-    echo "Please make sure all packages are installed in the products directories"
-    echo "PRODUCTS = $PRODUCTS"
+tmpfile=$(uuidgen)
+$cmd 2>&1 > $tmpfile
+
+if [[ "$?" == "0" ]]; then 
+    cat $tmpfile | \
+	grep -v cetbuildtools | \
+	grep -v artdaq_ganglia_plugin | \
+	grep -v artdaq_utilities | \
+	awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
+    rm -f $tmpfile
+else
+    rm -f $tmpfile
     cleanup
-    exit 1
+    errmsg "Problem executing \"$cmd\""
+fi
+
+
+major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
+full_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}_[0-9]+).*/\1/p' $packagedepsfile )
+
+if [[ "$major_art_version" == "v1_15" ]]; then
+    build_framework_branch="for_art_v1_15"
+elif [[ "$major_art_version" == "v1_14" ]]; then
+    build_framework_branch="for_art_v1_14"
+elif [[ "$major_art_version" == "v1_13" ]]; then
+    build_framework_branch="for_art_v1_13"
+else
+    cleanup
+    errmsg "Unable to determine the art version"
 fi
 
 # Now, check out artdaq-utilities, and edit the package's
@@ -156,20 +113,12 @@ fi
 # add a code snippet which WILL support it)
 
 if [[ ! -e artdaq-utilities ]]; then
-    git clone ssh://p-artdaq-utilities@cdcvs.fnal.gov/cvs/projects/artdaq-utilities
+
+    git clone ssh://p-artdaq-utilities@cdcvs.fnal.gov/cvs/projects/artdaq-utilities || \
+	( cleanup; errmsg "Problem cloning artdaq-utilities!" )
 fi
 
-if [[ "$?" != "0" ]]; then
-    echo "Problem cloning artdaq-utilities!"
-    cleanup
-    exit 1
-fi
-
-if [[ ! -e $buildfile ]]; then
-    echo "Unable to find ${buildfile}!"
-    cleanup
-    exit 1
-fi
+[[ -e $buildfile ]] || (cleanup; errmsg "Unable to find ${buildfile}!")
 
 edit_buildfile
 
@@ -177,23 +126,33 @@ if [[ ! -e build-framework ]]; then
 
     # Read-only checkout - don't yet have write access to build-framework!
 
-    git clone http://cdcvs.fnal.gov/projects/build-framework
-fi
-
-if [[ "$?" != "0" ]]; then
-    echo "Problem cloning build-framework!"
-    cleanup
-    exit 1
+    git clone http://cdcvs.fnal.gov/projects/build-framework || \
+	( cleanup; errmsg "Problem cloning build-framework!" )
 fi
 
 cd build-framework
-git checkout $build_framework_commit
+git reset HEAD --hard
 
-if [[ "$?" != "0" ]]; then
-    echo "Problem with git checkout $build_framework_commit in build-framework"
-    cleanup
-    exit 1
-fi
+git checkout $build_framework_branch || \
+    (cleanup; errmsg "Problem with git checkout $build_framework_commit in build-framework" )
+
+commits_ago="-1"
+
+for i in {0..100}; do 
+    res=$( git show HEAD~${i}:CMakeLists.txt | grep -E "\(\s*art\s+${full_art_version}" )
+    
+    if [[ -n $res ]]; then 
+	commits_ago=$i; 
+	break; 
+    fi; 
+done
+
+[[ "$commits_ago" != "-1" ]] || \
+    errmsg "Unable to determine where on the $build_framework_branch branch of build-framework the CMakeLists.txt file for art $full_art_version is"
+
+echo "Will try to descend $commits_ago commits down the $build_framework_branch of build-framework"
+git checkout HEAD~${i} || errmsg "Problem descending $commits_ago commits down the $build_framework_branch of build-framework"
+
 
 # Make sure that all packages (except the target package) are what we
 # expect them to be in build-framework's CMakeLists.txt file
@@ -204,22 +163,20 @@ while read line ; do
     version=$( echo $line | awk '{print $2}' )
 
     echo $package $version
+    
+    underscored_package=$( echo $package | tr "-" "_" )
 
-    if [[ "$package" != "$upspackagename" ]]; then
+    if [[ "${underscored_package}" != "$upspackagename" ]]; then
 
-	grepstring="create_product_variables\s*\(\s*$package\s*"
-	res=$( egrep "$grepstring" CMakeLists.txt )
+	grepstring="create_product_variables\s*\(\s*${underscored_package}\s*"
+	res=$( grep -E "$grepstring" CMakeLists.txt )
 
-	if [[ "$res" == "" ]]; then
-	    echo "Error: unable to find $package $version among the create_product_variables calls in $PWD/CMakeLists.txt"
-	    cleanup
-	    exit 1
-	fi
+	[[ "$res" != "" ]] || \
+	    ( cleanup; errmsg "Error: unable to find ${underscored_package} $version among the create_product_variables calls in $PWD/CMakeLists.txt" )
 
-	sedstring="s/(.*create_product_variables.*)${package}\s+\S+(.*)/\1${package}  ${version}\2/";
+	sedstring="s/(.*create_product_variables.*\(\s*)${underscored_package}\s+\S+(.*)/\1${underscored_package}  ${version}\2/";
 
-	sed -ri "$sedstring" CMakeLists.txt 2>&1 > /dev/null
-	    
+	sed -r -i "$sedstring" CMakeLists.txt 2>&1 > /dev/null
     fi
 
 done < $packagedepsfile
@@ -228,27 +185,23 @@ done < $packagedepsfile
 # package depends on are the versions we expect, now update the target
 # package version in the CMakeLists.txt file
 
-sedstring="s/(.*create_product_variables.*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  v${packageversion}\2/";
-echo $sedstring
-sed -ri "$sedstring" CMakeLists.txt
-
-# Add a commit to build-framework here after a prompt?
+sedstring="s/(.*create_product_variables.*\(\s*)${upspackagename}\s+\S+(.*)/\1${upspackagename}  ${packageversion}\2/";
+sed -r -i "$sedstring" CMakeLists.txt
 
 # Now that we've got build-framework's CMakeLists.txt file, run cmake
 
 cd ..
 mkdir -p build_build-framework
 
-# Is it necessary to explicitly check whether cmake actually works?
-
 cd build_build-framework
-cmake ../build-framework
+cmake ../build-framework || \
+    (cleanup; errmsg "Problem running cmake on build-framework!")
 
 cleanup
 
 cd $basedir
 
-ls -ltr build_build-framework/art_externals/${upspackagename}*
+#ls -ltr build_build-framework/art_externals/${upspackagename}*
 
 }
 
@@ -258,40 +211,6 @@ function cleanup() {
     rm -f $basedir/nu-*.html
 }
 
-function parse_package_info() {
-
-    depsfile=${packagename}/ups/product_deps
-
-    # For devel
-    if [[ ! -e $depsfile ]]; then
-	echo "Problem finding $depsfile!"
-	cleanup
-	exit 1
-    fi
-
-    sedstring='s!^\s*parent\s+'${upspackagename}'\s+v([0-9_]+)\s*$!\1!p'
-    packageversion=$( sed -rn "$sedstring" $depsfile )
-
-    echo "packageversion = ${packageversion}"
-
-    # Only deduce the package qualifiers from the product_deps file if
-    # they weren't already supplied as an argument to the script
-
-    if [[ -z $package_all_quals_colondelim ]]; then
-	sedstring='s!^\s*defaultqual\s+(\S+)\s*!\1!p'
-	package_all_quals_colondelim=$( sed -rn "$sedstring" $depsfile)
-    fi
-
-    package_all_quals_spacedelim=$( echo $package_all_quals_colondelim | tr ":" " " )
-
-    # And pluck out the e-qualifier (compiler version) and s-qualifier (art version) (if applicable)
-
-    package_e_qual=$( echo $package_all_quals_spacedelim | sed -r 's/.*(e[0-9]+).*/\1/' )
-    package_s_qual=$( echo $package_all_quals_spacedelim | sed -r 's/.*(s[0-9]+).*/\1/' )
-
-}
-
-
 function edit_buildfile() {
     
     # I'll need to give some careful thought to the possible permutations
@@ -300,8 +219,7 @@ function edit_buildfile() {
     possible_qualifiers="${package_e_qual} ${package_e_qual}:${package_s_qual} ${package_s_qual}:${package_e_qual}"
 
     for qual in $possible_qualifiers; do
-	echo "Checking $qual"
-	res=$( grep -r '^\s*'$qual'\s*)$' $buildfile )
+	res=$( grep -r '^\s*'$qual'\s*)\s*$' $buildfile )
 	
 	if [[ "$res" != "" ]]; then
 	    break
@@ -317,18 +235,7 @@ function edit_buildfile() {
     # If we're here, it means that we didn't find the build qualifier,
     # so add it to the switch statement
 
-    # First, copy the part of the original buildfile up to the line at
-    # which the case statement is located, using some sleight-of-hand
-    # which takes advantage of the "-n" option to the cat command
-
-    sedstring='/case \$\{qual_set\} in/p'
-
-    insert_at_line=$( cat -n $buildfile | sed -rn "$sedstring" | awk '{print $1}')
-    echo "insert_at_line = $insert_at_line"
-
-    head -${insert_at_line} $buildfile > $edited_buildfile
-
-    # Next, to fill in the body of the switch statement for the target
+    # To fill in the body of the switch statement for the target
     # package, we'll deduce the relevant art package the target
     # package depends on, as well as the nutools package corresponding
     # to that art version
@@ -367,30 +274,28 @@ function edit_buildfile() {
 	echo "Desired nutools version is $nutools_version"
     fi
 
+# Now construct a sed command which will append the new qualifiers
+# after the "case ${qual_set} in" line in the build script - observe
+# that since I'm putting the command in double quotes since variables
+# need to be subbed in, I need to perform a combination of escapes for
+# both the shell and for sed (with its "-r", extended regular
+# expression, option)
 
-    cat <<EOF >> $edited_buildfile
-  ${package_s_qual}:${package_e_qual})
-     basequal=${package_e_qual}
-     squal=${package_s_qual}
-     artver=${art_version}
-     nutoolsver=${nutools_version}
-  ;;
-EOF
 
-    total_lines=$(wc -l $buildfile | awk '{print $1}' )
-    echo "total_lines = $total_lines"
-    echo "insert_at_line = $insert_at_line"
+sedstring="/case \\\$\{qual_set\} in/a\
+    ${package_s_qual}:${package_e_qual})\n\
+       basequal=${package_e_qual}\n\
+       squal=${package_s_qual}\n\
+       artver=${art_version}\n\
+       nutoolsver=${nutools_version}\n\
+       ;;\n\
+ "
 
-    let "tail_lines = $total_lines - $insert_at_line"
-    echo "tail_lines = $tail_lines"
-    
+sed -r "$sedstring" $buildfile > $edited_buildfile
 
-    tail -${tail_lines} $buildfile >> $edited_buildfile
-
-    echo "THE FOLLOWING EDIT WILL BE MADE TO $buildfile UNLESS YOU HIT ctrl-C IN THE NEXT 5 SECONDS: "
+    echo "THE FOLLOWING EDIT WILL BE MADE TO $buildfile: "
 
     diff $buildfile $edited_buildfile
-    sleep 5
     cp $edited_buildfile $buildfile
 }
 
@@ -404,41 +309,9 @@ function get_art_from_nutools() {
 	echo "Problem grabbing http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/nu-${nv}.html"
     fi
 
-    nutools_art_listing=$( sed -rn 's/.*\s+art\s+.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-${nv}.html )
+    nutools_art_listing=$( sed -r -n 's/.*\s+art\s+.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-${nv}.html )
     rm -f nu-${nv}.html
     echo $nutools_art_listing
-}
-
-function install_package() {
-    
-    cd $basedir
-
-    if [[ ! -e products ]]; then
-
-	mkdir $basedir/products
-	cp -R $existing_products_dir/.upsfiles $basedir/products
-	cp -p $existing_products_dir/setup $basedir/products
-
-	source $basedir/products/setup
-
-	export PRODUCTS=$basedir/products:${PRODUCTS}
-	echo "PRODUCTS = $PRODUCTS"
-    fi
-
-    if [[ ! -e build_${packagename} ]]; then
-	mkdir -p build_${packagename}
-    fi
-
-    cd build_${packagename}
-    . ../$packagename/ups/setup_for_development -p ${package_all_quals_spacedelim}
-    buildtool -c -j 40 -i -I ../products
-    cd $basedir
-
-    if [[ "$?" != "0" ]]; then
-	echo "There was a problem trying to build $packagename"
-	cleanup
-	exit 1
-    fi
 }
 
 

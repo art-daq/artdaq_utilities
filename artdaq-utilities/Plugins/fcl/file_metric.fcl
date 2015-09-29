@@ -1,0 +1,25 @@
+#
+#  Example File plugin configuration FhiCL
+#  Values shown are the defaults (except for metricPluginType, which has no default value)
+#
+
+daq.metrics.file: { # Can be named anything.
+                     # If you're using multiple instances of the file plugin, they must have unique names
+  #
+  # Metric Plugin Configuration (Common to all ARTDAQ Metric Plugins)
+  #
+  level: 0 # Integer, verbosity level of metrics that will be recorded by this plugin. 
+           # 0 is minimum amount, maximum is implementation-defined.
+  metricPluginType: "file" # Must be "epics" for the plugin to be loaded
+  reporting_interval: 15.0 # Double value, the frequency in seconds that the plugin sends out metrics
+
+  #
+  # File Metric Plugin Configuration
+  #
+  fileName: "FileMetric.out" # Name (optionally path as well) of the output file
+  uniquify: false            # Whether to generate a unique file name. If true, fileName should contain
+                             # the string "%UID%".
+  fileMode: "append"         # The mode that the file will be opned with. If this is equal to "Overwrite",
+                             # "Create", or "Write", the plugin will overwrite the file if it exists,
+                             # otherwise, it will append to the file if it exists.
+}
