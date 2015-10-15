@@ -58,10 +58,13 @@ if (have_old_art)
 endif()
 unset(have_old_art)
 
+#########################################################################
+# Ability to build with multiple versions of art.
 check_ups_version(art "$ENV{ART_VERSION}" v1_14_00 PRODUCT_OLDER_VAR EVENTID_HAS_EXPLICIT_RUNID)
 if (EVENTID_HAS_EXPLICIT_RUNID)
   add_definitions(-DARTDAQ_ART_EVENTID_HAS_EXPLICIT_RUNID)
 endif()
+########################################################################
 
 find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
