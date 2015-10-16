@@ -1,6 +1,6 @@
 cet_make(
-  EXCLUDE graphite_metric.cc file_metric.cc
-  LIBRARIES
+  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc
+  LIB_LIBRARIES
   ${ART_PERSISTENCY_COMMON}
   ${ART_UTILITIES}
   ${FHICLCPP}
@@ -14,6 +14,13 @@ basic_plugin("file" "metric"
   ${CETLIB}
 )
 
+basic_plugin("msgFacility" "metric"
+   ${FHICLCPP}
+   ${CETLIB}
+   ${MF_MESSAGELOGGER}
+   ${MF_UTILITIES}
+)
+
 basic_plugin("graphite" "metric"
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
@@ -24,3 +31,4 @@ basic_plugin("graphite" "metric"
 
 install_headers()
 install_source()
+install_fhicl(LIST fcl/file_metric.fcl fcl/graphite_metric.fcl fcl/msgFacility_metric.fcl)
