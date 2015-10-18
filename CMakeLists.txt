@@ -44,6 +44,7 @@ find_ups_product( TRACE v3_03_00 )
 find_ups_product( cetlib v1_08_00 )
 find_ups_product( cetpkgsupport v1_08_03 )
 find_ups_product( fhiclcpp v3_04_00 )
+find_ups_product( messagefacility v1_14_01 )
 
 find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 

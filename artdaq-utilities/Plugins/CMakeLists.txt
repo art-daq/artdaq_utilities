@@ -1,6 +1,6 @@
 cet_make(
   EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc
-  LIB_LIBRARIES
+  LIBRARIES
   ${ART_PERSISTENCY_COMMON}
   ${ART_UTILITIES}
   ${FHICLCPP}
