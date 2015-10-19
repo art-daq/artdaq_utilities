@@ -23,8 +23,7 @@ IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
 
-set(CMAKE_MODULE_PATH $ENV{ART_DIR}/Modules
-		      $ENV{CETBUILDTOOLS_DIR}/Modules
+set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 
 include(CetCMakeEnv)
@@ -42,29 +41,10 @@ cet_report_compiler_flags()
 find_ups_boost(v1_53_0)
 find_ups_product (cetbuildtools v4_09_02)
 find_ups_product( TRACE v3_03_00 )
-find_ups_product( art v1_08_10 )
 find_ups_product( cetlib v1_08_00 )
 find_ups_product( cetpkgsupport v1_08_03 )
-find_ups_product( clhep v2_2_0_3 )
 find_ups_product( fhiclcpp v3_04_00 )
 find_ups_product( messagefacility v1_14_01 )
-find_ups_product( sqlite v3_08_05_00 )
-find_ups_product( tbb v4_1 )
-find_ups_root( v5_34_20 )
-
-check_ups_version(art "$ENV{ART_VERSION}" v1_11_00 PRODUCT_OLDER_VAR have_old_art)
-if (have_old_art)
-  cmake_policy(SET CMP0046 OLD)
-endif()
-unset(have_old_art)
-
-#########################################################################
-# Ability to build with multiple versions of art.
-check_ups_version(art "$ENV{ART_VERSION}" v1_14_00 PRODUCT_OLDER_VAR EVENTID_HAS_EXPLICIT_RUNID)
-if (EVENTID_HAS_EXPLICIT_RUNID)
-  add_definitions(-DARTDAQ_ART_EVENTID_HAS_EXPLICIT_RUNID)
-endif()
-########################################################################
 
 find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
@@ -75,9 +55,7 @@ if(BTYPE_UC STREQUAL DEBUG)
 endif()
 
 # macros for artdaq_dictionary and simple_plugin
-include(ArtDictionary)
-include(ArtMake)
-include(BuildPlugins)
+include(BasicPlugin)
 
 # source
 add_subdirectory(artdaq-utilities)
