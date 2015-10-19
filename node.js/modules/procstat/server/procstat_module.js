@@ -10,8 +10,6 @@ var fs = require('fs');
 var emitter = require('events').EventEmitter;
 var procstat = new emitter();
 
-procstat.MasterInitFunction = function () { return null; };
-
 // Only function here...read the file
 procstat.GET_ = function () {
   fs.readFile('/proc/stat', function read(err, data) {

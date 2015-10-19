@@ -94,7 +94,6 @@ arc.MasterInitFunction = function ( workerData ) {
     
     workerData["artdaq-runcontrol"] = output;
 };
-arc.WorkerInitFunction = function () { return null; };
 
 function checkCommand( systemStatus ) {
     if ( systemStatus.commandPID !== null ) {
