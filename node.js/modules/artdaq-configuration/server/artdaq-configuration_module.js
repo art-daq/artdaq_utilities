@@ -11,7 +11,7 @@ function generateDefaultConfig() {
     var output = {};
     output.expertMode = false;
     output.configName = "Default";
-    output.artdaqDir = "$HOME/artdaq-demo-base";
+    output.artdaqDir = "/path/to/artdaq-demo-base";
     output.setupScript = "setupARTDAQDEMO";
     output.needsRestart = false;
     output.dataDir = "/tmp";
