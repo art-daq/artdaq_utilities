@@ -136,6 +136,15 @@ function startCommand( args,systemStatus ) {
         var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.err.log",'w' );
         console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray );
         var command = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
+        /*
+        var client = xmlrpc.createClient({ host: 'localhost', port: 9090, path: '/'})
+ 
+		 // Sends a method call to the XML-RPC server 
+		 client.methodCall('anAction', ['aParam'], function (error, value) {
+				 // Results of the method response 
+				 console.log('Method response for \'anAction\': ' + value)
+			 })
+        */
         systemStatus.commandPID = command.pid;
         command.unref( );
         systemStatus.commandRunning = true;
