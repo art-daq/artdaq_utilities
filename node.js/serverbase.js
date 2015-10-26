@@ -95,7 +95,9 @@ if ( cluster.isMaster ) {
     
     // Call Master Init functions
     for ( var name in module_holder ) {
-        module_holder[name].MasterInitFunction( workerData );
+        try {
+			module_holder[name].MasterInitFunction( workerData );
+        } catch ( err ) { ; }
         module_holder[name].on("message", messageHandler );
     }
     fs.createWriteStream( __dirname + '/server.log',{ flags : 'w' } );
@@ -145,7 +147,9 @@ if ( cluster.isMaster ) {
 		//console.log("Received message from module " + data.name);
             process.send( data );
         } );
-        module_holder[name].WorkerInitFunction( workerData );
+        try {
+			module_holder[name].WorkerInitFunction( workerData );
+        } catch (err) { ; }
     }
     
     function serve( req,res,readOnly,username ) {

@@ -40,6 +40,7 @@ var configuration = {};
 configuration.artdaqDir = "~/artdaq-demo-base";
 configuration.setupScript = "setupARTDAQDEMO";
 configuration.runValue = 0;
+configuration.xmlObj;
 
 function readConfiguration( systemStatus ) {
     var fileName = __dirname + "/../../artdaq-configuration/server/" + systemStatus.config;
@@ -47,12 +48,12 @@ function readConfiguration( systemStatus ) {
     if ( fs.existsSync( fileName ) ) {
         var res = true;
         var config = "" + fs.readFileSync( fileName );
-	var xmlObj;
-	parser.parseString( config, function(err,result) {xmlObj = result;});
-        
-        configuration.artdaqDir = xmlObj['artdaq-configuration'].artdaqDir;
-        configuration.setupScript = xmlObj['artdaq-configuration'].setupScript;
-        configuration.runValue = xmlObj['artdaq-configuration'].dataLogger.runValue;
+		var xmlObj;
+		parser.parseString( config, function(err,result) {xmlObj = result;});
+		configuration.xmlObj = xmlObj;
+		configuration.artdaqDir = xmlObj['artdaq-configuration'].artdaqDir;
+		configuration.setupScript = xmlObj['artdaq-configuration'].setupScript;
+		configuration.runValue = xmlObj['artdaq-configuration'].dataLogger.runValue;
 
         return res;
     }
@@ -94,7 +95,6 @@ arc.MasterInitFunction = function ( workerData ) {
     
     workerData["artdaq-runcontrol"] = output;
 };
-arc.WorkerInitFunction = function () { return null; };
 
 function checkCommand( systemStatus ) {
     if ( systemStatus.commandPID !== null ) {
@@ -128,6 +128,7 @@ function startCommand( args,systemStatus ) {
     if ( readConfiguration( systemStatus ) ) {
         var port = ( systemStatus.partition * 100 ) + 5600;
         var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
+		fs.createReadStream(__dirname + "/../../artdaq-configuration/server/" + systemStatus.config).pipe(fs.createWriteStream(configName));
         var commandArray = [systemStatus.config,configName,port,"manageSystem.sh", "-C", configName].concat( args );
         systemStatus.commandErrorBuffer = "";
         systemStatus.commandOutputBuffer = "";
@@ -135,6 +136,15 @@ function startCommand( args,systemStatus ) {
         var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/comm.err.log",'w' );
         console.log( "Spawning: " + __dirname + "/runARTDAQ.sh " + commandArray );
         var command = spawn( __dirname + "/runARTDAQ.sh",commandArray,{ detached: true, stdio: ['ignore',out,err] } );
+        /*
+        var client = xmlrpc.createClient({ host: 'localhost', port: 9090, path: '/'})
+ 
+		 // Sends a method call to the XML-RPC server 
+		 client.methodCall('anAction', ['aParam'], function (error, value) {
+				 // Results of the method response 
+				 console.log('Method response for \'anAction\': ' + value)
+			 })
+        */
         systemStatus.commandPID = command.pid;
         command.unref( );
         systemStatus.commandRunning = true;
@@ -148,13 +158,11 @@ function startSystem( systemStatus ) {
     if ( readConfiguration( systemStatus ) ) {
         console.log( "Starting System, Partition " + systemStatus.partition );
         var port = ( systemStatus.partition * 100 ) + 5600;
-        var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
-        var xmlObj;
-        parser.parseString( "" + fs.readFileSync( configName ), function(err, result) { xmlObj = result; });        
-        var logRoot = xmlObj['artdaq-configuration'].logDir;
-        var eventBuilderHostnames = xmlObj['artdaq-configuration'].eventBuilders.hostnames.hostname;
-        var aggregatorHostname = xmlObj['artdaq-configuration'].dataLogger.hostname;
-        var boardReaderHostnames = xmlObj['artdaq-configuration'].boardReaders.boardReader.hostname;
+        
+        var logRoot = configuration.xmlObj['artdaq-configuration'].logDir;
+        var eventBuilderHostnames = configuration.xmlObj['artdaq-configuration'].eventBuilders.hostnames.hostname;
+        var aggregatorHostname = configuration.xmlObj['artdaq-configuration'].dataLogger.hostname;
+        var boardReaderHostnames = configuration.xmlObj['artdaq-configuration'].boardReaders.boardReader.hostname;
 
         console.log("Making PMT Log Directories");
         spawn("/bin/mkdir", ["-p","-m","0777",logRoot + "/pmt"]);
@@ -179,7 +187,11 @@ function startSystem( systemStatus ) {
 	    }
 	}
 
-        var commandArray = [systemStatus.config, configName,port,"pmt.rb","-p ${ARTDAQ_BASE_PORT} -C",configName,"--logpath", logRoot, "--display ${DISPLAY}"];
+        var configName = configuration.artdaqDir + "/P" + systemStatus.partition + "Config.xml";
+		fs.createReadStream(__dirname + "/../../artdaq-configuration/server/" + systemStatus.config).pipe(fs.createWriteStream(configName));
+        var displayNumber = process.env.DISPLAY;
+        
+        var commandArray = [systemStatus.config, configName,port,"pmt.rb","-p", port, "-C",configName,"--logpath", logRoot, "--display", displayNumber];
         
         var out = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/out.log",'w' );
         var err = fs.openSync( __dirname + "/../client/P" + systemStatus.partition + "/err.log",'w' );
@@ -204,7 +216,7 @@ function initialize( systemStatus ) {
     }
     else {
         var onmonDir = __dirname + "/../client/P" + systemStatus.partition + "/artdaqdemo_onmon.root";
-        var args = ["-M", onmonDir, "-D", 35555 + systemStatus.partition, "init"];
+        var args = ["-M", onmonDir, "init"];
         startCommand( args,systemStatus );
         systemStatus.state = "Initialized";
     }

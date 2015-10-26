@@ -27,7 +27,13 @@ case ${qual_set} in
   ;;
   e7) 
      basequal=e7
-     artver=v1_15_02
+     case ${version} in
+       v1_00_09) 
+         artver=v1_14_02
+       ;;
+       *)
+         artver=v1_15_02
+     esac
   ;;
   *)
     echo "unexpected qualifier set ${qual_set}"

@@ -1,6 +1,6 @@
-art_make(
+cet_make(
   EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc
-  LIB_LIBRARIES
+  LIBRARIES
   ${ART_PERSISTENCY_COMMON}
   ${ART_UTILITIES}
   ${FHICLCPP}
@@ -9,19 +9,19 @@ art_make(
   ${MF_UTILITIES}
   )
 
-simple_plugin("file" "metric"
+basic_plugin("file" "metric"
   ${FHICLCPP}
   ${CETLIB}
 )
 
-simple_plugin("msgFacility" "metric"
+basic_plugin("msgFacility" "metric"
    ${FHICLCPP}
    ${CETLIB}
    ${MF_MESSAGELOGGER}
    ${MF_UTILITIES}
 )
 
-simple_plugin("graphite" "metric"
+basic_plugin("graphite" "metric"
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
   ${FHICLCPP}
