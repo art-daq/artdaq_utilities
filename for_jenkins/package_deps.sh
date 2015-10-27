@@ -80,7 +80,7 @@ function package_dep() {
 
     # NOTE THE WHITESPACE BEFORE THE FIRST TOKEN AND AFTER THE LAST
 
-    local irreducible_list=" art mpich mvapich2 artdaq_ganglia_plugin TRACE smc_compiler cetbuildtools xmlrpc_c artdaq_utilities pqxx "
+    local irreducible_list=" art mpich mvapich2 artdaq_ganglia_plugin artdaq_epics_plugin TRACE smc_compiler cetbuildtools xmlrpc_c artdaq_utilities pqxx "
 
     if [[ "$irreducible_list" =~ " $package " ]]; then
 	echo "Found match for $package in $irreducible_list"
