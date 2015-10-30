@@ -294,6 +294,9 @@ if ( cluster.isMaster ) {
                 }
                 
                 var filename = "./modules/" + moduleName + "/client/" + functionName;
+                if(functionName.search("favicon.ico") >= 0) {
+					filename = "./modules/base/client/images/favicon.ico";
+                }
                 if ( fs.existsSync( filename ) ) {
                     res.setHeader( "Content-Length",fs.statSync( filename )["size"] );
                     if ( req.headers.range != null ) {
