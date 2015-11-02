@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <SchemaVersion>2.0</SchemaVersion>
+        <ProjectGuid>{5244963e-f7ee-4dff-b193-4e7b3b7cd065}</ProjectGuid>
+        <ProjectHome>..\</ProjectHome>
+        <ProjectView>ShowAllFiles</ProjectView>
+        <StartupFile>serverbase.js</StartupFile>
+        <WorkingDirectory>.</WorkingDirectory>
+        <OutputPath>.</OutputPath>
+        <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
+        <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup>
+        <Content Include="client.html" />
+        <Compile Include="serverbase.js" />
+        <Content Include="modules\artdaq-runcontrol\client\UDPDump.html" />
+        <Content Include="modules\artdaq-runcontrol\client\client.html" />
+        <Content Include="modules\artdaq-runcontrol\client\viewer.html" />
+        <Content Include="modules\artdaq-runcontrol\client\client.css" />
+        <Compile Include="modules\artdaq-runcontrol\client\client.js" />
+        <Compile Include="modules\artdaq-runcontrol\client\MakeEventGraph.js" />
+        <Compile Include="modules\artdaq-runcontrol\client\UDPDump.js" />
+        <Compile Include="modules\artdaq-runcontrol\client\viewer.js" />
+        <Compile Include="modules\artdaq-runcontrol\server\artdaq-runcontrol_module.js" />
+        <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
+        <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
+        <Content Include="modules\procstat\client\client.html" />
+        <Compile Include="modules\procstat\server\procstat_module.js" />
+        <Content Include="modules\JSRootIO\client\changes.txt" />
+        <Content Include="modules\JSRootIO\client\index.htm" />
+        <Content Include="modules\JSRootIO\client\style\JSRootInterface.css" />
+        <Content Include="modules\JSRootIO\client\style\JSRootPainter.css" />
+        <Content Include="modules\JSRootIO\client\style\jquery-ui.css" />
+        <Compile Include="modules\JSRootIO\client\scripts\JSRootInterface.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\helvetiker_regular.typeface.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\d3.v3.min.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\JSRoot3DPainter.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\jquery-ui.min.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\rawinflate.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\helvetiker_bold.typeface.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\jquery.mousewheel.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\JSRootCore.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\JSRootPainter.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\three.min.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\JSRootIOEvolution.js" />
+        <Compile Include="modules\JSRootIO\client\scripts\jquery.min.js" />
+        <Content Include="modules\JSRootIO\client\img\RootIcon.ico" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_glass_75_e6e6e6_1x400.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_flat_75_ffffff_40x100.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-icons_2e83ff_256x240.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-icons_454545_256x240.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_glass_65_ffffff_1x400.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-icons_888888_256x240.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-icons_cd0a0a_256x240.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_glass_55_fbf9ee_1x400.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_flat_0_aaaaaa_40x100.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_glass_75_dadada_1x400.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_highlight-soft_75_cccccc_1x100.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-icons_222222_256x240.png" />
+        <Content Include="modules\JSRootIO\client\style\images\ui-bg_glass_95_fef1ec_1x400.png" />
+        <Content Include="modules\JSRootIO\client\style\images\animated-overlay.gif" />
+        <Content Include="modules\db\client\client.html" />
+        <Content Include="modules\db\client\client.css" />
+        <Compile Include="modules\db\client\client.js" />
+        <Compile Include="modules\db\server\db_module.js" />
+        <Content Include="modules\base\client\ReadServerLog.html" />
+        <Content Include="modules\base\client\jquery.mobile.css" />
+        <Compile Include="modules\base\client\d3.min.js" />
+        <Compile Include="modules\base\client\d3.js" />
+        <Compile Include="modules\base\client\d3.v3.min.js" />
+        <Compile Include="modules\base\client\jquery.mobile.min.js" />
+        <Compile Include="modules\base\client\MakeGraph.js" />
+        <Compile Include="modules\base\client\AjaxPostAndGet.js" />
+        <Compile Include="modules\base\client\jquery.min.js" />
+        <Compile Include="modules\base\server\base_module.js" />
+        <Content Include="modules\base\client\images\ajax-loader.gif" />
+        <Content Include="modules\base\client\images\favicon.ico" />
+        <Content Include="modules\iostat\client\client.html" />
+        <Compile Include="modules\iostat\server\iostat_module.js" />
+        <Content Include="modules\artdaq-configuration\client\ConfigurationEditor.html" />
+        <Content Include="modules\artdaq-configuration\client\UDP_receiver.html" />
+        <Content Include="modules\artdaq-configuration\client\TOY2_simulator.html" />
+        <Content Include="modules\artdaq-configuration\client\BoardReader.html" />
+        <Content Include="modules\artdaq-configuration\client\ASCII_simulator.html" />
+        <Content Include="modules\artdaq-configuration\client\TOY1_simulator.html" />
+        <Content Include="modules\artdaq-configuration\client\V172X_reader.html" />
+        <Compile Include="modules\artdaq-configuration\client\ConfigurationEditor.js" />
+        <Compile Include="modules\artdaq-configuration\server\artdaq-configuration_module.js" />
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="certs" />
+        <Folder Include="certs\certificates" />
+        <Folder Include="modules" />
+        <Folder Include="modules\artdaq-configuration" />
+        <Folder Include="modules\artdaq-configuration\client" />
+        <Folder Include="modules\artdaq-configuration\server" />
+        <Folder Include="modules\artdaq-runcontrol" />
+        <Folder Include="modules\artdaq-runcontrol\client" />
+        <Folder Include="modules\artdaq-runcontrol\server" />
+        <Folder Include="modules\base" />
+        <Folder Include="modules\base\client" />
+        <Folder Include="modules\base\client\images" />
+        <Folder Include="modules\base\server" />
+        <Folder Include="modules\db" />
+        <Folder Include="modules\db\client" />
+        <Folder Include="modules\db\server" />
+        <Folder Include="modules\iostat" />
+        <Folder Include="modules\iostat\client" />
+        <Folder Include="modules\iostat\server" />
+        <Folder Include="modules\JSRootIO" />
+        <Folder Include="modules\JSRootIO\client" />
+        <Folder Include="modules\JSRootIO\client\img" />
+        <Folder Include="modules\JSRootIO\client\scripts" />
+        <Folder Include="modules\JSRootIO\client\style" />
+        <Folder Include="modules\JSRootIO\client\style\images" />
+        <Folder Include="modules\procstat" />
+        <Folder Include="modules\procstat\client" />
+        <Folder Include="modules\procstat\server" />
+        <Folder Include="Win32" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->
+    <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />
+    <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />
+    <ProjectExtensions>
+        <VisualStudio>
+          <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+            <WebProjectProperties>
+              <UseIIS>False</UseIIS>
+              <AutoAssignPort>True</AutoAssignPort>
+              <DevelopmentServerPort>0</DevelopmentServerPort>
+              <DevelopmentServerVPath>/</DevelopmentServerVPath>
+              <IISUrl>http://localhost:48022/</IISUrl>
+              <NTLMAuthentication>False</NTLMAuthentication>
+              <UseCustomServer>True</UseCustomServer>
+              <CustomServerUrl>http://localhost:1337</CustomServerUrl>
+              <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+            </WebProjectProperties>
+          </FlavorProperties>
+          <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+            <WebProjectProperties>
+              <StartPageUrl>
+              </StartPageUrl>
+              <StartAction>CurrentPage</StartAction>
+              <AspNetDebugging>True</AspNetDebugging>
+              <SilverlightDebugging>False</SilverlightDebugging>
+              <NativeDebugging>False</NativeDebugging>
+              <SQLDebugging>False</SQLDebugging>
+              <ExternalProgram>
+              </ExternalProgram>
+              <StartExternalURL>
+              </StartExternalURL>
+              <StartCmdLineArguments>
+              </StartCmdLineArguments>
+              <StartWorkingDirectory>
+              </StartWorkingDirectory>
+              <EnableENC>False</EnableENC>
+              <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+            </WebProjectProperties>
+          </FlavorProperties>
+        </VisualStudio>
+    </ProjectExtensions>
+</Project>
