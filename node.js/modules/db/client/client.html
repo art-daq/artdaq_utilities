@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>DB Data Display Test</title>
+    <style>
+        @import url(client.css);
+        @import url(/base/jquery.mobile.css);
+    </style>
+    <script src="/base/jquery.min.js"></script>
+    <script src="/base/jquery.mobile.min.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script src="client.js"></script>
+</head>
+<body>
+    <div data-role="page">
+        <div data-role="header" id="header">
+            <h1>Database Viewer Test</h1>
+            <p id="info"></p>
+        </div>
+        <div data-role="main" class="ui-content">
+            <div class="tabs">
+                <ul id="tabLinks" class="tab-links">
+                    <li class="active"><a href="#tab1">Information</a></li>
+                </ul>
+
+                <div id="tabContents" class="tab-content">
+                    <div id="tab1" class="tab active">
+                        <p>
+                            Welcome to the ARTDAQ Database Editor<br />
+                            Please Select a named configuration from the list below. It will load in additional top-level tabs.
+                        </p>
+                        <form>
+                            <fieldset data-role="collapsible" data-collapsed="false">
+                                <legend>Select Database Configuration</legend>
+                                <label for="configs">Configuration List</label>
+                                <select name="configs" id="configs">
+                                    <option value="Default">No Named Configurations Found</option>
+                                </select>
+                                <button type="button" id="loadConfigButton">Load Selected Configuration</button>
+
+                                <div data-role="fieldcontain">
+                                    <label for="configName">Configuration Name</label>
+                                    <input type="text" name="configName" id="configName" class="triggersModified">
+                                </div>
+                                <button type="button" id="saveConfig">Save Configuration</button>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <textarea id="debug"></textarea>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
