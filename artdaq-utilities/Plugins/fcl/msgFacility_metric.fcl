@@ -10,7 +10,7 @@ daq.metrics.msgfac: { # Can be named anything.
   #
   level: 0 # Integer, verbosity level of metrics that will be recorded by this plugin. 
            # 0 is minimum amount, maximum is implementation-defined.
-  metricPluginType: "msgFacility" # Must be "graphite" for the plugin to be loaded
+  metricPluginType: "msgFacility" # Must be "msgFacility" for the plugin to be loaded
   reporting_interval: 15.0 # Double value, the frequency in seconds that the plugin sends out metrics
 
   #

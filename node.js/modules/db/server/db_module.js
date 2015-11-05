@@ -8,21 +8,33 @@ var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
 var db = new emitter();
 
-function GetNamedConfigs() {
+function GetNamedConfigs(testData) {
     var configs = [];
-    configs.push("Default");
+    for (var config in testData) {
+        configs.push(testData[config].name);
+    }
     return configs;
 }
 
-function GetCategories(dbdata) {
-    var categories = [];
-    categories.push("Category 1");
-    categories.push("Category 2");
-    return categories;
-}
+function GetDBStructure(testData, configName)
+{
+    var thisConfig = testData[configName];
+    var output = [];
 
-function GetTables(dbdata) {
+    for (var cat in thisConfig.categories) {
+        var thisCat = thisConfig.categories[cat];
+        var catData = {};
+        catData.name = thisCat.name;
+        catData.tables = [];
+        for (var tab in thisCat.tables) {
+            var thisTab = thisCat.tables[tab];
+            catData.tables.push(thisTab.name);
+        }
 
+        output.push(catData);
+    }
+
+    return output;
 }
 
 function GetTable(dbdata, tableID) {
@@ -31,7 +43,7 @@ function GetTable(dbdata, tableID) {
 
 var makeTestData = function () {
     var data = {
-        name: "Test Config",
+        name: "Default",
         detector: "NearDet",
         mode: "DCS",
         time: "Latest",
@@ -45,20 +57,20 @@ var makeTestData = function () {
                 name: "Category 1",
                 tables: [
                     {
-                        name: "first_table",
+                        name: "Table A",
                         data: [
-                            { name: "Full System", value: 0x00000000 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000000 },
+                            { name: "Full System", value: 0x00000001 },
+                            { name: "Full System/dcm-1-01-01", value: 0x00000002 },
                             { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-02", value: 0x00000003 },
                             { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-03", value: 0x00000004 },
                             { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
@@ -66,20 +78,20 @@ var makeTestData = function () {
                         ]
                     },
                     {
-                        name: "second_table",
+                        name: "Table B",
                         data: [
-                            { name: "Full System", value: 0x00000000 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000000 },
+                            { name: "Full System", value: 0x00000010 },
+                            { name: "Full System/dcm-1-01-01", value: 0x00000020 },
                             { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-02", value: 0x00000030 },
                             { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-03", value: 0x00000040 },
                             { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
@@ -92,20 +104,20 @@ var makeTestData = function () {
                 name: "Category 2",
                 tables: [
                     {
-                        name: "first_table",
+                        name: "Table C",
                         data: [
-                            { name: "Full System", value: 0x00000000 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000000 },
+                            { name: "Full System", value: 0x00000100 },
+                            { name: "Full System/dcm-1-01-01", value: 0x00000200 },
                             { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-02", value: 0x00000300 },
                             { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-03", value: 0x00000400 },
                             { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
@@ -113,20 +125,20 @@ var makeTestData = function () {
                         ]
                     },
                     {
-                        name: "second_table",
+                        name: "Table D",
                         data: [
-                            { name: "Full System", value: 0x00000000 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000000 },
+                            { name: "Full System", value: 0x00001000 },
+                            { name: "Full System/dcm-1-01-01", value: 0x00002000 },
                             { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-02", value: 0x00003000 },
                             { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
                             { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000000 },
+                            { name: "Full System/dcm-1-01-03", value: 0x00004000 },
                             { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
                             { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
                             { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
@@ -137,8 +149,9 @@ var makeTestData = function () {
             }
         ]
     };
-    
-    return data;
+    var arr = [];
+    arr.push(data);
+    return arr;
 }
 
 db.MasterInitFunction = function (workerData) {
@@ -151,8 +164,8 @@ module.exports = function (module_holder) {
 };
 
 
-db.GET_NamedConfigs = function () {
-    var configs = GetNamedConfigs();
+db.GET_NamedConfigs = function ( testData ) {
+    var configs = GetNamedConfigs(testData);
     console.log(configs);
     var configsOutput = [];
     for (var conf in configs) {
@@ -164,16 +177,9 @@ db.GET_NamedConfigs = function () {
     return configsOutput;
 };
 
-db.GET_Categories = function (workerData) {
-    return JSON.stringify(GetCategories(workerData));
-};
-
-db.RO_GetTables = function (POST, workerData) {
-
-};
-
-db.RW_GetData = function (POST, workerData) {
-
+db.RO_GetData = function (POST, workerData) {
+    console.log(JSON.stringify(POST));
+    return JSON.stringify(workerData[POST.config].categories[POST.category].tables[POST.table].data);
 };
 
 db.RW_saveConfig = function (POST, testData) {
@@ -185,18 +191,17 @@ db.RW_saveConfig = function (POST, testData) {
         return { Success: false };
     }
     console.log(util.inspect(config, false, null));
-    testData = config;
+    testData[config.name] = config;
     return { Success: success };
 };
 
 db.RO_LoadNamedConfig = function (POST, testData) {
     console.log("Request for configuration with file name \"" + POST.configFile + "\" received.");
-    if (POST.configFile === "Default") {
-        return JSON.stringify(testData);
-    } else if (POST.configFile.search("\\.\\.") >= 0) {
+    if (POST.configFile.search("\\.\\.") >= 0) {
         console.log("Possible break-in attempt! NOT Proceeding!");
         return "";
     }
     
-    return JSON.stringify(testData);
+    return JSON.stringify(GetDBStructure(testData, POST.configFile));
+
 };
