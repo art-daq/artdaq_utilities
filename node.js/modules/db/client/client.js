@@ -15,6 +15,118 @@ function getUrlParameter(sParam) {
     }
 }
 
+var makeTreeGrid = function (tag) {
+    var employees = [
+        {
+            "EmployeeID": 2, "FirstName": "Andrew", "LastName": "Fuller", "Country": "USA", "Title": "Vice President, Sales", "HireDate": "1992-08-14 00:00:00", "BirthDate": "1952-02-19 00:00:00", "City": "Tacoma", "Address": "908 W. Capital Way", "expanded": "true",
+            children: [
+                { "EmployeeID": 8, "FirstName": "Laura", "LastName": "Callahan", "Country": "USA", "Title": "Inside Sales Coordinator", "HireDate": "1994-03-05 00:00:00", "BirthDate": "1958-01-09 00:00:00", "City": "Seattle", "Address": "4726 - 11th Ave. N.E." },
+                { "EmployeeID": 1, "FirstName": "Nancy", "LastName": "Davolio", "Country": "USA", "Title": "Sales Representative", "HireDate": "1992-05-01 00:00:00", "BirthDate": "1948-12-08 00:00:00", "City": "Seattle", "Address": "507 - 20th Ave. E.Apt. 2A" },
+                { "EmployeeID": 3, "FirstName": "Janet", "LastName": "Leverling", "Country": "USA", "Title": "Sales Representative", "HireDate": "1992-04-01 00:00:00", "BirthDate": "1963-08-30 00:00:00", "City": "Kirkland", "Address": "722 Moss Bay Blvd." },
+                { "EmployeeID": 4, "FirstName": "Margaret", "LastName": "Peacock", "Country": "USA", "Title": "Sales Representative", "HireDate": "1993-05-03 00:00:00", "BirthDate": "1937-09-19 00:00:00", "City": "Redmond", "Address": "4110 Old Redmond Rd." },
+                {
+                    "EmployeeID": 5, "FirstName": "Steven", "LastName": "Buchanan", "Country": "UK", "Title": "Sales Manager", "HireDate": "1993-10-17 00:00:00", "BirthDate": "1955-03-04 00:00:00", "City": "London", "Address": "14 Garrett Hill", "expanded": "true",
+                    children: [
+                        { "EmployeeID": 6, "FirstName": "Michael", "LastName": "Suyama", "Country": "UK", "Title": "Sales Representative", "HireDate": "1993-10-17 00:00:00", "BirthDate": "1963-07-02 00:00:00", "City": "London", "Address": "Coventry House Miner Rd." },
+                        { "EmployeeID": 7, "FirstName": "Robert", "LastName": "King", "Country": "UK", "Title": "Sales Representative", "HireDate": "1994-01-02 00:00:00", "BirthDate": "1960-05-29 00:00:00", "City": "London", "Address": "Edgeham Hollow Winchester Way" },
+                        { "EmployeeID": 9, "FirstName": "Anne", "LastName": "Dodsworth", "Country": "UK", "Title": "Sales Representative", "HireDate": "1994-11-15 00:00:00", "BirthDate": "1966-01-27 00:00:00", "City": "London", "Address": "7 Houndstooth Rd." }
+                    ]
+                }
+            ]
+        }
+    ];
+    // prepare the data
+    var source =
+ {
+        dataType: "json",
+        dataFields: [
+            { name: 'EmployeeID', type: 'number' },
+            { name: 'FirstName', type: 'string' },
+            { name: 'LastName', type: 'string' },
+            { name: 'Country', type: 'string' },
+            { name: 'City', type: 'string' },
+            { name: 'Address', type: 'string' },
+            { name: 'Title', type: 'string' },
+            { name: 'HireDate', type: 'date' },
+            { name: 'children', type: 'array' },
+            { name: 'expanded', type: 'bool' },
+            { name: 'BirthDate', type: 'date' }
+        ],
+        hierarchy:
+ {
+            root: 'children'
+        },
+        id: 'EmployeeID',
+        localData: employees
+    };
+    var dataAdapter = new $.jqx.dataAdapter(source);
+    // create Tree Grid
+    tag.jqxTreeGrid(
+        {
+            width: 850,
+            source: dataAdapter,
+            editable: true,
+            editSettings: { saveOnPageChange: true, saveOnBlur: true, saveOnSelectionChange: true, cancelOnEsc: true, saveOnEnter: true, editSingleCell: true, editOnDoubleClick: true, editOnF2: true },
+            sortable: true,
+            columns: [
+                { text: 'FirstName', dataField: 'FirstName', width: 200 },
+                { text: 'LastName', dataField: 'LastName', width: 200 },
+                { text: 'City', dataField: 'City', width: 200 },
+                { text: 'Country', dataField: 'Country' }
+            ]
+        });
+    // Cell Begin Edit
+    tag.on('cellBeginEdit', function (event) {
+        var args = event.args;
+        // row key
+        var rowKey = args.key;
+        // row's data.
+        var rowData = args.row;
+        // column's data field.
+        var columnDataField = args.dataField;
+        // column's display field.
+        var columnDisplayField = args.displayField;
+        // cell's value.
+        var value = args.value;
+        $("#debug").html("cellBeginEdit - Row ID: " + rowKey + ", Column: " + columnDataField + ", Value: " + value + "<br/>" + $("#debug").html());
+        
+    });
+    // Cell End Edit
+    tag.on('cellEndEdit', function (event) {
+        var args = event.args;
+        // row key
+        var rowKey = args.key;
+        // row's data.
+        var rowData = args.row;
+        // column's data field.
+        var columnDataField = args.dataField;
+        // column's display field.
+        var columnDisplayField = args.displayField;
+        // cell's value.
+        var value = args.value;
+        $("#debug").html("<br/>cellEndEdit - Row ID: " + rowKey + ", Column: " + columnDataField + ", Value: " + value + "<br/>" + $("#debug").html());
+        
+    });
+}
+
+var loadTable = function (categoryNum, tableNum, tag) {
+    AjaxPost('/db/GetData', { config: currentNamedConfig, category: categoryNum, table: tableNum }, function (data) {
+        var dataObj = JSON.parse(data);
+        var columns = [];
+        var paths = [];
+        var maxlevel = 0;
+        for (var itemN in dataObj) {
+            var item = dataObj[itemN];
+            for (var prop in item) {
+                if (item.hasOwnProperty(prop) && columns.indexOf(prop) == -1) {
+                    columns.push(prop);
+                }
+            }
+        }
+        makeTreeGrid($('.tabs ' + tag)).trigger('create');
+    });
+}
+
 var loadConfigs = function () {
     AjaxGet("/db/NamedConfigs", function (data) {
         $("#configs").html(data.join("")).trigger('create').selectmenu('refresh');
@@ -35,36 +147,6 @@ var updateHeader = function (error, text) {
     }
 }
 
-var setupNodes = function (level, paths, columnns, maxlevel) {
-    var output = "";
-    if (level == 0) {
-        output = "<ul data-role=\"listview\" class=\"ui-listview-outer\" data-inset=\"true\">";
-    } else {
-        output = "<ul data-role=\"listview\" data-shadow=\"false\" data-inset=\"true\" data-corners=\"false\">";
-    }
-    
-    var nodes = [];
-    for (var pathN in paths) {
-        var path = paths[pathN];
-        if (path.length > level) {
-            if (nodes.indexOf(path[level]) == -1) {
-                nodes.push(path[level]);
-                if (level < maxlevel) {
-                    output += "<li data-role=\"collapsible\" data-iconpos=\"right\" data-shadow=\"false\" data-corners=\"false\">";
-                    output += "<h2>" + path[level] + "</h2>";
-                }
-                else {
-                    output += "<li>" + path[level];
-                }
-                output += setupNodes(level + 1, paths, columns, maxlevel);
-                output += "</li>";
-            }
-        }
-    }
-    
-    return output + "</ul>";
-}
-
 var registerTabFunctions = function () {
     $('.tabs .table-data a').off();
     $('.tabs .tab-links a').off().on('click', function (e) {
@@ -81,28 +163,7 @@ var registerTabFunctions = function () {
     $('.table-data a').on('click', function (e) {
         var currentAttrValue = $(this).attr('href');
         var matches = currentAttrValue.match(/#tab(\d+) #tabletab(\d+)/);
-        AjaxPost('/db/GetData', { config: currentNamedConfig, category: parseInt(matches[1]) - 2, table: parseInt(matches[2]) - 1 }, function (data) {
-            var dataObj = JSON.parse(data);
-            var columns = [];
-            var paths = [];
-            var maxlevel = 0;
-            for (var itemN in dataObj) {
-                var item = dataObj[itemN];
-                for (var prop in item) {
-                    if (item.hasOwnProperty(prop)) {
-                        if (prop !== "name" && columns.indexOf(prop) == -1) {
-                            columns.push(prop);
-                        }
-                    }
-                }
-                
-                var path = item.name.split('/');
-                if (path.length > maxlevel) { maxlevel = path.length; }
-                paths.push(path);
-            }
-            var list = setupNodes(0, paths, columns, maxlevel - 1);
-            $('.tabs ' + currentAttrValue).html(list).trigger('create');
-        });
+        loadTable(parseInt(matches[1]) - 2, parseInt(matches[2]) - 1, currentAttrValue);
     });
 }
 
