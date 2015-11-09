@@ -16,11 +16,10 @@ function GetNamedConfigs(testData) {
     return configs;
 }
 
-function GetDBStructure(testData, configName)
-{
+function GetDBStructure(testData, configName) {
     var thisConfig = testData[configName];
     var output = [];
-
+    
     for (var cat in thisConfig.categories) {
         var thisCat = thisConfig.categories[cat];
         var catData = {};
@@ -30,10 +29,10 @@ function GetDBStructure(testData, configName)
             var thisTab = thisCat.tables[tab];
             catData.tables.push(thisTab.name);
         }
-
+        
         output.push(catData);
     }
-
+    
     return output;
 }
 
@@ -58,44 +57,62 @@ var makeTestData = function () {
                 tables: [
                     {
                         name: "Table A",
+                        columns: [
+                            { name: 'id', type: "number" },
+                            { name: 'name', type: "string" },
+                            { name: 'value', type: "number", radix: 16 },
+                            { name: 'threshold', type: "number", radix: 10 },
+                            { name: 'parent', type: "number" }
+                        ],
+                        key: 'id',
+                        parent: 'parent',
                         data: [
-                            { name: "Full System", value: 0x00000001 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000002 },
-                            { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000003 },
-                            { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000004 },
-                            { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-03/FEB 3", value: 0xFFFF0000 },
+                            { id: 0, name: "Full System", value: 0x00000001, threshold: 0 },
+                            { id: 1, name: "dcm-1-01-01", value: 0x00000002, threshold: 0, parent: 0 },
+                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
+                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
+                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
+                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
+                            { id: 6, name: "dcm-1-01-02", value: 0x00000003 , threshold: 0, parent: 0 },
+                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
+                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
+                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
+                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
+                            { id: 11, name: "dcm-1-01-03", value: 0x00000004, threshold: 0, parent: 0 },
+                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
+                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
+                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
+                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
                         ]
                     },
                     {
                         name: "Table B",
+                        columns: [
+                            { name: 'id', type: "number" },
+                            { name: 'name', type: "string" },
+                            { name: 'value', type: "number", radix: 16 },
+                            { name: 'threshold', type: "number", radix: 10 },
+                            { name: 'parent', type: "number" }
+                        ],
+                        key: 'id',
+                        parent: 'parent',
                         data: [
-                            { name: "Full System", value: 0x00000010 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000020 },
-                            { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000030 },
-                            { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000040 },
-                            { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-03/FEB 3", value: 0xFFFF0000 },
+                            { id: 0, name: "Full System", value: 0x00000010 },
+                            { id: 1, name: "dcm-1-01-01", value: 0x00000020, parent: 0 },
+                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
+                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
+                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
+                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
+                            { id: 6, name: "dcm-1-01-02", value: 0x00000030 , parent: 0 },
+                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
+                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
+                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
+                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
+                            { id: 11, name: "dcm-1-01-03", value: 0x00000040, parent: 0 },
+                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
+                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
+                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
+                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
                         ]
                     }
                 ]
@@ -105,44 +122,62 @@ var makeTestData = function () {
                 tables: [
                     {
                         name: "Table C",
+                        columns: [
+                            { name: 'id', type: "number" },
+                            { name: 'name', type: "string" },
+                            { name: 'value', type: "number", radix: 16 },
+                            { name: 'threshold', type: "number", radix: 10 },
+                            { name: 'parent', type: "number" }
+                        ],
+                        key: 'id',
+                        parent: 'parent',
                         data: [
-                            { name: "Full System", value: 0x00000100 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00000200 },
-                            { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00000300 },
-                            { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00000400 },
-                            { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-03/FEB 3", value: 0xFFFF0000 },
+                            { id: 0, name: "Full System", value: 0x00000100 },
+                            { id: 1, name: "dcm-1-01-01", value: 0x00000200, parent: 0 },
+                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
+                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
+                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
+                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
+                            { id: 6, name: "dcm-1-01-02", value: 0x00000300 , parent: 0 },
+                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
+                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
+                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
+                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
+                            { id: 11, name: "dcm-1-01-03", value: 0x00000400, parent: 0 },
+                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
+                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
+                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
+                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
                         ]
                     },
                     {
                         name: "Table D",
+                        columns: [
+                            { name: 'id', type: "number" },
+                            { name: 'name', type: "string" },
+                            { name: 'value', type: "number", radix: 2},
+                            { name: 'threshold', type: "number", radix: 10 },
+                            { name: 'parent', type: "number" }
+                        ],
+                        key: 'id',
+                        parent: 'parent',
                         data: [
-                            { name: "Full System", value: 0x00001000 },
-                            { name: "Full System/dcm-1-01-01", value: 0x00002000 },
-                            { name: "Full System/dcm-1-01-01/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-01/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-01/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-01/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-02", value: 0x00003000 },
-                            { name: "Full System/dcm-1-01-02/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-02/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-02/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-02/FEB 3", value: 0xFFFF0000 },
-                            { name: "Full System/dcm-1-01-03", value: 0x00004000 },
-                            { name: "Full System/dcm-1-01-03/FEB 0", value: 0xFFFFFFFF },
-                            { name: "Full System/dcm-1-01-03/FEB 1", value: 0xF0F0F0F0 },
-                            { name: "Full System/dcm-1-01-03/FEB 2", value: 0xFF00FF00 },
-                            { name: "Full System/dcm-1-01-03/FEB 3", value: 0xFFFF0000 },
+                            { id: 0, name: "Full System", value: 0x00001000 },
+                            { id: 1, name: "dcm-1-01-01", value: 0x00002000, parent: 0 },
+                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
+                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
+                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
+                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
+                            { id: 6, name: "dcm-1-01-02", value: 0x00003000 , parent: 0 },
+                            { id: 7, name: "FEB 0", value: "0xFFFFFFFF" , threshold: 200, parent: 6 },
+                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
+                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
+                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
+                            { id: 11, name: "dcm-1-01-03", value: 0x00004000, parent: 0 },
+                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
+                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
+                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
+                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
                         ]
                     }
                 ]
@@ -164,7 +199,7 @@ module.exports = function (module_holder) {
 };
 
 
-db.GET_NamedConfigs = function ( testData ) {
+db.GET_NamedConfigs = function (testData) {
     var configs = GetNamedConfigs(testData);
     console.log(configs);
     var configsOutput = [];
@@ -179,7 +214,7 @@ db.GET_NamedConfigs = function ( testData ) {
 
 db.RO_GetData = function (POST, workerData) {
     console.log(JSON.stringify(POST));
-    return JSON.stringify(workerData[POST.config].categories[POST.category].tables[POST.table].data);
+    return JSON.stringify(workerData[POST.config].categories[POST.category].tables[POST.table]);
 };
 
 db.RW_saveConfig = function (POST, testData) {
@@ -205,3 +240,7 @@ db.RO_LoadNamedConfig = function (POST, testData) {
     return JSON.stringify(GetDBStructure(testData, POST.configFile));
 
 };
+
+db.RO_Update = function (POST, testData) {
+    console.log(JSON.stringify(POST));
+}

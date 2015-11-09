@@ -29,6 +29,7 @@
     <Compile Include="modules\artdaq-runcontrol\server\artdaq-runcontrol_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
+    <Content Include="modules\db\client\RadixButtons.html" />
     <Content Include="modules\db\client\Tables.html" />
     <Content Include="modules\procstat\client\client.html" />
     <Compile Include="modules\procstat\server\procstat_module.js" />
