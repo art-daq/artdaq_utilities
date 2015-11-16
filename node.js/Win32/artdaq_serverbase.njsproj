@@ -18,6 +18,11 @@
   <ItemGroup>
     <Content Include="client.html" />
     <Compile Include="serverbase.js" />
+    <Content Include="Configs\TestConfiguration.json" />
+    <Content Include="Configs\TestConfiguration\Category1\TableA.json" />
+    <Content Include="Configs\TestConfiguration\Category1\TableB.json" />
+    <Content Include="Configs\TestConfiguration\Category2\TableC.json" />
+    <Content Include="Configs\TestConfiguration\Category2\TableD.json" />
     <Content Include="modules\artdaq-runcontrol\client\UDPDump.html" />
     <Content Include="modules\artdaq-runcontrol\client\client.html" />
     <Content Include="modules\artdaq-runcontrol\client\viewer.html" />
@@ -29,7 +34,6 @@
     <Compile Include="modules\artdaq-runcontrol\server\artdaq-runcontrol_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
-    <Content Include="modules\db\client\RadixButtons.html" />
     <Content Include="modules\db\client\Tables.html" />
     <Content Include="modules\procstat\client\client.html" />
     <Compile Include="modules\procstat\server\procstat_module.js" />
@@ -97,6 +101,10 @@
   <ItemGroup>
     <Folder Include="certs" />
     <Folder Include="certs\certificates" />
+    <Folder Include="Configs\" />
+    <Folder Include="Configs\TestConfiguration\" />
+    <Folder Include="Configs\TestConfiguration\Category1\" />
+    <Folder Include="Configs\TestConfiguration\Category2\" />
     <Folder Include="modules" />
     <Folder Include="modules\artdaq-configuration" />
     <Folder Include="modules\artdaq-configuration\client" />

@@ -6,191 +6,105 @@
 // Node.js framework "includes"
 var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
+var fs = require('fs');
+var path_module = require('path');
 var db = new emitter();
+var configCache = {};
 
-function GetNamedConfigs(testData) {
+function GetNamedConfigs(configPath) {
+    console.log("Searching for Named Configs in path " + configPath);
+    // we have a directory: do a tree walk
     var configs = [];
-    for (var config in testData) {
-        configs.push(testData[config].name);
+    var files = fs.readdirSync(configPath);
+    var f, l = files.length;
+    for (var i = 0; i < l; i++) {
+        f = path_module.join(configPath, files[i]);
+        if (fs.lstatSync(f).isDirectory() && fs.existsSync(f + ".json")) {
+            configs.push({ name: JSON.parse(fs.readFileSync(f + ".json")).name, path: path_module.basename(f) });
+        }
     }
     return configs;
 }
 
-function GetDBStructure(testData, configName) {
-    var thisConfig = testData[configName];
-    var output = [];
-    
-    for (var cat in thisConfig.categories) {
-        var thisCat = thisConfig.categories[cat];
-        var catData = {};
-        catData.name = thisCat.name;
-        catData.tables = [];
-        for (var tab in thisCat.tables) {
-            var thisTab = thisCat.tables[tab];
-            catData.tables.push(thisTab.name);
+function ProcessDirectory(path) {
+    var output = {
+        name: path_module.basename(path),
+        tables: [],
+        children: []
+    };
+    var files = fs.readdirSync(path);
+    var f, l = files.length;
+    for (var i = 0; i < l; i++) {
+        console.log("Processing File " + files[i]);
+        f = path_module.join(path, files[i]);
+        if (fs.lstatSync(f).isDirectory()) {
+            console.log("Adding Directory " + f + " to children list");
+            output.children.push(ProcessDirectory(f));
+        } else if (files[i].search(".json") > 0 && files[i].search("~") < 0) {
+            var contents = JSON.parse(fs.readFileSync(f));
+            console.log("Adding Table " + contents.name + " to tables list");
+            output.tables.push(contents.name);
         }
-        
-        output.push(catData);
     }
-    
     return output;
 }
 
-function GetTable(dbdata, tableID) {
-
+function GetDBStructure(configName, workerData) {
+    var configs = GetNamedConfigs(workerData.configPath);
+    if (configs.length == 0) { return false; }
+    var found = false;
+    for (var c in configs) {
+        if (configs[c].path === configName) {
+            found = true;
+        }
+    }
+    if (!found) { return false; }
+    
+    var output = [];
+    var dir = path_module.join(workerData.configPath, configName);
+    return ProcessDirectory(dir);
 }
 
-var makeTestData = function () {
-    var data = {
-        name: "Default",
-        detector: "NearDet",
-        mode: "DCS",
-        time: "Latest",
-        db: {
-            host: "novadaq-near-db-01.fnal.gov",
-            name: "nova_prod",
-            user: "novadaq"
-        },
-        categories: [
-            {
-                name: "Category 1",
-                tables: [
-                    {
-                        name: "Table A",
-                        columns: [
-                            { name: 'id', type: "number" },
-                            { name: 'name', type: "string" },
-                            { name: 'value', type: "number", radix: 16 },
-                            { name: 'threshold', type: "number", radix: 10 },
-                            { name: 'parent', type: "number" }
-                        ],
-                        key: 'id',
-                        parent: 'parent',
-                        data: [
-                            { id: 0, name: "Full System", value: 0x00000001, threshold: 0 },
-                            { id: 1, name: "dcm-1-01-01", value: 0x00000002, threshold: 0, parent: 0 },
-                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
-                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
-                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
-                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
-                            { id: 6, name: "dcm-1-01-02", value: 0x00000003 , threshold: 0, parent: 0 },
-                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
-                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
-                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
-                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
-                            { id: 11, name: "dcm-1-01-03", value: 0x00000004, threshold: 0, parent: 0 },
-                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
-                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
-                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
-                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
-                        ]
-                    },
-                    {
-                        name: "Table B",
-                        columns: [
-                            { name: 'id', type: "number" },
-                            { name: 'name', type: "string" },
-                            { name: 'value', type: "number", radix: 16 },
-                            { name: 'threshold', type: "number", radix: 10 },
-                            { name: 'parent', type: "number" }
-                        ],
-                        key: 'id',
-                        parent: 'parent',
-                        data: [
-                            { id: 0, name: "Full System", value: 0x00000010 },
-                            { id: 1, name: "dcm-1-01-01", value: 0x00000020, parent: 0 },
-                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
-                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
-                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
-                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
-                            { id: 6, name: "dcm-1-01-02", value: 0x00000030 , parent: 0 },
-                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
-                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
-                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
-                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
-                            { id: 11, name: "dcm-1-01-03", value: 0x00000040, parent: 0 },
-                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
-                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
-                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
-                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "Category 2",
-                tables: [
-                    {
-                        name: "Table C",
-                        columns: [
-                            { name: 'id', type: "number" },
-                            { name: 'name', type: "string" },
-                            { name: 'value', type: "number", radix: 16 },
-                            { name: 'threshold', type: "number", radix: 10 },
-                            { name: 'parent', type: "number" }
-                        ],
-                        key: 'id',
-                        parent: 'parent',
-                        data: [
-                            { id: 0, name: "Full System", value: 0x00000100 },
-                            { id: 1, name: "dcm-1-01-01", value: 0x00000200, parent: 0 },
-                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
-                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
-                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
-                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
-                            { id: 6, name: "dcm-1-01-02", value: 0x00000300 , parent: 0 },
-                            { id: 7, name: "FEB 0", value: 0xFFFFFFFF , threshold: 200, parent: 6 },
-                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
-                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
-                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
-                            { id: 11, name: "dcm-1-01-03", value: 0x00000400, parent: 0 },
-                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
-                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
-                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
-                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
-                        ]
-                    },
-                    {
-                        name: "Table D",
-                        columns: [
-                            { name: 'id', type: "number" },
-                            { name: 'name', type: "string" },
-                            { name: 'value', type: "number", radix: 2},
-                            { name: 'threshold', type: "number", radix: 10 },
-                            { name: 'parent', type: "number" }
-                        ],
-                        key: 'id',
-                        parent: 'parent',
-                        data: [
-                            { id: 0, name: "Full System", value: 0x00001000 },
-                            { id: 1, name: "dcm-1-01-01", value: 0x00002000, parent: 0 },
-                            { id: 2, name: "FEB 0", value: 0xFFFFFFFF, threshold: 100, parent: 1 },
-                            { id: 3, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 101, parent: 1 },
-                            { id: 4, name: "FEB 2", value: 0xFF00FF00, threshold: 102, parent: 1 },
-                            { id: 5, name: "FEB 3", value: 0xFFFF0000, threshold: 103, parent: 1 },
-                            { id: 6, name: "dcm-1-01-02", value: 0x00003000 , parent: 0 },
-                            { id: 7, name: "FEB 0", value: "0xFFFFFFFF" , threshold: 200, parent: 6 },
-                            { id: 8, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 201 , parent: 6 },
-                            { id: 9, name: "FEB 2", value: 0xFF00FF00 , threshold: 202, parent: 6 },
-                            { id: 10, name: "FEB 3", value: 0xFFFF0000 , threshold: 203, parent: 6 },
-                            { id: 11, name: "dcm-1-01-03", value: 0x00004000, parent: 0 },
-                            { id: 12, name: "FEB 0", value: 0xFFFFFFFF , threshold: 300 , parent: 11 },
-                            { id: 13, name: "FEB 1", value: 0xF0F0F0F0 , threshold: 301 , parent: 11 },
-                            { id: 14, name: "FEB 2", value: 0xFF00FF00 , threshold: 302, parent: 11 },
-                            { id: 15, name: "FEB 3", value: 0xFFFF0000, threshold: 303 , parent: 11 }
-                        ]
-                    }
-                ]
+function GetTablePath(configsPath, configName, tablePath) {
+    var path = tablePath.split('/');
+    var tableName = path[path.length - 1];
+    path = path.slice(0, -1);
+    console.log(configsPath + "/" + configName + "/" + path);
+    var categoryPath = path_module.join(configsPath, configName, path.join('/'));
+    var files = fs.readdirSync(categoryPath);
+    var f, l = files.length;
+    for (var i = 0; i < l; i++) {
+        console.log("Processing File " + files[i]);
+        var f = path_module.join(categoryPath, files[i]);
+        if (!fs.lstatSync(f).isDirectory() && files[i].search(".json") > 0 && files[i].search("~") < 0) {
+            var contents = "" + fs.readFileSync(f);
+            if (JSON.parse(contents).name === tableName) {
+                return { name: f, contents: contents };
             }
-        ]
-    };
-    var arr = [];
-    arr.push(data);
-    return arr;
+        }
+    }
+    
+    return {};
+}
+
+function GetTable(configsPath, configName, tablePath) {
+    var file = GetTablePath(configsPath, configName, tablePath);
+    return file.contents;
+}
+
+function UpdateTable(configsPath, configName, tablePath, data) {
+    var file = GetTablePath(configsPath, configName, tablePath);
+    var oldData = JSON.parse(file.contents);
+    for (var entry in oldData.data) {
+        if (oldData.data[entry].id == data.id && oldData.data[entry].name == data.name) {
+            oldData.data[entry][data.column] = data.value;
+        }
+    }
+    fs.writeFileSync(file.name, JSON.stringify(oldData));
 }
 
 db.MasterInitFunction = function (workerData) {
-    var data = new makeTestData();
+    var data = {};
     workerData["db"] = data;
 };
 
@@ -199,13 +113,13 @@ module.exports = function (module_holder) {
 };
 
 
-db.GET_NamedConfigs = function (testData) {
-    var configs = GetNamedConfigs(testData);
+db.RO_NamedConfigs = function (POST, workerData) {
+    var configs = GetNamedConfigs(POST.data);
     console.log(configs);
     var configsOutput = [];
     for (var conf in configs) {
         if (conf) {
-            configsOutput.push("<option value=" + conf + ">" + configs[conf] + "</option>");
+            configsOutput.push("<option value=" + configs[conf].path + ">" + configs[conf].name + "</option>");
         }
     }
     console.log(configsOutput)
@@ -214,10 +128,13 @@ db.GET_NamedConfigs = function (testData) {
 
 db.RO_GetData = function (POST, workerData) {
     console.log(JSON.stringify(POST));
-    return JSON.stringify(workerData[POST.config].categories[POST.category].tables[POST.table]);
+    var configPath = POST.configPath;
+    var configName = POST.config;
+    var tablePath = POST.path;
+    return GetTable(configPath, configName, tablePath);
 };
 
-db.RW_saveConfig = function (POST, testData) {
+db.RW_saveConfig = function (POST, workerData) {
     var success = false;
     console.log("Request to save configuration recieved. Configuration data:");
     var config = JSON.parse(POST.config);
@@ -230,17 +147,37 @@ db.RW_saveConfig = function (POST, testData) {
     return { Success: success };
 };
 
-db.RO_LoadNamedConfig = function (POST, testData) {
+db.RO_LoadNamedConfig = function (POST, workerData) {
     console.log("Request for configuration with file name \"" + POST.configFile + "\" received.");
+    
+    if (fs.existsSync(POST.configPath) && fs.lstatSync(POST.configPath).isDirectory() && GetNamedConfigs(POST.configPath).length > 0) {
+        workerData.configPath = POST.configPath;
+    } else {
+        return "";
+    }
     if (POST.configFile.search("\\.\\.") >= 0) {
         console.log("Possible break-in attempt! NOT Proceeding!");
         return "";
     }
     
-    return JSON.stringify(GetDBStructure(testData, POST.configFile));
+    var structure = GetDBStructure(POST.configFile, workerData);
+    console.log("Returning DB Structure: " + JSON.stringify(structure));
+    return JSON.stringify(structure);
 
 };
 
-db.RO_Update = function (POST, testData) {
+db.RO_ConfigPath = function (POST, workerData) {
     console.log(JSON.stringify(POST));
+    if (fs.existsSync(POST.data) && fs.lstatSync(POST.data).isDirectory() && GetNamedConfigs(POST.data).length > 0) {
+        workerData.configPath = POST.data;
+        return true;
+    }
+    
+    return false;
+}
+
+db.RO_Update = function (POST, workerData) {
+    console.log(JSON.stringify(POST));
+    UpdateTable(POST.configPath, POST.config, POST.table, { id: POST.id, name: POST.name,column: POST.column, value: POST.value });
+    return "";
 }

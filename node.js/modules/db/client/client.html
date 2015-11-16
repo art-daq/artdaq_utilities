@@ -45,6 +45,11 @@
                         </p>
                         <form>
                             <fieldset data-role="collapsible" data-collapsed="false">
+                                <legend>Configuration Base Path</legend>
+                                <label for="configPath">Path</label>
+                                <input type="text" name="configPath" id="configPath">
+                            </fieldset>
+                            <fieldset data-role="collapsible" data-collapsed="true" id="configLoadAndSave" data-disabled="true">
                                 <legend>Select Database Configuration</legend>
                                 <label for="configs">Configuration List</label>
                                 <select name="configs" id="configs">
