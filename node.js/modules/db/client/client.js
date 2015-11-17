@@ -100,7 +100,7 @@ var makeTreeGrid = function (tag, displayColumns, dataFields, data, key,comment,
         var columnDisplayField = args.displayField;
         // cell's value.
         var value = args.value;
-        $.post("/db/Update", { configPath: $("#configPath").val(), config: currentNamedConfig, table: currentTable, column: columnDataField, id: rowData.id, name: rowData.name, value: value })
+        $.post("/db/Update", { configPath: $("#configPath").val(), config: currentNamedConfig, table: currentTable, column: columnDataField, id: rowData.id, name: rowData.name, value: value });
         $("#debug").html("<br/>cellEndEdit - Row ID: " + rowKey + ", Column: " + columnDataField + ", Value: " + value + "<br/>" + $("#debug").html());
         
     });

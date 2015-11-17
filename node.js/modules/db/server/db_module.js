@@ -122,7 +122,7 @@ db.RO_NamedConfigs = function (POST, workerData) {
             configsOutput.push("<option value=" + configs[conf].path + ">" + configs[conf].name + "</option>");
         }
     }
-    console.log(configsOutput)
+    console.log(configsOutput);
     return configsOutput;
 };
 
