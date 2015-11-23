@@ -58,7 +58,7 @@ namespace artdaq {
     virtual std::string getLibName() { return "file"; }
     virtual void sendMetric_(std::string name, std::string value, std::string unit ) 
     {
-      if(!stopped_) {
+      if(!stopped_ && !inhibit_) {
         const std::time_t result = std::time(NULL);
         outputStream_ << std::ctime(&result) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
       }

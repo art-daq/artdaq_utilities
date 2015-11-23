@@ -66,7 +66,7 @@ fi
 
 # Also, cetbuildtools is removed as this is not properly a package on
 # which the target package will depend, and
-# artdaq_ganglia_plugin/artdaq_utilities are removed as this does not
+# artdaq_ganglia_plugin/artdaq_utilities/artdaq_epics_plugin are removed as this does not
 # appear in build-framework's CMakeLists.txt file
 
 # Finally: note that the output of package_deps.sh is sent into a
@@ -83,6 +83,7 @@ if [[ "$?" == "0" ]]; then
     cat $tmpfile | \
 	grep -v cetbuildtools | \
 	grep -v artdaq_ganglia_plugin | \
+	grep -v artdaq_epics_plugin | \
 	grep -v artdaq_utilities | \
 	awk '/Final packagearray is/{showline=1;next}showline' > $packagedepsfile
     rm -f $tmpfile

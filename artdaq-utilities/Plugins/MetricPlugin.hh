@@ -17,7 +17,7 @@
 namespace artdaq {
   class MetricPlugin {
   public:
-    MetricPlugin(fhicl::ParameterSet const & ps) : pset(ps) {
+    MetricPlugin(fhicl::ParameterSet const & ps) : pset(ps), inhibit_(false) {
       runLevel_ = pset.get<int>("level",0);
       accumulationTime_ = pset.get<double>("reporting_interval",15.0);
     }
@@ -191,6 +191,7 @@ namespace artdaq {
     virtual void startMetrics() { startMetrics_(); }
     virtual void stopMetrics()
     {
+      inhibit_ = true;
       for(auto dv : doubleAccumulator_)
 	{
 	  static_cast<std::vector<double>>(dv.second).clear();
@@ -220,6 +221,7 @@ namespace artdaq {
 	  sendMetric(uv.first,(long unsigned int)0,"",false);
 	}
       stopMetrics_();
+      inhibit_ = false;
     }
 
     void setRunLevel(int level) { runLevel_ = level; }
@@ -229,6 +231,7 @@ namespace artdaq {
     int runLevel_;
     fhicl::ParameterSet pset;
     double accumulationTime_;
+    bool inhibit_;
 
   private:
     std::unordered_map<std::string, std::vector<double> >   doubleAccumulator_;
