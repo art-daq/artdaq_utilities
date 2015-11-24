@@ -21,6 +21,20 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+s11:e6)
+       basequal=e6
+       squal=s11
+       artver=v1_14_02
+       nutoolsver=v1_11_01
+       ;;
+ 
+s15:e6)
+       basequal=e6
+       squal=s15
+       artver=v1_15_02
+       nutoolsver=v1_14_02
+       ;;
+ 
   s21:e9)
      basequal=e9
      squal=s21
@@ -99,6 +113,12 @@ ERROR: pull of artdaq-${version} failed
 EOF
         exit 1
       }
+./pullProducts ${blddir} source art-${artver} || \
+    { cat 1>&2 <<EOF
+WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
+EOF
+}
+
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
