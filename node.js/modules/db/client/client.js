@@ -18,16 +18,15 @@ function getUrlParameter(sParam) {
     }
 }
 
-var makeTreeGrid = function (tag, displayColumns, dataFields, data, key,comment, parent) {
+var makeTreeGrid = function (tag, displayColumns, dataFields, data, comment) {
     // prepare the data
-    var source = {
-        dataType: "json",
-        dataFields: dataFields,
-        hierarchy: {
-            keyDataField: { name: key },
-            parentDataField: { name: parent }
-        },
-        id: key,
+        var source = {
+            dataType: "json",
+            dataFields: dataFields,
+            hierarchy: {
+                root: 'children'
+    },
+        id: 'name',
         localData: data,
         comment: comment
     };
@@ -35,7 +34,7 @@ var makeTreeGrid = function (tag, displayColumns, dataFields, data, key,comment,
         beforeLoadComplete: function (records) {
             var numberFields = [];
             for (var c in source.dataFields) {
-                if (source.dataFields[c].dataType === "number" && source.dataFields[c].name !== key && source.dataFields[c].name !== parent) {
+                if (source.dataFields[c].dataType === "number") {
                     numberFields.push({ name: source.dataFields[c].name, radix: source.dataFields[c].radix });
                 }
             }
@@ -114,12 +113,14 @@ var loadTable = function (path, tag) {
         var displayColumns = [];
         
         for (var c in columns) {
-            if (columns[c].name !== dataObj.key && columns[c].name !== dataObj.parent) {
-                var title = columns[c].name.charAt(0).toUpperCase() + columns[c].name.slice(1);
-                if (columns[c].type === "string") {
+                var title = columns[c].title;
+                if (typeof title === 'undefined' || title.length === 0) {
+                    title = columns[c].name.charAt(0).toUpperCase() + columns[c].name.slice(1);
+                }
+                if (columns[c].type === "string" && columns[c].display) {   
                     displayColumns.push({text: title, dataField: columns[c].name, editable: columns[c].editable});
                 }
-                else if (columns[c].type ==="number"){
+                else if (columns[c].type ==="number" && columns[c].display){
                     columns[c].type = "string";
                     columns[c].dataType = "number";
                     displayColumns.push({
@@ -158,10 +159,9 @@ var loadTable = function (path, tag) {
                         }
                     });
                 }
-            }
         }
         
-        makeTreeGrid(tag, displayColumns, columns, dataObj.data, dataObj.key,dataObj.comment, dataObj.parent);//.trigger('create');
+        makeTreeGrid(tag, displayColumns, columns, dataObj.data,dataObj.comment);//.trigger('create');
 
     });
 }
@@ -221,10 +221,25 @@ var createTabLevel = function (structureObj, parentTab) {
     var tableObj = structureObj.tables;
     for (var table in tableObj) {
         lastTabID++;
-        $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + tableObj[table] + "</a></li>");
+        var name = tableObj[table].name;
+        if (name.length === 0) {
+            name = tableObj[table];
+        }
+        $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
         $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
     }
 
+}
+
+function getUrlParameter(sParam) {
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) {
+            return sParameterName[1];
+        }
+    }
 }
 
 $(document).ready(function () {
@@ -248,7 +263,19 @@ $(document).ready(function () {
             }
         });
     });
-    
+    var configPath = getUrlParameter("configPath");
+    if (typeof configPath !== "undefined" && configPath.length > 0) {
+        $("#configPath").val(configPath);
+        $.post("/db/ConfigPath", { data: $("#configPath").val() }, function(data) {
+            if (data) {
+                loadConfigs();
+                $("#configLoadAndSave").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
+            } else {
+                $("#configLoadAndSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
+            }
+        });
+    }
+
     $("#loadConfigButton").click(function () {
         configNeedsRestart = false;
         updateHeader(false, "");

@@ -7,9 +7,55 @@
 var spawn = require('child_process').spawn;
 var emitter = require('events').EventEmitter;
 var fs = require('fs');
+var util = require('util');
 var path_module = require('path');
+var fhicl = require('./fhicljson');
 var db = new emitter();
 var configCache = {};
+
+var fhiclTableTemplate = {
+    columns: [
+        {
+            name: "name",
+            type: "string",
+            editable: false,
+            display: true
+        },
+        {
+            name: "value",
+            type: "string",
+            editable: true,
+            display: true
+        },
+        {
+            name: "annotation",
+            title: "User Comment",
+            type: "string",
+            editable: true,
+            display: true
+        },
+        {
+            name: "comment",
+            type: "comment",
+            editable: false,
+            display: false
+        },
+        {
+            name: "type",
+            type: "string",
+            editable: false,
+            display: false
+        },
+        {
+            name: "children",
+            type: "array",
+            editable: false,
+            display: false
+        }
+    ],
+    data: [],
+    comment: "comment"
+};
 
 function GetNamedConfigs(configPath) {
     console.log("Searching for Named Configs in path " + configPath);
@@ -24,6 +70,91 @@ function GetNamedConfigs(configPath) {
         }
     }
     return configs;
+}
+
+function ParseSequence(element, name) {
+    element.children = [];
+    for (var i in element.value) {
+        element.children.push({ name: name + ":" + i, value: element.value[i] });
+    }
+    element.value = "";
+    return element;
+}
+
+function ParseFhiclTable(table, name) {
+    var output = { name: name, values: [], children: [], tables: [] }
+    //console.log("Table name is " + name);
+    
+    for (var e in table) {
+        var element = table[e];
+        //console.log(element);
+        switch (element.type) {
+            case "table":
+                //console.log("Parsing table " + e);
+                output.children.push(ParseFhiclTable(element.value, e));
+                break;
+            case "sequence":
+                output.values.push(ParseSequence(element, e));
+                output.values[output.values.length - 1].name = e;
+                break;
+            case "number":
+            case "string":
+            case "bool":
+                output.values.push(element);
+                output.values[output.values.length - 1].name = e;
+                break;
+            default:
+                console.log("Unknown type " + element.type + " encountered!");
+                break;
+        }
+    }
+    var newTable;
+    var value;
+    if (output.children.length > 0 && output.values.length > 0) {
+        newTable = JSON.parse(JSON.stringify(fhiclTableTemplate));
+        newTable.name = "Table Entries";
+        
+        for (value in output.values) {
+            newTable.data.push(output.values[value]);
+        }
+        output.tables.push(newTable);
+    }
+    else if (output.children.length > 0) {
+        var modified = true;
+        while (modified) {
+            modified = false;
+            for (var i in output.children) {
+                if (output.children[i].children.length === 0) {
+                    newTable = JSON.parse(JSON.stringify(fhiclTableTemplate));
+                    newTable.name = output.children[i].name;
+                    
+                    for (value in output.children[i].values) {
+                        newTable.data.push(output.children[i].values[value]);
+                    }
+                    
+                    output.tables.push(newTable);
+                    output.children.splice(i, 1);
+                    modified = true;
+                    break;
+                }
+            }
+        }
+    }
+    return output;
+}
+
+function ParseFhicl(path, name) {
+    var json = fhicl.tojson(path);
+    if (json.first) {
+        //console.log("JSON:");
+        //console.log(json);
+        var fcl = JSON.parse(json.second);
+        //console.log(util.inspect(fcl, { depth: null }));
+        
+        return ParseFhiclTable(fcl.data, name);
+    }
+    
+    return { name: name, tables: [], children: [] };
 }
 
 function ProcessDirectory(path) {
@@ -44,6 +175,10 @@ function ProcessDirectory(path) {
             var contents = JSON.parse(fs.readFileSync(f));
             console.log("Adding Table " + contents.name + " to tables list");
             output.tables.push(contents.name);
+        } else if (files[i].search(".fcl") > 0 && files[i].search("~") < 0) {
+            var fhiclcontents = ParseFhicl(f, files[i]);
+            console.log("Adding Fhicl File " + fhiclcontents.name + " to tables list");
+            output.children.push(fhiclcontents);
         }
     }
     return output;
@@ -65,30 +200,76 @@ function GetDBStructure(configName, workerData) {
     return ProcessDirectory(dir);
 }
 
+function ContainsString(arr, val) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i].search(val) >= 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function ContainsName(arr, val) {
+    for (var i = 0; i < arr.length; i++) {
+        console.log("Checking if " + arr[i].name + " is equal to " + val);
+        if (arr[i].name === val) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 function GetTablePath(configsPath, configName, tablePath) {
     var path = tablePath.split('/');
-    var tableName = path[path.length - 1];
-    path = path.slice(0, -1);
-    console.log(configsPath + "/" + configName + "/" + path);
-    var categoryPath = path_module.join(configsPath, configName, path.join('/'));
-    var files = fs.readdirSync(categoryPath);
-    var f, l = files.length;
-    for (var i = 0; i < l; i++) {
-        console.log("Processing File " + files[i]);
-        var f = path_module.join(categoryPath, files[i]);
-        if (!fs.lstatSync(f).isDirectory() && files[i].search(".json") > 0 && files[i].search("~") < 0) {
-            var contents = "" + fs.readFileSync(f);
-            if (JSON.parse(contents).name === tableName) {
-                return { name: f, contents: contents };
+    var index = ContainsString(path, ".fcl");
+    //console.log("Index is " + index);
+    if (index >= 0) {
+        var fhiclName = path[index];
+        var fhiclPath = configsPath + "/" + configName;
+        for (var i = 0; i <= index; ++i) {
+            fhiclPath += "/" + path[0];
+            path.shift();
+        }
+        var fcl = ParseFhicl(fhiclPath, fhiclName);
+        //console.log(util.inspect(fcl, { depth: null }));
+        while (path.length > 1) {
+            index = ContainsName(fcl.children, path[0]);
+            fcl = fcl.children[index];
+            path.shift();
+        }
+        console.log("Table name is " + path[0]);
+        console.log(fcl.tables);
+        if (path[0] === "Table Entries") {
+            return { name: fcl.name, contents: JSON.stringify(fcl.tables[0]) };
+        } else {
+            var index = ContainsName(fcl.tables, path[0]);
+            return { name: fcl.tables[index].name, contents: JSON.stringify(fcl.tables[index]) };
+        }
+    } else {
+        var tableName = path[path.length - 1];
+        path = path.slice(0, -1);
+        console.log(configsPath + "/" + configName + "/" + path);
+        var categoryPath = path_module.join(configsPath, configName, path.join('/'));
+        var files = fs.readdirSync(categoryPath);
+        var f, l = files.length;
+        for (var i = 0; i < l; i++) {
+            console.log("Processing File " + files[i]);
+            var f = path_module.join(categoryPath, files[i]);
+            if (!fs.lstatSync(f).isDirectory() && files[i].search(".json") > 0 && files[i].search("~") < 0) {
+                var contents = "" + fs.readFileSync(f);
+                if (JSON.parse(contents).name === tableName) {
+                    return { name: f, contents: contents };
+                }
             }
         }
     }
-    
     return {};
 }
 
 function GetTable(configsPath, configName, tablePath) {
     var file = GetTablePath(configsPath, configName, tablePath);
+    console.log("Returning: ");
+    console.log(file.contents);
     return file.contents;
 }
 
@@ -161,7 +342,7 @@ db.RO_LoadNamedConfig = function (POST, workerData) {
     }
     
     var structure = GetDBStructure(POST.configFile, workerData);
-    console.log("Returning DB Structure: " + JSON.stringify(structure));
+    //console.log("Returning DB Structure: " + JSON.stringify(structure));
     return JSON.stringify(structure);
 
 };
@@ -178,6 +359,6 @@ db.RO_ConfigPath = function (POST, workerData) {
 
 db.RO_Update = function (POST, workerData) {
     console.log(JSON.stringify(POST));
-    UpdateTable(POST.configPath, POST.config, POST.table, { id: POST.id, name: POST.name,column: POST.column, value: POST.value });
+    UpdateTable(POST.configPath, POST.config, POST.table, { id: POST.id, name: POST.name, column: POST.column, value: POST.value });
     return "";
 }

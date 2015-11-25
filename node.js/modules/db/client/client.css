@@ -26,7 +26,7 @@
         padding: 9px 15px;
         display: inline-block;
         border-radius: 3px 3px 0 0;
-        background: #D5D5D5;
+        background: #D5D5E5;
         font-size: 16px;
         font-weight: 600;
         color: #4c4c4c;
@@ -41,6 +41,9 @@
             text-decoration: none;
         }
 
+        .table-data a {
+            background: #E5D5D5
+        }
 .table-data a:hover {
     background: #e5a7cc;
     text-decoration: none;
