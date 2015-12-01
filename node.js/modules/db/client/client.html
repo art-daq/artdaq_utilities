@@ -28,7 +28,7 @@
 <body>
     <div data-role="page">
         <div data-role="header" id="header">
-            <h1>Database Viewer Test</h1>
+            <h1>ARTDAQ Configuration Editor</h1>
             <p id="info"></p>
         </div>
         <div data-role="main" class="ui-content">
@@ -40,8 +40,9 @@
                 <div id="tabContents" class="tab-content">
                     <div id="tab1" class="tab active">
                         <p>
-                            Welcome to the ARTDAQ Configuration Editor<br />
-                            Please Select a named configuration from the list below. It will load in additional top-level tabs.
+                            Welcome to the ARTDAQ Configuration Editor<br/>
+                            Please Select a named configuration from the list below. It will load in additional top-level tabs.<br/><br/>
+                            If you have a number field which you wish to convert to a string (general-purpose) field, leave the field blank, select a different field, then go back.
                         </p>
                         <form>
                             <fieldset data-role="collapsible" data-collapsed="false">
@@ -62,13 +63,17 @@
                                     <input type="text" name="configName" id="configName" class="triggersModified">
                                 </div>
                                 <button type="button" id="saveConfig">Save Configuration</button>
+                                <button type="button" id="discardConfig">Discard Configuration Changes</button>
                             </fieldset>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="debug"></div>
+        <div data-role="footer" id="footer">
+            <h2>Changes Made Since Last Save</h2>
+            <textarea id="debug"></textarea>
+        </div>
     </div>
 </body>
 </html>

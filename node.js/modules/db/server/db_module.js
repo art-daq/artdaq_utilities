@@ -9,7 +9,12 @@ var emitter = require('events').EventEmitter;
 var fs = require('fs');
 var util = require('util');
 var path_module = require('path');
-var fhicl = require('./fhicljson');
+try {
+    var fhicl = require('./fhicljson');
+} catch (e) {
+    console.log("Error loading fhicljson module...have you built the artdaq-database project?");
+    console.log(e);
+}
 var db = new emitter();
 var configCache = {};
 
@@ -209,10 +214,10 @@ function ContainsString(arr, val) {
     return -1;
 }
 
-function ContainsName(arr, val) {
+function ContainsName(arr, val, name) {
     for (var i = 0; i < arr.length; i++) {
-        console.log("Checking if " + arr[i].name + " is equal to " + val);
-        if (arr[i].name === val) {
+        console.log("Checking if " + arr[i][name] + " is equal to " + val);
+        if (arr[i][name] === val) {
             return i;
         }
     }
@@ -222,6 +227,8 @@ function ContainsName(arr, val) {
 function GetTablePath(configsPath, configName, tablePath) {
     var path = tablePath.split('/');
     var index = ContainsString(path, ".fcl");
+    var categoryPath = path_module.join(configsPath, configName, path.join('/'));
+    var outputPath = path_module.join(configsPath, "..", "tmp", configName, path.join('/'));
     //console.log("Index is " + index);
     if (index >= 0) {
         var fhiclName = path[index];
@@ -233,32 +240,32 @@ function GetTablePath(configsPath, configName, tablePath) {
         var fcl = ParseFhicl(fhiclPath, fhiclName);
         //console.log(util.inspect(fcl, { depth: null }));
         while (path.length > 1) {
-            index = ContainsName(fcl.children, path[0]);
+            index = ContainsName(fcl.children, path[0], "name");
             fcl = fcl.children[index];
             path.shift();
         }
         console.log("Table name is " + path[0]);
-        console.log(fcl.tables);
+        //console.log(fcl.tables);
         if (path[0] === "Table Entries") {
-            return { name: fcl.name, contents: JSON.stringify(fcl.tables[0]) };
+            return { name: fcl.name, output: outputPath, contents: JSON.stringify(fcl.tables[0]) };
         } else {
-            var index = ContainsName(fcl.tables, path[0]);
-            return { name: fcl.tables[index].name, contents: JSON.stringify(fcl.tables[index]) };
+            var index = ContainsName(fcl.tables, path[0], "name");
+            return { name: fcl.tables[index].name, output: outputPath, contents: JSON.stringify(fcl.tables[index]) };
         }
     } else {
         var tableName = path[path.length - 1];
         path = path.slice(0, -1);
         console.log(configsPath + "/" + configName + "/" + path);
-        var categoryPath = path_module.join(configsPath, configName, path.join('/'));
         var files = fs.readdirSync(categoryPath);
         var f, l = files.length;
         for (var i = 0; i < l; i++) {
             console.log("Processing File " + files[i]);
-            var f = path_module.join(categoryPath, files[i]);
+            f = path_module.join(categoryPath, files[i]);
+            var g = path_module.join(outputPath, files[i]);
             if (!fs.lstatSync(f).isDirectory() && files[i].search(".json") > 0 && files[i].search("~") < 0) {
                 var contents = "" + fs.readFileSync(f);
                 if (JSON.parse(contents).name === tableName) {
-                    return { name: f, contents: contents };
+                    return { name: f, output: g, contents: contents };
                 }
             }
         }
@@ -281,7 +288,20 @@ function UpdateTable(configsPath, configName, tablePath, data) {
             oldData.data[entry][data.column] = data.value;
         }
     }
-    fs.writeFileSync(file.name, JSON.stringify(oldData));
+    console.log("File.name is " + file.name + ", and file.output is " + file.output);
+    var dirs = file.output.split('/');
+    var createdPath = path_module.join(configsPath, "..");
+    while (dirs.length > 1) {
+        if (configsPath.search(dirs[0]) < 0) {
+            createdPath = path_module.join(createdPath, dirs[0]);
+            if (!fs.existsSync(createdPath)) {
+                fs.mkdirSync(createdPath);
+            }
+        }
+        dirs.shift();
+    }
+    
+    fs.writeFileSync(file.output, JSON.stringify(oldData));
 }
 
 db.MasterInitFunction = function (workerData) {
@@ -318,14 +338,12 @@ db.RO_GetData = function (POST, workerData) {
 db.RW_saveConfig = function (POST, workerData) {
     var success = false;
     console.log("Request to save configuration recieved. Configuration data:");
-    var config = JSON.parse(POST.config);
-    if (config.name.search("\\.\\.") >= 0) {
-        console.log("Possible break-in attempt! NOT Proceeding!");
-        return { Success: false };
-    }
-    console.log(util.inspect(config, false, null));
-    testData[config.name] = config;
-    return { Success: success };
+    console.log(POST);
+    
+    
+    
+
+    return "";
 };
 
 db.RO_LoadNamedConfig = function (POST, workerData) {
@@ -346,6 +364,45 @@ db.RO_LoadNamedConfig = function (POST, workerData) {
     return JSON.stringify(structure);
 
 };
+
+db.RW_discardConfig = function(POST, workerData) {
+    console.log(workerData);
+    console.log(POST);
+    if (fs.existsSync(POST.configPath) && fs.lstatSync(POST.configPath).isDirectory() && GetNamedConfigs(POST.configPath).length > 0) {
+        workerData.configPath = POST.data;
+    }
+    if (POST.configFile.search("\\.\\.") >= 0) {
+        console.log("Possible break-in attempt! NOT Proceeding!");
+        return false;
+    }
+    var index = ContainsName(GetNamedConfigs(POST.configPath), POST.configFile, "path");
+    console.log("Array index is " + index);
+    if (index >= 0) {
+        var trashDir = path_module.join(POST.configPath, "..", "TRASH");
+        var trashPath = path_module.join(trashDir, POST.configFile + "_" + Date.now());
+        var configPath = path_module.join(POST.configPath, "..", "tmp", POST.configFile);
+
+        if (!fs.existsSync(configPath)) {
+            console.log("No changes detected, returning");
+            return true;
+        }
+
+        console.log("Moving configuration temporary directory to TRASH directory");
+        if (!fs.existsSync(trashDir)) {
+            fs.mkdirSync(trashDir);
+        }
+        console.log("Moving config to trash: " + configPath + " to " + trashPath);
+            fs.renameSync(configPath,trashPath);
+            console.log("Returning...");
+            return true;
+
+
+    } else {
+        // Config not found
+        console.log("Returning false");
+        return false;
+    }
+}
 
 db.RO_ConfigPath = function (POST, workerData) {
     console.log(JSON.stringify(POST));
