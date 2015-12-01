@@ -10,9 +10,12 @@ var fs = require('fs');
 var util = require('util');
 var path_module = require('path');
 try {
-    var fhicl = require('./fhicljson');
+    var fhiclPath = path_module.join(process.env["ARTDAQ_DATABASE_LIB"], "node_modules","fhicljson");
+    console.log("Looking for fhicljson module in " + fhiclPath);
+    var fhicl = require(fhiclPath);
+    console.log("Module loaded.");
 } catch (e) {
-    console.log("Error loading fhicljson module...have you built the artdaq-database project?");
+    console.log("Error loading fhicljson module...have you setup the artdaq_database product?");
     console.log(e);
 }
 var db = new emitter();
