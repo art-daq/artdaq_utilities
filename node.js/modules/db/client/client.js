@@ -73,7 +73,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         dataType: "json",
         dataFields: dataFields,
         hierarchy: {
-            root: "children"
+            root: "values"
         },
         id: "name",
         localData: data,

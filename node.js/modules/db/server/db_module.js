@@ -56,7 +56,7 @@ var fhiclTableTemplate = {
             display: false
         },
         {
-            name: "children",
+            name: "values",
             type: "array",
             editable: false,
             display: false
@@ -100,83 +100,90 @@ function GetNamedConfigs(baseDir) {
     return configs;
 }
 
-function ParseSequence(element, name) {
-    element.children = [];
-    for (var i in element.value) {
-        element.children.push({ name: name + ":" + i, value: element.value[i] });
+function ParseSequence(sequence) {
+    //console.log("SEQUENCE BEFORE: " + JSON.stringify(sequence));
+    if (sequence.values) {
+        for (var i = 0; i < sequence.values.length; ++i) {
+            var name = sequence.name + ":" + i;
+            var value = sequence.values[i];
+            sequence.values[i] = { name: name, value: value };
+        }
     }
-    element.value = "";
-    return element;
+    //console.log("SEQUENCE AFTER: " + JSON.stringify(sequence));
+    return sequence;
 }
 
-function ParseFhiclTable(table, name) {
-    var output = { name: name, values: [], children: [], tables: [] }
+function ParseFhiclTable(table) {
+    var tables = [];
+    var children = [];
+    var atoms = [];
     //console.log("Table name is " + name);
     
-    for (var e in table) {
-        var element = table[e];
-        //console.log(element);
-        switch (element.type) {
-            case "table":
-                //console.log("Parsing table " + e);
-                output.children.push(ParseFhiclTable(element.value, e));
-                break;
-            case "sequence":
-                output.values.push(ParseSequence(element, e));
-                output.values[output.values.length - 1].name = e;
-                break;
-            case "number":
-            case "string":
-            case "bool":
-                output.values.push(element);
-                output.values[output.values.length - 1].name = e;
-                break;
-            default:
-                console.log("Unknown type " + element.type + " encountered!");
-                break;
+    for (var e in table.children) {
+        if (table.children.hasOwnProperty(e)) {
+            var element = table.children[e];
+            //console.log(element);
+            switch (element.type) {
+                case "table":
+                    //console.log("Parsing table " + e);
+                    children.push(ParseFhiclTable(element));
+                    break;
+                case "sequence":
+                    atoms.push(ParseSequence(element));
+                case "number":
+                case "string":
+                case "bool":
+                    atoms.push(element);
+                    break;
+                default:
+                    console.log("Unknown type " + element.type + " encountered!");
+                    break;
+            }
         }
     }
     var newTable;
-    var value;
-    if (output.children.length > 0 && output.values.length > 0) {
+    
+    if (atoms.length > 0) {
         newTable = JSON.parse(JSON.stringify(fhiclTableTemplate));
         newTable.name = "Table Entries";
         
-        for (value in output.values) {
-            newTable.data.push(output.values[value]);
+        for (var atom in atoms) {
+            if (atoms.hasOwnProperty(atom)) {
+                newTable.data.push(atoms[atom]);
+            }
         }
-        output.tables.push(newTable);
+        tables.push(newTable);
     }
-    else if (output.children.length > 0) {
+    if (children.length > 0) {
         var modified = true;
         while (modified) {
             modified = false;
-            for (var i in output.children) {
-                if (output.children[i].children.length === 0) {
-                    newTable = JSON.parse(JSON.stringify(fhiclTableTemplate));
-                    newTable.name = output.children[i].name;
-                    
-                    for (value in output.children[i].values) {
-                        newTable.data.push(output.children[i].values[value]);
+            for (var i in children) {
+                if (children.hasOwnProperty(i)) {
+                    if (children[i].children.length === 0 && children[i].tables.length === 1 && children[i].tables[0].name === "Table Entries") {
+                        newTable = JSON.parse(JSON.stringify(children[i].tables[0]));
+                        newTable.name = children[i].name;
+                        
+                        tables.splice(-1, 0, newTable);
+                        children.splice(i, 1);
+                        modified = true;
+                        break;
                     }
-                    
-                    output.tables.push(newTable);
-                    output.children.splice(i, 1);
-                    modified = true;
-                    break;
                 }
             }
         }
     }
-    return output;
+    var comment = table.comment ? table.comment : "";
+    return { name: table.name, tables: tables, children: children, comment: comment };
 }
 
 function ParseFhicl(path, name) {
     console.log("Going to load FhiCL file: " + path);
     var json = fhicl.tojson(path);
     if (json.first) {
+        //console.log("DEBUG: " + json.second);
         var fcl = JSON.parse(json.second);
-        return ParseFhiclTable(fcl.data, name);
+        return ParseFhiclTable({ children: fcl.data, name: name });
     }
     
     return { name: name, tables: [], children: [] };
@@ -203,6 +210,7 @@ function ProcessDirectory(path) {
         } else if (files[i].search(".fcl") > 0 && files[i].search("~") < 0) {
             var fhiclcontents = ParseFhicl(f, files[i]);
             console.log("Adding Fhicl File " + fhiclcontents.name + " to tables list");
+            //console.log("DEBUG: " + JSON.stringify(fhiclcontents));
             output.children.push(fhiclcontents);
         }
     }
@@ -244,22 +252,14 @@ function GetTablePath(baseDir, configPath, tablePath) {
             path.shift();
         }
         console.log("Table name is " + path[0]);
-        //console.log(fcl.tables);
-        if (path[0] === "Table Entries") {
-            fhiclTmpPath += ".json";
-            if (fs.existsSync(fhiclTmpPath)) {
-                return { name: fcl.name, output: fhiclTmpPath, contents: fs.readFileSync(fhiclTmpPath) };
-            } else {
-                return { name: fcl.name, output: fhiclTmpPath, contents: JSON.stringify(fcl.tables[0]) };
-            }
+        console.log(fcl.tables);
+        
+        var index = ContainsName(fcl.tables, path[0], "name");
+        fhiclTmpPath = path_module.join(fhiclTmpPath, path[0] + ".json");
+        if (fs.existsSync(fhiclTmpPath)) {
+            return { name: path[0], output: fhiclTmpPath, contents: "" + fs.readFileSync(fhiclTmpPath) };
         } else {
-            var index = ContainsName(fcl.tables, path[0], "name");
-            fhiclTmpPath = path_module.join(fhiclTmpPath, path[0] + ".json");
-            if (fs.existsSync(fhiclTmpPath)) {
-                return { name: path[0], output: fhiclTmpPath, contents: fs.readFileSync(fhiclTmpPath) };
-            } else {
-                return { name: fcl.tables[index].name, output: fhiclTmpPath, contents: JSON.stringify(fcl.tables[index]) };
-            }
+            return { name: fcl.tables[index].name, output: fhiclTmpPath, contents: JSON.stringify(fcl.tables[index]) };
         }
     } else {
         var categoryPath = path_module.join(baseDir, configPath, path.join('/'));
@@ -302,9 +302,9 @@ function UpdateTable(baseDir, configPath, tablePath, data) {
                 } else {
                     //Check for Fhicl Sequence:
                     for (var element in oldData.data[entry].children) {
-                       if (oldData.data[entry].children[element].name === data.name) {
+                        if (oldData.data[entry].children[element].name === data.name) {
                             oldData.data[entry].children[element][data.column] = data.value;
-                       }
+                        }
                     }
                 }
             }
