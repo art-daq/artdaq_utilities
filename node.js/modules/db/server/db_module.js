@@ -77,7 +77,7 @@ function ContainsString(arr, val) {
 
 function ContainsName(arr, val, name) {
     for (var i = 0; i < arr.length; i++) {
-        console.log("Checking if " + arr[i][name] + " is equal to " + val);
+        //console.log("Checking if " + arr[i][name] + " is equal to " + val);
         if (arr[i][name] === val) {
             return i;
         }
@@ -104,7 +104,7 @@ function ParseSequence(sequence) {
     //console.log("SEQUENCE BEFORE: " + JSON.stringify(sequence));
     if (sequence.values) {
         for (var i = 0; i < sequence.values.length; ++i) {
-            var name = sequence.name + ":" + i;
+            var name = sequence.name + "_" + i;
             var value = sequence.values[i];
             sequence.values[i] = { name: name, value: value };
         }
@@ -130,6 +130,7 @@ function ParseFhiclTable(table) {
                     break;
                 case "sequence":
                     atoms.push(ParseSequence(element));
+                    break;
                 case "number":
                 case "string":
                 case "bool":
@@ -179,6 +180,13 @@ function ParseFhiclTable(table) {
 
 function ParseFhicl(path, name) {
     console.log("Going to load FhiCL file: " + path);
+    if (path.search(".fcl.json") >= 0) {
+        console.log("This file has already been fhicljson converted. Doing minimal processing");
+        var fcl = JSON.parse("" + fs.readFileSync(path));
+
+        console.log(JSON.stringify(fcl));
+        return ParseFhiclTable({ children: fcl.data, name: name });
+    }
     var json = fhicl.tojson(path);
     if (json.first) {
         //console.log("DEBUG: " + json.second);
@@ -203,15 +211,15 @@ function ProcessDirectory(path) {
         if (fs.lstatSync(f).isDirectory()) {
             console.log("Adding Directory " + f + " to children list");
             output.children.push(ProcessDirectory(f));
-        } else if (files[i].search(".json") > 0 && files[i].search("~") < 0) {
-            var contents = JSON.parse(fs.readFileSync(f));
-            console.log("Adding Table " + contents.name + " to tables list");
-            output.tables.push(contents.name);
         } else if (files[i].search(".fcl") > 0 && files[i].search("~") < 0) {
             var fhiclcontents = ParseFhicl(f, files[i]);
             console.log("Adding Fhicl File " + fhiclcontents.name + " to tables list");
             //console.log("DEBUG: " + JSON.stringify(fhiclcontents));
             output.children.push(fhiclcontents);
+        } else if (files[i].search(".json") > 0 && files[i].search("~") < 0) {
+            var contents = JSON.parse(fs.readFileSync(f));
+            console.log("Adding Table " + contents.name + " to tables list");
+            output.tables.push(contents.name);
         }
     }
     return output;
@@ -252,11 +260,11 @@ function GetTablePath(baseDir, configPath, tablePath) {
             path.shift();
         }
         console.log("Table name is " + path[0]);
-        console.log(fcl.tables);
         
         var index = ContainsName(fcl.tables, path[0], "name");
         fhiclTmpPath = path_module.join(fhiclTmpPath, path[0] + ".json");
         if (fs.existsSync(fhiclTmpPath)) {
+            console.log("Going to read from temporary file " + fhiclTmpPath);
             return { name: path[0], output: fhiclTmpPath, contents: "" + fs.readFileSync(fhiclTmpPath) };
         } else {
             return { name: fcl.tables[index].name, output: fhiclTmpPath, contents: JSON.stringify(fcl.tables[index]) };
@@ -294,16 +302,25 @@ function GetTable(baseDir, configPath, tablePath) {
 function UpdateTable(baseDir, configPath, tablePath, data) {
     var file = GetTablePath(baseDir, configPath, tablePath);
     var oldData = JSON.parse(file.contents);
+    //console.log("Searching table for entry");
     for (var entry in oldData.data) {
         if (oldData.data.hasOwnProperty(entry)) {
-            if (data.name.search(oldData.data[entry].name) === 0) {
+            var index = data.name.search(oldData.data[entry].name);
+            //console.log("Checking if " + data.name + " contains " + oldData.data[entry].name + " (" + index + ")");
+            if (index === 0) {
                 if (data.name === oldData.data[entry].name) {
+                    //console.log("Setting " + oldData.data[entry] + " field " + data.column + " to " + data.value);
                     oldData.data[entry][data.column] = data.value;
                 } else {
                     //Check for Fhicl Sequence:
-                    for (var element in oldData.data[entry].children) {
-                        if (oldData.data[entry].children[element].name === data.name) {
-                            oldData.data[entry].children[element][data.column] = data.value;
+                    var values = oldData.data[entry].values;
+                    for (var element in values) {
+                        if (values.hasOwnProperty(element)) {
+                            //console.log("SEQUENCE: Checking if " + values[element].name + " is equal to " + data.name);
+                            if (values[element].name === data.name) {
+                                //console.log("Setting " + values[element] + " field " + data.column + " to " + data.value);
+                                values[element][data.column] = data.value;
+                            }
                         }
                     }
                 }
@@ -316,6 +333,7 @@ function UpdateTable(baseDir, configPath, tablePath, data) {
     while (dirs.length > 1) {
         if (baseDir.search(dirs[0]) < 0) {
             createdPath = path_module.join(createdPath, dirs[0]);
+            //console.log("Checking and creating: " + createdPath);
             if (!fs.existsSync(createdPath)) {
                 fs.mkdirSync(createdPath);
             }
@@ -323,6 +341,7 @@ function UpdateTable(baseDir, configPath, tablePath, data) {
         dirs.shift();
     }
     
+    //console.log("Writing output to file: " + JSON.stringify(oldData));
     fs.writeFileSync(file.output, JSON.stringify(oldData));
 }
 
@@ -342,37 +361,47 @@ function ReadConfigMetadata(baseDir, configPath) {
 }
 
 function WriteConfigMetadata(baseDir, configPath, configName, log, oldConfigPath) {
+    console.log("Reading old Configuration Metadata:");
     var metadata = ReadConfigMetadata(baseDir, oldConfigPath);
+    console.log(JSON.stringify(metadata));
     metadata.baseDir = baseDir;
     metadata.name = configName;
-    metadata.changeLog = log + metadata.changeLog;
+    if (log && log.length > 0) {
+        metadata.changeLog = log + metadata.changeLog;
+    }
     metadata.time = Date.now();
-    
+
+    console.log("Writing new metadata file: " + path_module.join(baseDir, configPath + ".json"));
     fs.writeFileSync(path_module.join(baseDir, configPath + ".json"), JSON.stringify(metadata));
 }
 
 function ValidatePath(path, baseDir) {
     var re = /^[a-zA-Z0-9\-_]+$/;
     if (!path.match(re)) { return false; }
-    if (fs.existsSync(path_module.join(baseDir, path))) { return false; }
+    //if (fs.existsSync(path_module.join(baseDir, path))) { return false; }
     
     return true;
 }
 
 function FindDirectoryFiles(base, path) {
+    //console.log("Finding files in " + base + " (" + path + ")");
     var output = { files: [], dirs: [] };
-    var files = fs.readdirSync(path);
-    var f, l = files.length;
+    var files = fs.readdirSync(path_module.join(base, path));
+    var f, ff, l = files.length;
     for (var i = 0; i < l; i++) {
-        console.log("Processing File " + files[i]);
+        //console.log("Processing File " + files[i]);
         f = path_module.join(base, path, files[i]);
+        ff = path_module.join(path, files[i]);
         if (fs.lstatSync(f).isDirectory()) {
-            output.dirs.push(path_module.join(path, files[i]));
-            output.files.push(FindDirectoryFiles(base, files[i]));
+            output.dirs.push(ff);
+            var dirInfo = FindDirectoryFiles(base, ff);
+            output.files = output.files.concat(dirInfo.files);
+            output.dirs = output.dirs.concat(dirInfo.dirs);
         } else {
-            output.files.push(path_module.join(path, files[i]));
+            output.files.push(ff);
         }
     }
+    //console.log("Returning: " + JSON.stringify(output));
     return output;
 }
 
@@ -404,36 +433,40 @@ function rmrf(path) {
 }
 
 function FindFhiclFiles(fileArray) {
+    //console.log("Searching for FhiCL file names in " + JSON.stringify(fileArray));
     var fhiclFiles = [];
-    for (var i = 0; i < fhiclFiles.length; ++i) {
-        var filePath = fhiclFiles[i].split('/');
+    for (var i = 0; i < fileArray.length; ++i) {
+        //console.log("Processing file: " + fileArray[i]);
+        var filePath = fileArray[i].split('/');
+        var index = ContainsString(filePath, ".fcl");
         var fhiclFile = "";
-        for (var j = 0; j < filePath.length; ++j) {
-            if (filePath[j].search(".fcl") >= 0) {
-                fhiclFile = filePath[j];
-                break;
-            }
+        for (var j = 0; j <= index; ++j) {
+            fhiclFile = path_module.join(fhiclFile, filePath[j]);
         }
+        //console.log("Detected FhiCL File Name: " + fhiclFile);
         if (fhiclFile.length > 0 && ContainsString(fhiclFiles, fhiclFile) < 0) {
             fhiclFiles.push(fhiclFile);
         }
     }
+    //console.log("Returning: " + JSON.stringify(fhiclFiles));
     return fhiclFiles;
 }
 
 function MergeFhiclFiles(baseDir, oldPath, newPath) {
+    console.log("Merging FhiCL files");
     var originalConfig = path_module.join(baseDir, oldPath);
     var tmpDirectory = path_module.join(baseDir, "..", "tmp", oldPath);
     var outputDirectory = path_module.join(baseDir, newPath);
     var pathChanged = oldPath !== newPath;
     
-    var oldFiles = FindDirectoryFiles(originalConfig, "");
+    var oldFiles = FindDirectoryFiles(originalConfig, "").files;
     var oldFhiclFiles = FindFhiclFiles(oldFiles);
-    var modifiedFiles = FindDirectoryFiles(tmpDirectory, "");
+    var modifiedFiles = FindDirectoryFiles(tmpDirectory, "").files;
     var modifiedFhiclFiles = FindFhiclFiles(modifiedFiles);
     
     // Copy over unmodified files
     if (pathChanged) {
+        console.log("Path was changed. Copying in untouched source fhicl files");
         for (var i = 0; i < oldFhiclFiles.length; ++i) {
             if (ContainsString(modifiedFhiclFiles, oldFhiclFiles[i]) < 0) {
                 var fileIndex = ContainsString(oldFiles, oldFhiclFiles[i]);
@@ -447,18 +480,112 @@ function MergeFhiclFiles(baseDir, oldPath, newPath) {
         var fileName = modifiedFhiclFiles[i];
         var fileIndex = ContainsString(oldFiles, fileName);
         var oldFile = path_module.join(originalConfig, oldFiles[fileIndex]);
+        var newFile = path_module.join(outputDirectory, oldFiles[fileIndex]);
         var tmpJSON = fhicl.tojson(oldFile);
-        var oldFileJSON = {};
+        var oldFileJSON = { name: fileName, type: "table" };
         if (tmpJSON.first) {
-            oldFileJSON = JSON.parse(tmpJSON.second);
+            oldFileJSON.children = JSON.parse(tmpJSON.second).data;
         }
         
+        console.log(JSON.stringify(modifiedFiles));
         for (var j = 0; j < modifiedFiles.length; ++j) {
+            //console.log("Processing file: " + modifiedFiles[j]);
             if (modifiedFiles[j].search(fileName) >= 0) {
+                var tablePath = modifiedFiles[j].slice(fileName.length + 1);
+                console.log("Table Path: " + tablePath + ", fileName: " + fileName + ", modifiedFiles[j]: " + modifiedFiles[j]);
                 var thisTable = JSON.parse(fs.readFileSync(path_module.join(tmpDirectory, modifiedFiles[j])));
                 
+                var thisTableArr = tablePath.split('/');
+                var objects = [];
+                var thisFileObj = oldFileJSON;
+                while (thisTableArr.length > 1) {
+                    var oldFileObj = thisFileObj;
+                    var index = ContainsName(thisFileObj.children, thisTableArr[0], "name");
+                    thisFileObj = thisFileObj.children[index];
+                    objects.push({ index: index, item: oldFileObj });
+                    thisTableArr.shift();
+                }
+                
+                if (thisTableArr[0] !== "Table Entries.json") {
+                    var name = thisTableArr[0].slice(0, -5);
+                    var index = ContainsName(thisFileObj.children, name, "name");
+                    objects.push({ index: index, item: thisFileObj });
+                    thisFileObj = thisFileObj.children[index];
+                }
+                console.log(JSON.stringify(objects));
+                
+                console.log("OLD: ");
+                console.log(JSON.stringify(thisFileObj));
+                console.log("NEW: ");
+                
+                for (var item in thisTable.data) {
+                    if (thisTable.data[item].type === "sequence") {
+                        for (var child in thisTable.data[item].values) {
+                            if (thisTable.data[item].values[child].annotation.length > 0) {
+                                thisTable.data[item].annotation += "(" + child + ": " + thisTable.data[item].values[child].annotation + ")";
+                            }
+                            thisTable.data[item].values[child] = thisTable.data[item].values[child].value;
+                        }
+                    }
+                }
+                
+                var strippedTable = { type: "table", name: thisTable.name, children: thisTable.data }
+                console.log(JSON.stringify(strippedTable));
+                
+                if (thisTableArr[0] === "Table Entries.json") {
+                    for (var entry in thisFileObj.children) {
+                        if (thisFileObj.children.hasOwnProperty(entry)) {
+                            if (thisFileObj.children[entry].type !== "table") {
+                                if (strippedTable.children.length > 0) {
+                                    thisFileObj.children.splice(entry, 1, strippedTable.children.shift());
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    thisFileObj = strippedTable;
+                }
+                
+                for (var k = objects.length - 1; k >= 0; --k) {
+                    objects[k].item.children[objects[k].index] = thisFileObj;
+                    thisFileObj = objects[k].item;
+                }
+
             }
         }
+        //console.log(JSON.stringify(oldFileJSON));
+        
+        //Give to Gennadiy!
+        //tofhicl(newFile, JSON.stringify(oldFileJSON.children));
+        fs.writeFileSync(newFile + ".json", JSON.stringify({ data: oldFileJSON.children }));
+    }
+}
+
+function DiscardWorkingDir(baseDir, path) {
+    var index = ContainsName(GetNamedConfigs(baseDir), path, "path");
+    console.log("Array index is " + index);
+    if (index >= 0) {
+        var trashDir = path_module.join(baseDir, "..", "TRASH");
+        var trashPath = path_module.join(trashDir, path + "_" + Date.now());
+        var configPath = path_module.join(baseDir, "..", "tmp", path);
+        
+        if (!fs.existsSync(configPath)) {
+            console.log("No changes detected, returning");
+            return true;
+        }
+        
+        console.log("Moving configuration temporary directory to TRASH directory");
+        if (!fs.existsSync(trashDir)) {
+            fs.mkdirSync(trashDir);
+        }
+        console.log("Moving config to trash: " + configPath + " to " + trashPath);
+        fs.renameSync(configPath, trashPath);
+        console.log("Returning...");
+        return true;
+    } else {
+        // Config not found
+        console.log("Returning false");
+        return false;
     }
 }
 
@@ -466,6 +593,9 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
     var originalConfig = path_module.join(baseDir, oldPath);
     var tmpDirectory = path_module.join(baseDir, "..", "tmp", oldPath);
     var outputDirectory = path_module.join(baseDir, newPath);
+    //.log("Original Configuration Directory: " + originalConfig);
+    //console.log("Temporary Configuration Directory: " + tmpDirectory);
+    //console.log("Output Configuration Directory: " + outputDirectory);
     
     var pathChanged = oldPath !== newPath;
     
@@ -473,10 +603,13 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
     var modifiedFileObj = FindDirectoryFiles(tmpDirectory, "");
     var modifiedFileList = modifiedFileObj.files;
     var modifiedFileDirs = modifiedFileObj.dirs;
+    //console.log(JSON.stringify(oldFileList));
+    //console.log(JSON.stringify(modifiedFileObj));
     
-    var fhiclsModified = ContainsString(modifiedFileList, ".fcl");
+    var fhiclsModified = ContainsString(modifiedFileList, ".fcl") >= 0;
     
     if (!fhiclsModified) {
+        console.log("No FhiCL Files were changed. Doing direct copy");
         //We can do direct file overwriting
         if (pathChanged) {
             copy(originalConfig, outputDirectory);
@@ -492,15 +625,22 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
         }
     } else {
         // More complicated case.
+        console.log("FhiCL Files were changed. Copying in any other files.");
         if (pathChanged) {
-            fs.mkdirSync(outputDirectory);
-            
+            console.log("Path was changed. Creating output Directory");
+            if (!fs.existsSync(outputDirectory)) {
+                fs.mkdirSync(outputDirectory);
+            }
+
             //Copy in original config files (that aren't fhicl)
+            console.log("Recreating Directory Structure");
             for (var i = 0; i < oldFileList.dirs.length; ++i) {
                 if (!fs.existsSync(path_module.join(outputDirectory, oldFileList.dirs[i]))) {
+                    console.log("Creating directory " + path_module.join(outputdirectory, oldFileList.dirs[i]));
                     fs.mkdirSync(path_module.join(outputDirectory, oldFileList.dirs[i]));
                 }
             }
+            console.log("Copying in old non-FhiCL files");
             for (var i = 0; i < oldFileList.files.length; ++i) {
                 var oldFile = path_module.join(originalConfig, oldFileList.files[i]);
                 if (oldFileList.files[i].search(".fcl") < 0) {
@@ -511,13 +651,18 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
         
         // Copy in modified config files (that aren't fhicl)
         for (var i = 0; i < modifiedFileDirs.length; ++i) {
-            if (!fs.existsSync(path_module.join(outputDirectory, modifiedFileDirs[i]))) {
-                fs.mkdirSync(path_module.join(outputDirectory, modifiedFileDirs[i]));
+            if (modifiedFileDirs[i].search(".fcl") < 0) {
+                var dir = path_module.join(outputDirectory, modifiedFileDirs[i]);
+                console.log("Checking if Directory exists: " + dir);
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir);
+                }
             }
         }
         
         for (var i = 0; i < modifiedFileList.length; ++i) {
             if (modifiedFileList[i].search(".fcl") < 0) {
+                console.log("Copying file " + modifiedFileList[i] + " to output directory");
                 fs.unlinkSync(path_module.join(outputDirectory, modifiedFileList[i]));
                 fs.renameSync(path_module.join(originalConfig, modifiedFileList[i]), path_module.join(outputDirectory, modifiedFileList[i]));
             }
@@ -526,6 +671,7 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
         // Refactor out the hard bit...
         MergeFhiclFiles(baseDir, oldPath, newPath);
     }
+    return DiscardWorkingDir(baseDir, oldPath);
 }
 
 db.MasterInitFunction = function (workerData) {
@@ -575,6 +721,7 @@ db.RW_saveConfig = function (POST) {
     }
     
     if (POST.log === "") {
+        console.log("Empty Log Detected: No changes were made!");
         if (pathChanged) {
             console.log("Path change detected. Copying old configuration to new directory.");
             var oldDir = path_module.join(POST.baseDir, POST.oldConfigInfo.path);
@@ -586,6 +733,7 @@ db.RW_saveConfig = function (POST) {
             WriteConfigMetadata(POST.baseDir, POST.newConfigInfo.path, POST.newConfigInfo.name, POST.log, POST.oldConfigInfo.path);
         }
     } else {
+        console.log("Updating Configuration Files");
         UpdateConfigurationData(POST.baseDir, POST.oldConfigInfo.path, POST.newConfigInfo.path);
         WriteConfigMetadata(POST.baseDir, POST.newConfigInfo.path, POST.newConfigInfo.name, POST.log, POST.oldConfigInfo.path);
     }
@@ -617,31 +765,8 @@ db.RW_discardConfig = function (POST) {
         console.log("Possible break-in attempt! NOT Proceeding!");
         return false;
     }
-    var index = ContainsName(GetNamedConfigs(POST.baseDir), POST.configInfo.path, "path");
-    console.log("Array index is " + index);
-    if (index >= 0) {
-        var trashDir = path_module.join(POST.baseDir, "..", "TRASH");
-        var trashPath = path_module.join(trashDir, POST.configInfo.path + "_" + Date.now());
-        var configPath = path_module.join(POST.baseDir, "..", "tmp", POST.configInfo.path);
-        
-        if (!fs.existsSync(configPath)) {
-            console.log("No changes detected, returning");
-            return true;
-        }
-        
-        console.log("Moving configuration temporary directory to TRASH directory");
-        if (!fs.existsSync(trashDir)) {
-            fs.mkdirSync(trashDir);
-        }
-        console.log("Moving config to trash: " + configPath + " to " + trashPath);
-        fs.renameSync(configPath, trashPath);
-        console.log("Returning...");
-        return true;
-    } else {
-        // Config not found
-        console.log("Returning false");
-        return false;
-    }
+    
+    return DiscardWorkingDir(POST.baseDir, POST.configInfo.path);
 }
 
 db.RO_SetBaseDirectory = function (POST) {

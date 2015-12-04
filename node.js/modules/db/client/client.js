@@ -17,6 +17,12 @@ function updateHeader(error, text) {
     }
 };
 
+function resizeTextAreas() {
+    $("textarea").each(function (i, el) {
+        $(el).height(el.scrollHeight);
+    });
+}
+
 function createRowEditor(row, cellvalue, editor, cellText, width, height) {
     editor.after("<div></div><div></div>");
     var radix = 10;
@@ -175,7 +181,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             value: value
         });
         var now = new Date;
-        $("#debug").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowKey + ", Column: " + columnName + ", Value: " + value + "\n" + $("#debug").val());
+        $("#changes").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#changes").val());
+        resizeTextAreas();
         updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
     });
 }
@@ -222,7 +229,9 @@ function loadTable(path, tag) {
 
 function loadConfigs() {
     updateHeader(false, "");
-    $("#debug").val("");
+    $("#changes").val("");
+    $("#changeLog").val("");
+    resizeTextAreas();
     for (var i = 2; i <= lastTabID; i++) {
         $("#tab" + i).remove();
         $("#tablink" + i).remove();
@@ -349,7 +358,8 @@ $(document).ready(function() {
         lastTabID = 1;
         AjaxPost("/db/LoadNamedConfig", { configInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path }, baseDir: $("#baseDir").val() }, function(config) {
             var configObj = JSON.parse(config);
-            $("#debug").val(configObj.metadata.log);
+            $("#changeLog").val(configObj.metadata.changeLog)
+            resizeTextAreas();
             for (var category in configObj.children) {
                 if (configObj.children.hasOwnProperty(category)) {
                     lastTabID++;
@@ -369,7 +379,7 @@ $(document).ready(function() {
             $("#configMetadataText").val("");
             for (var md in configObj.metadata) {
                 if (configObj.metadata.hasOwnProperty(md)) {
-                    if (md !== "log" && md !== "name") {
+                    if (md !== "changeLog" && md !== "name") {
                         $("#configMetadataText").val($("#configMetadataText").val() + md + ": " + JSON.stringify(configObj.metadata[md]) + "\n");
                     }
                 }
@@ -389,7 +399,7 @@ $(document).ready(function() {
                 name: $("#configName").val(),
                 path: $("#configPath").val()
             },
-            log: $("#debug").val()
+            log: $("#changes").val()
         }, function(res) {
             if (res !== null && res.Success) {
                 updateHeader(false, "Configuration Saved.");
@@ -403,7 +413,7 @@ $(document).ready(function() {
     $("#discardConfig").click(function() {
         AjaxPost("/db/discardConfig", { baseDir: $("#baseDir").val(), configInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path } }, function(res) {
             if (res) {
-                $("#debug").val("");
+                $("#changes").val("").height($("#changes").scrollHeight);
                 loadConfigs();
             } else {
                 updateHeader(true, "Failed to discard configuration. Make sure you have a valid configuration selected.\nIf this problem persists, call an expert.");
