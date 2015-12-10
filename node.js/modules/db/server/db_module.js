@@ -183,7 +183,7 @@ function ParseFhicl(path, name) {
     if (path.search(".fcl.json") >= 0) {
         console.log("This file has already been fhicljson converted. Doing minimal processing");
         var fcl = JSON.parse("" + fs.readFileSync(path));
-
+        
         console.log(JSON.stringify(fcl));
         return ParseFhiclTable({ children: fcl.data, name: name });
     }
@@ -370,7 +370,7 @@ function WriteConfigMetadata(baseDir, configPath, configName, log, oldConfigPath
         metadata.changeLog = log + metadata.changeLog;
     }
     metadata.time = Date.now();
-
+    
     console.log("Writing new metadata file: " + path_module.join(baseDir, configPath + ".json"));
     fs.writeFileSync(path_module.join(baseDir, configPath + ".json"), JSON.stringify(metadata));
 }
@@ -482,10 +482,13 @@ function MergeFhiclFiles(baseDir, oldPath, newPath) {
         var oldFile = path_module.join(originalConfig, oldFiles[fileIndex]);
         var newFile = path_module.join(outputDirectory, oldFiles[fileIndex]);
         var tmpJSON = fhicl.tojson(oldFile);
+        var tmpJSONObj = {};
         var oldFileJSON = { name: fileName, type: "table" };
         if (tmpJSON.first) {
-            oldFileJSON.children = JSON.parse(tmpJSON.second).data;
+            tmpJSONObj = JSON.parse(tmpJSON.second);
         }
+        
+        oldFileJSON.children = tmpJSONObj.data;
         
         console.log(JSON.stringify(modifiedFiles));
         for (var j = 0; j < modifiedFiles.length; ++j) {
@@ -512,19 +515,24 @@ function MergeFhiclFiles(baseDir, oldPath, newPath) {
                     objects.push({ index: index, item: thisFileObj });
                     thisFileObj = thisFileObj.children[index];
                 }
-                console.log(JSON.stringify(objects));
+                //console.log(JSON.stringify(objects));
                 
                 console.log("OLD: ");
                 console.log(JSON.stringify(thisFileObj));
                 console.log("NEW: ");
                 
                 for (var item in thisTable.data) {
-                    if (thisTable.data[item].type === "sequence") {
-                        for (var child in thisTable.data[item].values) {
-                            if (thisTable.data[item].values[child].annotation.length > 0) {
-                                thisTable.data[item].annotation += "(" + child + ": " + thisTable.data[item].values[child].annotation + ")";
+                    if (thisTable.data.hasOwnProperty(item)) {
+                        if (thisTable.data[item].type === "sequence") {
+                            var values = thisTable.data[item].values;
+                            for (var child in values) {
+                                if (values.hasOwnProperty(child)) {
+                                    if (values[child].annotation.length > 0) {
+                                        thisTable.data[item].annotation += "(" + child + ": " + values[child].annotation + ")";
+                                    }
+                                    values[child] = values[child].value;
+                                }
                             }
-                            thisTable.data[item].values[child] = thisTable.data[item].values[child].value;
                         }
                     }
                 }
@@ -556,8 +564,15 @@ function MergeFhiclFiles(baseDir, oldPath, newPath) {
         //console.log(JSON.stringify(oldFileJSON));
         
         //Give to Gennadiy!
-        //tofhicl(newFile, JSON.stringify(oldFileJSON.children));
-        fs.writeFileSync(newFile + ".json", JSON.stringify({ data: oldFileJSON.children }));
+        var origin = tmpJSONObj.origin;
+        origin.source = "artdaq_config_editor";
+        origin.timestamp = (new Date).toString();
+        var comments = tmpJSONObj.comments;
+        var jsonObj = JSON.stringify({ data: oldFileJSON.children, origin: origin, comments: comments });
+        console.log("Converting back to FhiCL...");
+        fhicl.tofhicl(newFile, jsonObj);
+        console.log("Also writing JSON output");
+        fs.writeFileSync(newFile + ".json", jsonObj);
     }
 }
 
@@ -568,6 +583,8 @@ function DiscardWorkingDir(baseDir, path) {
         var trashDir = path_module.join(baseDir, "..", "TRASH");
         var trashPath = path_module.join(trashDir, path + "_" + Date.now());
         var configPath = path_module.join(baseDir, "..", "tmp", path);
+        console.log("trashDir: " + trashDir + ", trashPath: " + trashPath + ", confgiPath: " + configPath);
+        
         
         if (!fs.existsSync(configPath)) {
             console.log("No changes detected, returning");
@@ -631,7 +648,7 @@ function UpdateConfigurationData(baseDir, oldPath, newPath) {
             if (!fs.existsSync(outputDirectory)) {
                 fs.mkdirSync(outputDirectory);
             }
-
+            
             //Copy in original config files (that aren't fhicl)
             console.log("Recreating Directory Structure");
             for (var i = 0; i < oldFileList.dirs.length; ++i) {
