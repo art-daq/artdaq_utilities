@@ -1,3 +1,4 @@
+#!/usr/bin/node
 // serverbase.js : v0.5 : Node HTTPS Server
 // Author: Eric Flumerfelt, FNAL RSI
 // Last Modified: June 3, 2015
