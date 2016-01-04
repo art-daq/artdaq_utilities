@@ -39,7 +39,7 @@ function createRowEditor(row, cellvalue, editor, cellText, width, height) {
         cellvalue = cellvalue.slice(0, -1);
         radix = 2;
     }
-    if (isNaN(cellText) || cellText.length === 0 || cellText.indexOf(".") >= 0) {
+    if (isNaN(cellText) || ("" + cellText).length === 0 || ("" + cellText).indexOf(".") >= 0) {
         return;
     }
     editor.parent().jqxFormattedInput({ radix: radix, value: cellvalue, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
@@ -179,7 +179,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             id: rowData.id,
             name: rowData.name,
             value: value
-        });
+        }, function(retval) {});
         var now = new Date;
         $("#changes").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#changes").val());
         resizeTextAreas();
