@@ -18,8 +18,8 @@ fcldir      product_dir fcl
 
 #
 product		version		optional
-TRACE		v3_05_00a
-messagefacility v1_16_08        s23
+TRACE		v3_06_06
+messagefacility v1_16_23        s31
 messagefacility v1_16_07        s21
 messagefacility	v1_14_07	s15
 messagefacility	v1_14_05	s11
@@ -31,23 +31,21 @@ end_product_list
 # e9 - with gcc 4.9.3 and -std=c++14
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
-qualifier	TRACE	messagefacility	notes
-e9:s23:debug    e9      e9:debug        -std=c++14
-e9:s23:prof     e9      e9:prof         -std=c++14
-e7:s23:debug    e7      e7:debug        -std=c++14
-e7:s23:prof     e7      e7:prof         -std=c++14
-e9:s21:debug    e9      e9:debug        -std=c++14
-e9:s21:prof     e9      e9:prof         -std=c++14
-e7:s21:debug    e7      e7:debug        -std=c++14
-e7:s21:prof     e7      e7:prof         -std=c++14
-e7:s15:debug	e7	e7:debug	-std=c++1y
-e7:s15:prof	e7	e7:prof		-std=c++1y
-e6:s15:debug	e6	e6:debug	-std=c++1y
-e6:s15:prof	e6	e6:prof		-std=c++1y
-e7:s11:debug	e7	e7:debug	-std=c++14
-e7:s11:prof	e7	e7:prof		-std=c++14
-e6:s11:debug	e6	e6:debug	-std=c++1y
-e6:s11:prof	e6	e6:prof		-std=c++1y
+qualifier	TRACE   	messagefacility	notes
+e9:s31:debug    e9:debug      	e9:debug        -std=c++14
+e9:s31:prof     e9:prof       	e9:prof         -std=c++14
+e9:s21:debug    e9:debug      	e9:debug        -std=c++14
+e9:s21:prof     e9:prof       	e9:prof         -std=c++14
+e7:s21:debug    e7:debug      	e7:debug        -std=c++14
+e7:s21:prof     e7:prof		e7:prof         -std=c++14
+e7:s15:debug	e7:debug	e7:debug	-std=c++1y
+e7:s15:prof	e7:prof 	e7:prof		-std=c++1y
+e6:s15:debug	e6:debug	e6:debug	-std=c++1y
+e6:s15:prof	e6:prof 	e6:prof		-std=c++1y
+e7:s11:debug	e7:debug	e7:debug	-std=c++14
+e7:s11:prof	e7:prof 	e7:prof		-std=c++14
+e6:s11:debug	e6:debug	e6:debug	-std=c++1y
+e6:s11:prof	e6:prof 	e6:prof		-std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:

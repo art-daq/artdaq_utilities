@@ -34,7 +34,11 @@ s15:e6)
        artver=v1_15_02
        nutoolsver=v1_14_02
        ;;
- 
+   s31:e9)
+       basequal=e9
+       squal=s31
+       artver=v1_08_05
+       ;;
   s21:e9)
      basequal=e9
      squal=s21
