@@ -23,7 +23,7 @@ messagefacility v1_16_23        s31
 messagefacility v1_16_07        s21
 messagefacility	v1_14_07	s15
 messagefacility	v1_14_05	s11
-cetbuildtools	v4_17_01	-	only_for_build
+cetbuildtools	v4_18_02	-	only_for_build
 end_product_list
 
 # e6 - with gcc 4.9.1 and -std=c++1y
