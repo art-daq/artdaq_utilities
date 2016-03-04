@@ -54,6 +54,8 @@ public:
 
 	virtual void sendMetric_(std::string name, std::string value, std::string unit)
 	{
+	  if(!inhibit_) 
+		{
 		switch (outputLevel_)
 		{
         case 0:
@@ -69,6 +71,7 @@ public:
 			mf::LogError(facility_)<< name << ": " << value << " " << unit << "." << std::endl;
 			break;
 		}
+	  }
 	}
 	virtual void sendMetric_(std::string name, int value, std::string unit)
 	{

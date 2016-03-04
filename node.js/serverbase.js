@@ -10,182 +10,182 @@
 // Implementation Notes: modules should assign their emitter to the module_holder[<modulename>] object
 // modules will emit 'data' and 'end' signals and implement the function MasterInitFunction()
 
-var cluster = require('cluster');
-var numCPUs = require("os").cpus().length;
-var fs = require('fs');
-var path_module = require('path');
+var cluster = require( 'cluster' );
+var numCPUs = require( "os" ).cpus( ).length;
+var fs = require( 'fs' );
+var path_module = require( 'path' );
 var module_holder = {};
 var workerData = {};
 
-var util = require('util');
-var log_file = fs.createWriteStream(__dirname + '/server.log', { flags : 'a' });
+var util = require( 'util' );
+var log_file = fs.createWriteStream( __dirname + '/server.log',{ flags : 'a' } );
 var log_stdout = process.stdout;
 
-console.log = function (d) { //
-    log_file.write(util.format(d) + '\n');
-    log_stdout.write(util.format(d) + '\n');
+console.log = function ( d ) { //
+    log_file.write( util.format( d ) + '\n' );
+    log_stdout.write( util.format( d ) + '\n' );
 };
 
-function LoadCerts(path) {
+function LoadCerts( path )
+{
     var output = [];
-    var files = fs.readdirSync(path);
-    for (var i = 0; i < files.length; i++) {
-        if (files[i].search(".pem") > 0 || files[i].search(".crt") > 0) {
-            output.push(fs.readFileSync(path + "/" + files[i]));
-        }
+    var files = fs.readdirSync( path );
+    for( var i  = 0; i < files.length; i++ ) {
+	if(files[i].search(".pem") > 0 || files[i].search(".crt") > 0) {
+	    output.push(fs.readFileSync(path + "/" + files[i]));
+	}
     }
     return output;
 }
 
 // Sub-Module files
 // From: http://stackoverflow.com/questions/10914751/loading-node-js-modules-dynamically-based-on-route
-function LoadModules(path) {
-    var stat = fs.lstatSync(path);
-    if (stat.isDirectory()) {
+function LoadModules( path ) {
+    var stat = fs.lstatSync( path );
+    if ( stat.isDirectory( ) ) {
         // we have a directory: do a tree walk
-        var files = fs.readdirSync(path);
+        var files = fs.readdirSync( path );
         var f, l = files.length;
-        for (var i = 0; i < l; i++) {
-            f = path_module.join(path, files[i]);
-            LoadModules(f);
+        for ( var i = 0; i < l; i++ ) {
+            f = path_module.join( path,files[i] );
+            LoadModules( f );
         }
-    } else if (path.search("_module.js") > 0 && path.search("js~") < 0) {
-        console.log("Loading Submodule " + path);
+    } else if ( path.search( "_module.js" ) > 0 && path.search( "js~" ) < 0 ) {
+        console.log( "Loading Submodule " + path );
         // we have a file: load it
-        require(path)(module_holder);
-        console.log("Initialized Submodule " + path);
+        require( path )( module_holder );
+        console.log( "Initialized Submodule " + path );
     }
 }
-var DIR = path_module.join(__dirname, "modules");
-LoadModules(DIR);
+var DIR = path_module.join( __dirname,"modules" );
+LoadModules( DIR );
 
 // Node.js by default is single-threaded. Start multiple servers sharing
 // the same port so that an error doesn't bring the whole system down
-if (cluster.isMaster) {
+if ( cluster.isMaster ) {
     
-    function messageHandler(msg) {
-        //console.log("Received message from worker");
-        if (!msg["name"]) {
+    function messageHandler( msg ) {
+	//console.log("Received message from worker");
+        if(!msg["name"]) {
             //workerData = msg;
-            console.log("Depreciated message recieved!");
+	    console.log("Depreciated message recieved!");
         }
-        if (msg["name"]) {
-            if (!msg["target"]) {
-                console.log("Depreciated message recieved!");
+	if(msg["name"]) {
+	    if(!msg["target"]) {
+	    console.log("Depreciated message recieved!");
 		//console.log("Recieved message from worker: Setting workerData[" + msg.name + "].");
 		//workerData[msg.name] = msg.data;
 		//Object.keys( cluster.workers ).forEach( function ( id ) {
 		//   cluster.workers[id].send( {name:msg.name, data:workerData[msg.name]} );
 		//} );
-            } else {
-                if (!msg["method"]) {
-                    //console.log("Recieved message from worker: Setting workerData[" + msg.name + "]["+msg.target+"].");
-                    workerData[msg.name][msg.target] = msg.data;
-                }
-                else if (msg["method"] === "push") {
-                    //console.log("Recieved message from worker: Adding to workerData[" + msg.name + "]["+msg.target+"].");
-                    workerData[msg.name][msg.target].push(msg.data);
-                }
-                Object.keys(cluster.workers).forEach(function (id) {
-                    cluster.workers[id].send({ name: msg.name, target: msg.target, data: workerData[msg.name][msg.target] });
-                });
-            }
-        }
+	    } else {
+		if (!msg["method"]) {
+		    //console.log("Recieved message from worker: Setting workerData[" + msg.name + "]["+msg.target+"].");
+		    workerData[msg.name][msg.target] = msg.data;
+		}
+		else if(msg["method"] === "push") {
+		    //console.log("Recieved message from worker: Adding to workerData[" + msg.name + "]["+msg.target+"].");
+		    workerData[msg.name][msg.target].push(msg.data);
+		}
+		Object.keys( cluster.workers ).forEach( function ( id ) {
+			cluster.workers[id].send( {name: msg.name, target:msg.target, data:workerData[msg.name][msg.target]} );
+		} );
+	    }
+	}
     }
     
     // Call Master Init functions
-    for (var name in module_holder) {
+    for ( var name in module_holder ) {
         try {
-            module_holder[name].MasterInitFunction(workerData);
-        } catch (err) {            ; }
-        module_holder[name].on("message", messageHandler);
+			module_holder[name].MasterInitFunction( workerData );
+        } catch ( err ) { ; }
+        module_holder[name].on("message", messageHandler );
     }
-    fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
+    fs.createWriteStream( __dirname + '/server.log',{ flags : 'w' } );
     
-    cluster.on('online', function (worker) {
-        worker.send(workerData);
-    });
+    cluster.on( 'online',function ( worker ) {
+        worker.send( workerData );
+    } );
     
     // Start workers for each CPU on the host
-    for (var i = 0; i < numCPUs; i++) {
-        var worker = cluster.fork();
-        worker.on('message', messageHandler);
+    for ( var i = 0; i < numCPUs; i++ ) {
+        var worker = cluster.fork( );
+        worker.on( 'message',messageHandler );
     }
     
     // If one dies, start a new one!
-    cluster.on("exit", function (worker, code, signal) {
-        var newWorker = cluster.fork();
-        newWorker.on('message', messageHandler);
-    });
+    cluster.on( "exit",function ( worker,code,signal ) {
+        var newWorker = cluster.fork( );
+        newWorker.on( 'message',messageHandler );
+    } );
 } else {
     // Node.js framework "includes"
-    var https = require('https');
-    var http = require('http');
-    var url = require('url');
-    var qs = require('querystring');
+    var https = require( 'https' );
+    var http = require( 'http' );
+    var url = require( 'url' );
+    var qs = require( 'querystring' );
     
-    
-    function workerMessageHandler(msg) {
-        if (!msg["name"]) {
-            //console.log("Received Data Dump from Master!");
-            workerData = msg;
-        } else {
-            if (!msg["target"]) {
-                //console.log("Received message from master: Setting workerData[" + msg.name + "].");
-                workerData[msg.name] = msg.data;
-            } else {
-                //console.log("Received message from master: Setting workerData[" + msg.name + "][" + msg.target + "].");
-                workerData[msg.name][msg.target] = msg.data;
-            }
-        }
+
+    function workerMessageHandler( msg ) {
+	if(!msg["name"]) {
+	    //console.log("Received Data Dump from Master!");
+	    workerData = msg;
+	} else {
+	    if(!msg["target"]) {
+		//console.log("Received message from master: Setting workerData[" + msg.name + "].");
+		workerData[msg.name] = msg.data;
+	    } else {
+		//console.log("Received message from master: Setting workerData[" + msg.name + "][" + msg.target + "].");
+		workerData[msg.name][msg.target] = msg.data;
+	    }
+	}
     }
     
-    process.on('message', workerMessageHandler);
+    process.on( 'message',  workerMessageHandler );
     
-    for (var name in module_holder) {
-        module_holder[name].on("message", function (data) {
-            //console.log("Received message from module " + data.name);
-            process.send(data);
-        });
+    for ( var name in module_holder ) {
+        module_holder[name].on( "message",function ( data ) {
+		//console.log("Received message from module " + data.name);
+            process.send( data );
+        } );
         try {
-            module_holder[name].WorkerInitFunction(workerData);
-        } catch (err) {            ; }
+			module_holder[name].WorkerInitFunction( workerData );
+        } catch (err) { ; }
     }
     
-    function serve(req, res, readOnly, username) {
+    function serve( req,res,readOnly,username ) {
         // req is the HTTP request, res is the response the server will send
         // pathname is the URL after the http://host:port/ clause
-        var pathname = url.parse(req.url, true).pathname;
-        if (pathname[0] === '/') {
-            pathname = pathname.substr(1);
+        var pathname = url.parse( req.url,true ).pathname;
+        if ( pathname[0] === '/' ) {
+            pathname = pathname.substr( 1 );
         }
         
-        var moduleName = pathname.substr(0, pathname.indexOf('/'));
-        var functionName = pathname.substr(pathname.indexOf('/') + 1);
+        var moduleName = pathname.substr( 0,pathname.indexOf( '/' ) );
+        var functionName = pathname.substr( pathname.indexOf( '/' ) + 1 );
         
         var dnsDone = false;
-        var peerName = require('dns').reverse(req.connection.remoteAddress, function (err, domains) {
+        var peerName = require( 'dns' ).reverse( req.connection.remoteAddress,function ( err,domains ) {
             dnsDone = true;
-            if (!err) {
-                if (functionName.search(".min.map") < 0) {
-                    console.log("Received " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+            if ( !err ) {
+                if ( functionName.search( ".min.map" ) < 0 ) {
+                    console.log( "Received " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
                 }
                 return domains[0];
             } else {
-                if (functionName.search(".min.map") < 0) {
-                    console.log("Received " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+                if ( functionName.search( ".min.map" ) < 0 ) {   
+                    console.log( "Received " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName );
                 }
                 return "";
             }
-        });
+        } );
         if (moduleName == ".." || functionName.search("\\.\\.") >= 0) {
             console.log("Possible break-in attempt!: " + pathname);
             res.writeHeader(404, { 'Content-Type': 'text/html' });
             res.end("Error");
             return "";
         }
-        
-        res.setHeader("Content-Type", "application/json");
+        res.setHeader( "Content-Type","application/json" );
         res.statusCode = 200;
         // Log to console...
         //console.log("Received " + req.method + " for " + pathname);
@@ -193,154 +193,152 @@ if (cluster.isMaster) {
         
         // If we're recieving a POST to /runcommand (As defined in the module),
         // handle that here
-        if (req.method === "POST") {
+        if ( req.method === "POST" ) {
             var body = "";
             
             // Callback for request data (may come in async)
-            req.on('data', function (data) {
+            req.on( 'data',function ( data ) {
                 body += data;
-            });
+            } );
             
-            req.on('end', function () {
+            req.on( 'end',function () {
                 // Get the content of the POST request 
-                var POST = {};
-                try {
-                    POST = JSON.parse(body);
+                    var POST = {};
+		    try { 
+                        POST = JSON.parse(body); 
                         //console.log("JSON Query Detected");  
-                } catch (e) {
-                    POST = qs.parse(body);
+		    } catch (e) { 
+                        POST = qs.parse( body ); 
                         //console.log("QueryString Query Detected");
-                }
+                    }
                 POST.who = username;
                 
-                if (module_holder[moduleName] != null) {
-                    console.log("Module " + moduleName + ", function " + functionName + " accessType " + (readOnly ? "RO" : "RW"));
+                if ( module_holder[moduleName] != null ) {
+                    console.log( "Module " + moduleName + ", function " + functionName + " accessType " + ( readOnly ? "RO" : "RW" ) );
                     var dataTemp = "";
-                    module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
+                    module_holder[moduleName].removeAllListeners( 'data' ).on( 'data',function ( data ) {
                         //res.write(JSON.stringify(data));
                         dataTemp += data;
-                    });
-                    module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
+                    } );
+                    module_holder[moduleName].removeAllListeners( 'end' ).on( 'end',function ( data ) {
                         //console.log("Sending Message!");
                         //process.send( workerData );
-                        res.end(JSON.stringify(dataTemp + data));
-                    });
-                    if (readOnly) {
+                        res.end( JSON.stringify( dataTemp + data ) );
+                    } );
+                    if ( readOnly ) {
                         try {
-                            var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
-                            if (data != null) {
-                                res.end(JSON.stringify(data));
+                            var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
+                            if ( data != null ) {
+                                res.end( JSON.stringify( data ) );
                             }
-                        } catch (err) {
-                            if (err instanceof TypeError) {
-                                console.log("Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName);
-                                res.end(JSON.stringify(null));
+                        } catch ( err ) {
+                            if ( err instanceof TypeError ) {
+                                console.log( "Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName );
+                                res.end( JSON.stringify( null ) );
                             }
                         }
                     } else {
                         try {
-                            var data = module_holder[moduleName]["RW_" + functionName](POST, workerData[moduleName]);
-                            if (data != null) {
-                                res.end(JSON.stringify(data));
+                            var data = module_holder[moduleName]["RW_" + functionName]( POST,workerData[moduleName] );
+                            if ( data != null ) {
+                                res.end( JSON.stringify( data ) );
                                 //console.log("Sending Message!");
                                 //process.send( workerData );
                             }
-                        } catch (err) {
+                        } catch ( err ) {
                             //console.log("Error caught; text:");
                             //console.log(err);
-                            if (err instanceof TypeError) {
+                            if ( err instanceof TypeError ) {
                                 //RW_ version not available, try read-only version:
-                                var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
-                                if (data != null) {
-                                    res.end(JSON.stringify(data));
+                                var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
+                                if ( data != null ) {
+                                    res.end( JSON.stringify( data ) );
                                 }
                             }
                         }
                     }
                 } else {
-                    console.log("Unknown POST URL: " + pathname);
-                    res.writeHeader(404, { 'Content-Type': 'text/html' });
-                    res.end("Error");
+                    console.log( "Unknown POST URL: " + pathname );
+                    res.writeHeader( 404,{ 'Content-Type': 'text/html' } );
+                    res.end( "Error" );
                 }
-            });
+            } );
         }
         //We got a GET request!
-        if (req.method === "GET" || req.method === "HEAD") {
+        if ( req.method === "GET" || req.method === "HEAD" ) {
             //console.log(req.headers);
-            if (functionName.indexOf(".") > 0) {
+            if ( functionName.indexOf( "." ) > 0 ) {
                 //console.log("Client File Access Requested");
-                var ext = functionName.substr(functionName.lastIndexOf(".") + 1);
-                res.setHeader("Content-Type", "text/plain");
+                var ext = functionName.substr( functionName.lastIndexOf( "." ) + 1 );
+                res.setHeader( "Content-Type","text/plain" );
                 //console.log("Extension: " + ext);
-                switch (ext) {
+                switch ( ext ) {
                     case "css":
-                        res.setHeader("Content-Type", "text/css");
+                        res.setHeader( "Content-Type","text/css" );
                         break;
                     case "js":
-                        res.setHeader("Content-Type", "text/javascript");
+                        res.setHeader( "Content-Type","text/javascript" );
                         break;
                     case "html":
-                        res.setHeader("Content-Type", "text/html");
+                        res.setHeader( "Content-Type","text/html" );
                         break;
                     case "htm":
-                        res.setHeader("Content-Type", "text/html");
+                        res.setHeader( "Content-Type","text/html" );
                         break;
                     case "root":
-                        res.setHeader("Content-Type", "application/root+root.exe");
+                        res.setHeader( "Content-Type","application/root+root.exe" );
                         break;
                     case "gif":
-                        res.setHeader("Content-Type", "image/gif");
+                        res.setHeader( "Content-Type","image/gif" );
                         break;
                 }
                 
                 var filename = "./modules/" + moduleName + "/client/" + functionName;
-                
-                if (functionName.search('favicon') >= 0) {
-                    filename = "./modules/base/client/images/favicon.ico";
+                if(functionName.search("favicon.ico") >= 0) {
+					filename = "./modules/base/client/images/favicon.ico";
                 }
-
-                if (fs.existsSync(filename)) {
-                    res.setHeader("Content-Length", fs.statSync(filename)["size"]);
-                    if (req.headers.range != null) {
+                if ( fs.existsSync( filename ) ) {
+                    res.setHeader( "Content-Length",fs.statSync( filename )["size"] );
+                    if ( req.headers.range != null ) {
                         var range = req.headers.range;
-                        var fd = fs.openSync(filename, 'r');
-                        var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
-                        var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
-                        console.log("Reading (" + offset + ", " + endOffset + ")");
+                        var fd = fs.openSync( filename,'r' );
+                        var offset = parseInt( range.substr( range.indexOf( '=' ) + 1,range.indexOf( '-' ) - ( range.indexOf( '=' ) + 1 ) ) );
+                        var endOffset = parseInt( range.substr( range.indexOf( '-' ) + 1 ) );
+                        console.log( "Reading (" + offset + ", " + endOffset + ")" );
                         
-                        res.setHeader("Content-Length", (endOffset - offset + 1).toString());
-                        var readStream = fs.createReadStream(filename, { start: parseInt(offset), end: parseInt(endOffset) });
-                        readStream.pipe(res);
+                        res.setHeader( "Content-Length",( endOffset - offset + 1 ).toString( ) );
+                        var readStream = fs.createReadStream( filename,{ start: parseInt( offset ), end: parseInt( endOffset ) } );
+                        readStream.pipe( res );
                     } else {
-                        res.end(fs.readFileSync(filename));
+                        res.end( fs.readFileSync( filename ) );
                     }
                     //console.log("Done sending file");
                 } else {
-                    console.log("File not found: " + filename);
-                    res.setHeader("Content-Type", "text/plain");
-                    res.end("File Not Found.");
+                    console.log( "File not found: " + filename );
+                    res.setHeader( "Content-Type","text/plain" );
+                    res.end( "File Not Found." );
                 }
-            } else if (module_holder[moduleName] != null) {
+            } else if ( module_holder[moduleName] != null ) {
                 //console.log("Module " + moduleName + ", function GET_" + functionName);
                 
                 var dataTemp = "";
-                module_holder[moduleName].removeAllListeners('data').on('data', function (data) {
+                module_holder[moduleName].removeAllListeners( 'data' ).on( 'data',function ( data ) {
                     //res.write(JSON.stringify(data));
                     dataTemp += data;
-                });
-                module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
-                    res.end(JSON.stringify(dataTemp + data));
-                });
-                var data = module_holder[moduleName]["GET_" + functionName](workerData[moduleName]);
-                if (data != null) {
-                    res.end(JSON.stringify(data));
+                } );
+                module_holder[moduleName].removeAllListeners( 'end' ).on( 'end',function ( data ) {
+                    res.end( JSON.stringify( dataTemp + data ) );
+                } );
+                var data = module_holder[moduleName]["GET_" + functionName]( workerData[moduleName] );
+                if ( data != null ) {
+                    res.end( JSON.stringify( data ) );
                 }
             } else {
-                console.log("Sending client.html");
+                console.log( "Sending client.html" );
                 // Write out the frame code
-                res.setHeader("Content-Type", "text/html");
-                res.end(fs.readFileSync("./client.html"), 'utf-8');
-                console.log("Done sending client.html");
+                res.setHeader( "Content-Type","text/html" );
+                res.end( fs.readFileSync( "./client.html" ),'utf-8' );
+                console.log( "Done sending client.html" );
             }
         }
     }
