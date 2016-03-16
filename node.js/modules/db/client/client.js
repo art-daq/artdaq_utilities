@@ -3,7 +3,8 @@ var defaultColor = "";
 var defaultShadow = "";
 var tableHTML;
 var radixButtonHTML;
-var currentNamedConfig = { name: "", path: "" };
+var currentNamedConfig = "";
+var currentMetadata;
 var currentTable;
 var lastTabID = 1;
 
@@ -75,6 +76,9 @@ function getRowEditorValue(row, cellvalue, editor) {
 
 function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
     // prepare the data
+    console.log("Data is " + JSON.stringify(data));
+    console.log("DisplayColumns is " + JSON.stringify(displayColumns));
+    console.log("DataFields is " + JSON.stringify(dataFields));
     var source = {
         dataType: "json",
         dataFields: dataFields,
@@ -86,7 +90,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         comment: comment
     };
     var dataAdapter = new $.jqx.dataAdapter(source, {
-        beforeLoadComplete: function(records) {
+        beforeLoadComplete: function (records) {
             var numberFields = [];
             for (var c in source.dataFields) {
                 if (source.dataFields[c].dataType === "number") {
@@ -102,7 +106,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                     var value = records[i][numberFields[f].name];
                     if (value) {
                         if (typeof value === "number" || !(value.search("0x") === 0 || value.search("0") === 0 || value.search("b") === value.length - 1)) {
-
+                            
                             value = parseInt(value).toString(radix).toUpperCase();
                             records[i][numberFields[f].name] = value;
                             if (radix === 2) {
@@ -123,35 +127,35 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
     });
     // create Tree Grid
     tag.jqxTreeGrid(
-    {
-        width: 850,
-        source: dataAdapter,
-        editable: true,
-        editSettings: { saveOnPageChange: true, saveOnBlur: true, saveOnSelectionChange: true, cancelOnEsc: true, saveOnEnter: true, editSingleCell: true, editOnDoubleClick: true, editOnF2: true },
-        sortable: true,
-        columnsResize: true,
-        columns: displayColumns,
-        rendered: function() {
-            $(".jqx-tooltip").remove();
-            var setupRow = function(rowObject) {
-                if (rowObject[source.comment] && rowObject[source.comment].length > 0 && rowObject[source.comment] !== " ") {
-                    var selector = $("tr[data-key=\'" + rowObject.uid + "\']");
-                    if (selector.length) {
-                        selector.jqxTooltip({ content: rowObject[source.comment], position: "mouse" });
+        {
+            width: "100%",
+            source: dataAdapter,
+            editable: true,
+            editSettings: { saveOnPageChange: true, saveOnBlur: true, saveOnSelectionChange: true, cancelOnEsc: true, saveOnEnter: true, editSingleCell: true, editOnDoubleClick: true, editOnF2: true },
+            sortable: true,
+            columnsResize: true,
+            columns: displayColumns,
+            rendered: function () {
+                $(".jqx-tooltip").remove();
+                var setupRow = function (rowObject) {
+                    if (rowObject[source.comment] && rowObject[source.comment].length > 0 && rowObject[source.comment] !== " ") {
+                        var selector = $("tr[data-key=\'" + rowObject.uid + "\']");
+                        if (selector.length) {
+                            selector.jqxTooltip({ content: rowObject[source.comment], position: "mouse" });
+                        }
                     }
+                    for (var trow in rowObject.records) {
+                        setupRow(rowObject.records[trow]);
+                    }
+                };
+                var rows = tag.jqxTreeGrid("getRows");
+                for (var ttrow = 0; ttrow < rows.length; ttrow++) {
+                    setupRow(rows[ttrow]);
                 }
-                for (var trow in rowObject.records) {
-                    setupRow(rowObject.records[trow]);
-                }
-            };
-            var rows = tag.jqxTreeGrid("getRows");
-            for (var ttrow = 0; ttrow < rows.length; ttrow++) {
-                setupRow(rows[ttrow]);
             }
-        }
-    });
+        });
     // Cell End Edit
-    tag.on("cellEndEdit", function(event) {
+    tag.on("cellEndEdit", function (event) {
         var args = event.args;
         // row key
         var rowKey = args.key;
@@ -169,17 +173,13 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         // cell's value.
         var value = args.value;
         AjaxPost("/db/Update", {
-            baseDir: $("#baseDir").val(),
-            configInfo: {
-                name: currentNamedConfig.name,
-                path: currentNamedConfig.path
-            },
+            configName: currentNamedConfig,
             table: currentTable,
             column: columnDataField,
             id: rowData.id,
             name: rowData.name,
             value: value
-        }, function(retval) {});
+        }, function (retval) { });
         var now = new Date;
         $("#changes").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#changes").val());
         resizeTextAreas();
@@ -189,11 +189,11 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
 
 function loadTable(path, tag) {
     currentTable = path;
-    AjaxPost("/db/GetData", { baseDir: $("#baseDir").val(), configInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path }, path: path }, function(data) {
+    AjaxPost("/db/GetData", { configName: currentNamedConfig, path: path }, function (data) {
         var dataObj = JSON.parse(data);
         var columns = dataObj.columns;
         var displayColumns = [];
-
+        
         for (var c in columns) {
             var title = columns[c].title;
             if (typeof title === "undefined" || title.length === 0) {
@@ -221,13 +221,13 @@ function loadTable(path, tag) {
                 });
             }
         }
-
-        makeTreeGrid(tag, displayColumns, columns, dataObj.data, dataObj.comment); //.trigger('create');
+        
+        makeTreeGrid(tag, displayColumns, columns, dataObj.data.children, dataObj.comment); //.trigger('create');
 
     });
 };
 
-function loadConfigs() {
+function getConfigList() {
     updateHeader(false, "");
     $("#changes").val("");
     $("#changeLog").val("");
@@ -236,31 +236,34 @@ function loadConfigs() {
         $("#tab" + i).remove();
         $("#tablink" + i).remove();
     }
-    AjaxPost("/db/NamedConfigs", { data: $("#baseDir").val() }, function(data) {
+    AjaxGet("/db/NamedConfigs", function (data) {
         $("#configs").html(data.join("")).trigger("create").selectmenu("refresh");
         var config = getUrlParameter("configs");
         if (config !== undefined) {
             $("#configs").val(config);
         }
     });
+    $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
+    $("#configSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
+    $("#configMetadata").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
 };
 
 function registerTabFunctions() {
     $(".tabs .table-data a").off();
-    $(".tabs .tab-links a").off().on("click", function(e) {
+    $(".tabs .tab-links a").off().on("click", function (e) {
         var currentAttrValue = $(this).attr("href");
-
+        
         // Show/Hide Tabs
         $(".tabs " + currentAttrValue).show().siblings().hide();
-
+        
         // Change/remove current tab to active
         $(this).parent("li").addClass("active").siblings().removeClass("active");
-
+        
         e.preventDefault();
     });
-    $(".table-data a").on("click", function(e) {
+    $(".table-data a").on("click", function (e) {
         var path = [];
-        $("li.active :visible").each(function(index, item) {
+        $("li.active :visible").each(function (index, item) {
             path.push(item.firstChild.textContent);
         });
         console.log(path.join("/"));
@@ -271,23 +274,22 @@ function registerTabFunctions() {
 function createTabLevel(structureObj, parentTab) {
     var categoryObj = structureObj.children;
     for (var cat in categoryObj) {
-        lastTabID++;
-        $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\"><a href=\"#tab" + lastTabID + "\">" + categoryObj[cat].name + "</a></li>");
-        $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
-        $("#tab" + lastTabID).html(tableHTML);
-        createTabLevel(categoryObj[cat], lastTabID);
-    }
-    var tableObj = structureObj.tables;
-    for (var table in tableObj) {
-        lastTabID++;
-        var name = tableObj[table].name;
-        if (name.length === 0) {
-            name = tableObj[table];
+        if (categoryObj.hasOwnProperty(cat)) {
+            var name = categoryObj[cat].name;
+            if (name.length === 0) { name = categoryObj[cat]; }
+            if (categoryObj[cat].hasSubtables) {
+                lastTabID++;
+                $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
+                $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
+                $("#tab" + lastTabID).html(tableHTML);
+                createTabLevel(categoryObj[cat], lastTabID);
+            } else {
+                lastTabID++;
+                $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
+                $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
+            }
         }
-        $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
-        $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
     }
-
 };
 
 function getUrlParameter(sParam) {
@@ -301,127 +303,172 @@ function getUrlParameter(sParam) {
             return sParameterName[1];
         }
     }
-}
+    return "";
+};
 
-function checkDirAndLoadConfigNames() {
-    $.post("/db/SetBaseDirectory", { data: $("#baseDir").val() }, function (data) {
-        if (data) {
-            loadConfigs();
-            $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
-            $("#configSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
-            $("#configMetadata").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
-        } else {
-            $("#configLoad").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
-            $("#configSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
-            $("#configMetadata").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
-        }
+function loadConfigMetadata() {
+    AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig }, function (metadata) {
+        var metadataObj = JSON.parse(metadata);
+        //console.log(metadata);
+        $("#metadataEntity").val(metadataObj.configurable_entity.name);
+        $("#metadataVersion").val(metadataObj.version);
+        
+        var displayColumns = [
+            {
+                text: "Name",
+                dataField: "name",
+                editable: false
+            },
+            {
+                text: "Date Assigned",
+                dataField: "assigned",
+                editable: false
+            }
+        ];
+        var dataFields = [
+            { name: "name", type: "string", editable: false, display: true },
+            { name: "assigned", type: "date", editable: false, display: true }
+        ];
+        var source = {
+            dataType: "json",
+            dataFields: dataFields,
+            id: "name",
+            hierarchy: {
+                root: "values"
+            },
+            localData: metadataObj.configurations
+    };
+        var dataAdapter = new $.jqx.dataAdapter(source);
+        // create Tree Grid
+        $("#metadataConfigurations").jqxTreeGrid(
+            {
+                width: "100%",
+                source: dataAdapter,
+                editable: false,
+                sortable: true,
+                columnsResize: true,
+                columns: displayColumns
+            });
+        
+        $("#configMetadata").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
     });
 }
 
-$(document).ready(function() {
-    defaultColor = $("#header").css("background-color");
-    defaultShadow = $("#header").css("text-shadow");
-
-    $.get("/db/Tables.html", function(data) {
-        tableHTML = data;
-    });
-
-    registerTabFunctions();
-    $(".tabs #tab1").show().siblings().hide();
-
-    $("#baseDir").keyup(function() {
-        checkDirAndLoadConfigNames();
-    });
-
-    var configPathParameter = "" + getUrlParameter("configPath");
-    var baseDirParameter = "" + getUrlParameter("baseDir");
-    var givenParameter = configPathParameter.length > baseDirParameter.length ? configPathParameter : baseDirParameter;
-    if (givenParameter.length > 0 && givenParameter !== "undefined") {
-        $("#baseDir").val(givenParameter);
-        checkDirAndLoadConfigNames();
+function loadConfig() {
+    console.log("Loading Configuration");
+    updateHeader(false, "");
+    var selected = $("#configs").find(":selected");
+    currentNamedConfig = selected.text();
+    $("#configName").val(currentNamedConfig);
+    for (var i = 2; i <= lastTabID; i++) {
+        $("#tab" + i).remove();
+        $("#tablink" + i).remove();
     }
-
-    $("#reloadConfigsButton").click(function() {
-        checkDirAndLoadConfigNames();
-    });
-
-    $("#loadConfigButton").click(function() {
-        updateHeader(false, "");
-        var selected = $("#configs").find(":selected");
-        currentNamedConfig = { name: selected.text(), path: selected.val() };
-        $("#configPath").val(currentNamedConfig.path);
-        $("#configName").val(currentNamedConfig.name);
-        for (var i = 2; i <= lastTabID; i++) {
-            $("#tab" + i).remove();
-            $("#tablink" + i).remove();
-        }
-        lastTabID = 1;
-        AjaxPost("/db/LoadNamedConfig", { configInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path }, baseDir: $("#baseDir").val() }, function(config) {
-            var configObj = JSON.parse(config);
-            $("#changeLog").val(configObj.metadata.changeLog)
-            resizeTextAreas();
-            for (var category in configObj.children) {
-                if (configObj.children.hasOwnProperty(category)) {
+    lastTabID = 1;
+    AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig }, function (config) {
+        var configObj = JSON.parse(config);
+        //$("#changeLog").val(configObj.metadata.changeLog);
+        resizeTextAreas();
+        for (var category in configObj.children) {
+            if (configObj.children.hasOwnProperty(category)) {
+                var name = configObj.children[category].name;
+                if (name.length === 0) { name = configObj.children[category]; }
+                if (configObj.children[category].hasSubtables) {
+                    //console.log("Category: " + JSON.stringify(configObj.children[category]));
                     lastTabID++;
-                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\"><a href=\"#tab" + lastTabID + "\">" + configObj.children[category].name + "</a></li>");
+                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
                     $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
                     $("#tab" + lastTabID).html(tableHTML);
                     createTabLevel(configObj.children[category], lastTabID);
-                }
-            }
-            for (var table in configObj.tables) {
-                if (configObj.tables.hasOwnProperty(table)) {
+                } else {
                     lastTabID++;
-                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + configObj.tables[table] + "</a></li>");
+                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
                     $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
                 }
             }
-            $("#configMetadataText").val("");
-            for (var md in configObj.metadata) {
-                if (configObj.metadata.hasOwnProperty(md)) {
-                    if (md !== "changeLog" && md !== "name") {
-                        $("#configMetadataText").val($("#configMetadataText").val() + md + ": " + JSON.stringify(configObj.metadata[md]) + "\n");
-                    }
-                }
-            }
-            $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", true);
-            $("#configSave").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
-            $("#configMetadata").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
-            registerTabFunctions();
-        });
+        }
+        $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", true);
+        $("#configSave").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
+        registerTabFunctions();
+    loadConfigMetadata();
     });
+};
 
-    $("#saveConfig").click(function() {
-        AjaxPost("/db/saveConfig", {
-            baseDir: $("#baseDir").val(),
-            oldConfigInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path },
-            newConfigInfo: {
-                name: $("#configName").val(),
-                path: $("#configPath").val()
-            },
-            log: $("#changes").val()
-        }, function(res) {
-            if (res !== null && res.Success) {
-                updateHeader(false, "Configuration Saved.");
-            } else {
-                updateHeader(true, "Failed to save configuration!");
-            }
-            checkDirAndLoadConfigNames();
-        });
+function saveConfig() {
+    console.log("Saving Configuration Changes");
+    AjaxPost("/db/saveConfig", {
+        oldConfigName: currentNamedConfig,
+        newConfigName: $("#configName").val(),
+        log: $("#changes").val()
+    }, function (res) {
+        if (res !== null && res.Success) {
+            updateHeader(false, "Configuration Saved.");
+        } else {
+            updateHeader(true, "Failed to save configuration!");
+        }
+        getConfigList();
     });
+};
 
-    $("#discardConfig").click(function() {
-        AjaxPost("/db/discardConfig", { baseDir: $("#baseDir").val(), configInfo: { name: currentNamedConfig.name, path: currentNamedConfig.path } }, function(res) {
-            if (res) {
-                $("#changes").val("").height($("#changes").scrollHeight);
-                loadConfigs();
-            } else {
-                updateHeader(true, "Failed to discard configuration. Make sure you have a valid configuration selected.\nIf this problem persists, call an expert.");
-            }
-        });
+function discardConfig() {
+    console.log("Discarding Configuration Changes");
+    AjaxPost("/db/discardConfig", { configName: currentNamedConfig }, function (res) {
+        if (res) {
+            $("#changes").val("").height($("#changes").scrollHeight);
+            getConfigList();
+        } else {
+            updateHeader(true, "Failed to discard configuration. Make sure you have a valid configuration selected.\nIf this problem persists, call an expert.");
+        }
     });
+};
 
-    $(".triggersModified").change(function() {
+(function ($, sr) {
+    
+    // debouncing function from John Hann
+    // http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
+    var debounce = function (func, threshold, execAsap) {
+        var timeout;
+        
+        return function debounced() {
+            var obj = this, args = arguments;
+            function delayed() {
+                if (!execAsap)
+                    func.apply(obj, args);
+                timeout = null;
+            }            ;
+            
+            if (timeout)
+                clearTimeout(timeout);
+            else if (execAsap)
+                func.apply(obj, args);
+            
+            timeout = setTimeout(delayed, threshold || 100);
+        };
+    }
+    // smartresize 
+    jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
+
+})(jQuery, 'smartresize');
+
+$(document).ready(function () {
+    defaultColor = $("#header").css("background-color");
+    defaultShadow = $("#header").css("text-shadow");
+    
+    $.get("/db/Tables.html", function (data) {
+        tableHTML = data;
+    });
+    
+    registerTabFunctions();
+    $(".tabs #tab1").show().siblings().hide();
+    
+    getConfigList();
+    
+    $(".triggersModified").change(function () {
         updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+    });
+    
+    
+    $(window).smartresize(function () {
+        $(".jqx-grid").jqxTreeGrid({ width: "100%" });
     });
 });

@@ -45,19 +45,14 @@
                             If you have a number field which you wish to convert to a string (general-purpose) field, leave the field blank, select a different field,then go back.<br /><br />
                         </p>
                         <form>
-                            <fieldset data-role="collapsible" data-collapsed="false">
-                                <legend>Configuration Base Path</legend>
-                                <label for="baseDir">Path</label>
-                                <input type="text" name="baseDir" id="baseDir">
-                            </fieldset>
-                            <fieldset data-role="collapsible" data-collapsed="true" id="configLoad" data-disabled="true">
+                            <fieldset data-role="collapsible" data-collapsed="false" id="configLoad">
                                 <legend>Select Configuration</legend>
                                 <label for="configs">Configuration List</label>
                                 <select name="configs" id="configs">
                                     <option value="Default">No Named Configurations Found</option>
                                 </select>
-                                <button type="button" id="loadConfigButton">Load Selected Configuration</button>
-                                <button type="button" id="reloadConfigsButton">Reload Configurations</button>
+                                <button type="button" id="loadConfigButton" onclick="loadConfig()">Load Selected Configuration</button>
+                                <button type="button" id="reloadConfigsButton" onclick="getConfigList()">Reload Configurations</button>
                             </fieldset>
                             <fieldset data-role="collapsible" data-collapsed="true" id="configSave" data-disabled="true">
                                 <legend>Save or Discard Changes</legend>
@@ -65,16 +60,23 @@
                                     <label for="configName">Configuration Name</label>
                                     <input type="text" name="configName" id="configName" class="triggersModified">
                                 </div>
-                                <div data-role="fieldcontain">
-                                    <label for="configPath">Configuration Directory Name</label>
-                                    <input type="text" name="configPath" id="configPath" class="triggersModified">
-                                </div>
-                                <button type="button" id="saveConfig">Save Configuration</button>
-                                <button type="button" id="discardConfig">Discard Configuration Changes</button>
+                                <button type="button" id="saveConfigButton" onclick="saveConfig()">Save Configuration</button>
+                                <button type="button" id="discardConfigButton" onclick="discardConfig()">Discard Configuration Changes</button>
                             </fieldset>
                             <fieldset data-role="collapsible" data-collapsed="true" id="configMetadata" data-disabled="true">
                                 <legend>Configuration Information</legend>
-                                <textarea id="configMetadataText" readonly></textarea>
+                                <div data-role="fieldcontain">
+                                    <label for="metadataVersion">Configuration Version</label>
+                                    <input type="text" name="metadataVersion" id="metadataVersion" class="triggersModified">
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <label for="metadataEntity">Configuration Entity Name</label>
+                                    <input type="text" name="metadataEntity" id="metadataEntity" class="triggersModified">
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <label for="metadataConfigurations">Assigned Global Configurations</label>
+                                    <div id="metadataConfigurations"></div>
+                                </div>
                             </fieldset>
                         </form>
                     </div>

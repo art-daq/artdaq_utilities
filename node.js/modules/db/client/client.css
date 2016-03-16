@@ -101,6 +101,7 @@ li.active a, li.active a:hover {
 
 /*----- Content of Tabs -----*/
 .tab-content {
+    width: 95%;
     margin: 0;
     padding: 15px;
     border-radius: 3px;
@@ -110,6 +111,7 @@ li.active a, li.active a:hover {
 }
 
 .tab {
+    width: 100%;
     display: none;
 }
 
@@ -130,11 +132,16 @@ tr {
     width: 100%;
 }
 
+/*
 td {
     max-width: 150px;
-}
+}*/
 
 p {
     margin: 6px 40px 6px 6px;
+    width: 100%;
+}
+
+.jqx-widget {
     width: 100%;
 }
