@@ -1,5 +1,5 @@
 .vs
-.ntvs_analysis.dat
+.ntvs_analysis.dat*
 bin/*
 obj/*
 

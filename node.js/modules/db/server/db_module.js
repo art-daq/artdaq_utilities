@@ -14,9 +14,9 @@ var path_module = require("path");
 // ReSharper restore PossiblyUnassignedProperty
 var db = new Emitter();
 
-var dbDirectory = path_module.join(process.env["HOME"], "database", "db");
-var tmpDirectory = path_module.join(process.env["HOME"], "database", "tmp");
-var trashDirectory = path_module.join(process.env["HOME"], "database", "TRASH");
+var dbDirectory = path_module.join(process.env["HOME"], "databases", "db");
+var tmpDirectory = path_module.join(process.env["HOME"], "databases", "tmp");
+var trashDirectory = path_module.join(process.env["HOME"], "databases", "TRASH");
 
 var defaultColumns = {
     columns: [
