@@ -2,6 +2,7 @@
 var defaultColor = "";
 var defaultShadow = "";
 var tableHTML;
+var infoHTML;
 var radixButtonHTML;
 var currentNamedConfig = "";
 var currentMetadata;
@@ -10,7 +11,7 @@ var lastTabID = 1;
 
 function updateHeader(error, text) {
     if (error) {
-        $("#header").css("background-color", "#D59595").css("text-shadow", "#D99 0px 1px 0px");
+        $("#header").css("background-color", "#D59595").css("text-shadow", '#D99 0 1px 0px');
         $("#info").text(text);
     } else {
         $("#header").css("background-color", defaultColor).css("text-shadow", defaultShadow);
@@ -27,15 +28,15 @@ function resizeTextAreas() {
 function createRowEditor(row, cellvalue, editor, cellText, width, height) {
     editor.after("<div></div><div></div>");
     var radix = 10;
-    if (typeof cellText === "string" && cellText.search("0x") == 0) {
+    if (typeof cellText === "string" && cellText.search("0x") === 0) {
         cellText = cellText.slice(2);
         cellvalue = cellvalue.slice(2);
         radix = 16;
-    } else if (typeof cellText === "string" && cellText.search("0") == 0) {
+    } else if (typeof cellText === "string" && cellText.search("0") === 0) {
         cellText = cellText.slice(1);
         cellvalue = cellvalue.slice(1);
         radix = 8;
-    } else if (typeof cellText === "string" && cellText.search("b") >= 0) {
+    } else if (typeof cellText === "string" && cellText.search("b") === cellText.length - 1) {
         cellText = cellText.slice(0, -1);
         cellvalue = cellvalue.slice(0, -1);
         radix = 2;
@@ -261,13 +262,21 @@ function registerTabFunctions() {
         
         e.preventDefault();
     });
-    $(".table-data a").on("click", function (e) {
+    $(".table-data a").on("click", function () {
         var path = [];
         $("li.active :visible").each(function (index, item) {
             path.push(item.firstChild.textContent);
         });
         console.log(path.join("/"));
         loadTable(path.join("/"), $(".tabs " + $(this).attr("href")));
+    });
+    $(".file-tab a").on("click", function () {
+        var fileName = [];
+        $("li.active :visible").each(function (index, item) {
+            fileName.push(item.firstChild.textContent);
+        });
+        console.log(fileName.join("/") + ".gui.json");
+        loadConfigMetadata(fileName.join("/") + ".gui.json", $(this).attr("href"));
     });
 };
 
@@ -306,12 +315,12 @@ function getUrlParameter(sParam) {
     return "";
 };
 
-function loadConfigMetadata() {
-    AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig }, function (metadata) {
+function loadConfigMetadata(fileName, id) {
+    AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig, configFile: fileName }, function (metadata) {
         var metadataObj = JSON.parse(metadata);
         //console.log(metadata);
-        $("#metadataEntity").val(metadataObj.configurable_entity.name);
-        $("#metadataVersion").val(metadataObj.version);
+        $(id + " #metadataEntity").val(metadataObj.configurable_entity.name);
+        $(id + " #metadataVersion").val(metadataObj.version);
         
         var displayColumns = [
             {
@@ -337,10 +346,10 @@ function loadConfigMetadata() {
                 root: "values"
             },
             localData: metadataObj.configurations
-    };
+        };
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        $("#metadataConfigurations").jqxTreeGrid(
+        $(id + " #metadataConfigurations").jqxTreeGrid(
             {
                 width: "100%",
                 source: dataAdapter,
@@ -349,8 +358,6 @@ function loadConfigMetadata() {
                 columnsResize: true,
                 columns: displayColumns
             });
-        
-        $("#configMetadata").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
     });
 }
 
@@ -369,28 +376,26 @@ function loadConfig() {
         var configObj = JSON.parse(config);
         //$("#changeLog").val(configObj.metadata.changeLog);
         resizeTextAreas();
-        for (var category in configObj.children) {
-            if (configObj.children.hasOwnProperty(category)) {
-                var name = configObj.children[category].name;
-                if (name.length === 0) { name = configObj.children[category]; }
-                if (configObj.children[category].hasSubtables) {
-                    //console.log("Category: " + JSON.stringify(configObj.children[category]));
-                    lastTabID++;
-                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
-                    $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
-                    $("#tab" + lastTabID).html(tableHTML);
-                    createTabLevel(configObj.children[category], lastTabID);
-                } else {
-                    lastTabID++;
-                    $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"table-data\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
-                    $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
-                }
+        for (var file in configObj.files) {
+            if (configObj.files.hasOwnProperty(file)) {
+                var name = configObj.files[file].name;
+                if (name.length === 0) { name = configObj.files[file]; }
+                
+                lastTabID++;
+                var parentTab = lastTabID;
+                $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"file-tab\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
+                $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
+                $("#tab" + lastTabID).html(tableHTML);
+                lastTabID++;
+                $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"info-tab\"><a href=\"#tab" + lastTabID + "\">File Information</a></li>");
+                $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
+                $("#tab" + lastTabID).html(infoHTML);
+                createTabLevel(configObj.files[file], parentTab);
             }
         }
         $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", true);
         $("#configSave").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
         registerTabFunctions();
-    loadConfigMetadata();
     });
 };
 
@@ -458,6 +463,10 @@ $(document).ready(function () {
         tableHTML = data;
     });
     
+    $.get("/db/FileInfo.html", function (data) {
+        infoHTML = data;
+    });
+    
     registerTabFunctions();
     $(".tabs #tab1").show().siblings().hide();
     
@@ -471,4 +480,5 @@ $(document).ready(function () {
     $(window).smartresize(function () {
         $(".jqx-grid").jqxTreeGrid({ width: "100%" });
     });
+    $(".jqx-grid").jqxTreeGrid({ width: "100%" });
 });

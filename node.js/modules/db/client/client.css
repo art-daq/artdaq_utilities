@@ -41,13 +41,29 @@
             text-decoration: none;
         }
 
-        .table-data a {
-            background: #E5D5D5
-        }
-.table-data a:hover {
-    background: #e5a7cc;
-    text-decoration: none;
+.table-data a {
+    background: #E5D5D5;
 }
+
+    .table-data a:hover {
+        background: #e5a7cc;
+        text-decoration: none;
+    }
+
+    .info-tab a {
+        background: #D5E5D5;
+    }
+    .info-tab a:hover {
+        background: #a7e5cc;
+        text-decoration: none;
+    }
+    .file-tab a {
+        background: #E5d5e5;
+    }
+    .file-tab a:hover {
+        background: #e5e5e5;
+        text-decoration: none;
+    }
 
 li.active a, li.active a:hover {
     background: #fff;

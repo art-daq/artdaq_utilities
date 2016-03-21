@@ -203,14 +203,18 @@ function GetDBStructure(configPath) {
     if (index < 0) {
         return false;
     }
-    
-    return ParseFhicl(configPath);
+
+    var retval = {
+        files: []
+    }
+    retval.files.push(ParseFhicl(configPath, configPath));
+    return retval;
 }
 
 function GetData(configPath, tablePath) {
     console.log("Searching for Table " + tablePath + " in " + configPath);
     var path = tablePath.split("/");
-    
+    path.shift();
     var fileName = path_module.join(dbDirectory, configPath);
     if (fs.existsSync(path_module.join(tmpDirectory, configPath))) { fileName = path_module.join(tmpDirectory, configPath); }
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
