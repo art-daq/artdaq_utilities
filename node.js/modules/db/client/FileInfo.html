@@ -1,6 +1,6 @@
 ﻿<div id="fileInfo">
     <form>
-        <fieldset data-role="collapsible" id="fileMetadata">
+        <fieldset data-role="collapsible" id="fileMetadata" data-collapsed="false">
             <legend>File Information</legend>
             <div data-role="fieldcontain">
                 <label for="metadataVersion">File Version</label>
@@ -13,6 +13,17 @@
             <div data-role="fieldcontain">
                 <label for="metadataConfigurations">Assigned Configurations</label>
                 <div id="metadataConfigurations"></div>
+            </div>
+        </fieldset>
+        <fieldset data-role="collapsible" id="logs"  data-collapsed="false">
+            <legend>Change Logs</legend>
+            <div data-role="fieldcontain">
+                <label for="changes">Changes Made Since Last Save</label>
+                <textarea id="changes" readonly style="height: auto;"></textarea>
+            </div>
+            <div data-role="fieldcontain">
+                <label for="changeLog">File Change Log</label>
+                <textarea id="changeLog" readonly style="height: auto;"></textarea>
             </div>
         </fieldset>
     </form>

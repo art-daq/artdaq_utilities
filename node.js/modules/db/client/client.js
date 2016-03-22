@@ -32,16 +32,21 @@ function createRowEditor(row, cellvalue, editor, cellText, width, height) {
         cellText = cellText.slice(2);
         cellvalue = cellvalue.slice(2);
         radix = 16;
+        if (("" + cellText).search(/[^0-9a-fA-F]/) >= 0) { return; }
     } else if (typeof cellText === "string" && cellText.search("0") === 0) {
         cellText = cellText.slice(1);
         cellvalue = cellvalue.slice(1);
         radix = 8;
+        if (isNaN(cellText)) { return; }
     } else if (typeof cellText === "string" && cellText.search("b") === cellText.length - 1) {
         cellText = cellText.slice(0, -1);
         cellvalue = cellvalue.slice(0, -1);
         radix = 2;
+        if (isNaN(cellText)) { return; }
+    } else if (isNaN(cellText)) {
+        return;
     }
-    if (isNaN(cellText) || ("" + cellText).length === 0 || ("" + cellText).indexOf(".") >= 0) {
+    if (cellText === " " || ("" + cellText).length === 0 || ("" + cellText).indexOf(".") >= 0) {
         return;
     }
     editor.parent().jqxFormattedInput({ radix: radix, value: cellvalue, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
@@ -65,6 +70,9 @@ function getRowEditorValue(row, cellvalue, editor) {
             return "0x" + editor.val().toUpperCase();
         }
         if (radix == 8 || radix === "octal") {
+            if (editor.val()[0] === '0') {
+                return editor.val();
+            }
             return "0" + editor.val();
         }
         if (editor.val().search("000") === 0) {
@@ -171,6 +179,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                 break;
             }
         }
+        tag.jqxTreeGrid('setCellValue', rowKey, 'edited', true);
         // cell's value.
         var value = args.value;
         AjaxPost("/db/Update", {
@@ -188,11 +197,27 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
     });
 }
 
+function cellClass(row, dataField, cellText, rowData) {
+    var edited = rowData[edited];
+    if (edited) {
+        return "editedValue";
+    }
+    return "value";
+}
+
 function loadTable(path, tag) {
     currentTable = path;
     AjaxPost("/db/GetData", { configName: currentNamedConfig, path: path }, function (data) {
         var dataObj = JSON.parse(data);
         var columns = dataObj.columns;
+        
+        columns.push({
+            name: "edited",
+            type: "bool",
+            editable: false,
+            display: true
+        });
+        
         var displayColumns = [];
         
         for (var c in columns) {
@@ -207,7 +232,8 @@ function loadTable(path, tag) {
                     editable: columns[c].editable,
                     createEditor: createRowEditor,
                     initEditor: initRowEditor,
-                    getEditorValue: getRowEditorValue
+                    getEditorValue: getRowEditorValue,
+                    cellClassName: cellClass
                 });
             } else if (columns[c].type === "number" && columns[c].display) {
                 columns[c].type = "string";
@@ -218,7 +244,8 @@ function loadTable(path, tag) {
                     editable: columns[c].editable,
                     createEditor: createRowEditor,
                     initEditor: initRowEditor,
-                    getEditorValue: getRowEditorValue
+                    getEditorValue: getRowEditorValue,
+                    cellClassName: cellClass
                 });
             }
         }
@@ -389,7 +416,7 @@ function loadConfig() {
                 lastTabID++;
                 $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"info-tab\"><a href=\"#tab" + lastTabID + "\">File Information</a></li>");
                 $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
-                $("#tab" + lastTabID).html(infoHTML);
+                $("#tab" + lastTabID).html(infoHTML).trigger("create");
                 createTabLevel(configObj.files[file], parentTab);
             }
         }
