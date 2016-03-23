@@ -18,6 +18,12 @@ var dbDirectory = path_module.join(process.env["HOME"], "databases", "db");
 var tmpDirectory = path_module.join(process.env["HOME"], "databases", "tmp");
 var trashDirectory = path_module.join(process.env["HOME"], "databases", "TRASH");
 
+var config = {
+    dbprovider: "filesystem",
+    dataformat: "gui",
+    configNameFilter: ""
+};
+
 var defaultColumns = {
     columns: [
         {
@@ -61,6 +67,73 @@ var defaultColumns = {
     comment: "comment"
 };
 
+function RunConfTool(operation, outputFileName) {
+    var inputName = path_module.join(dbDirectory, "query.flt.json");
+    execSync("conftool2 -o " + operation + "-c " + inputName + " -j " + outputFileName);
+}
+
+function RunGetConfigsQuery() {
+    console.log("Running findconfigs query");
+    var query = {
+        filter: { "configurations.name": { $regex: config.configNameFilter } },
+        dbprovider: config.dbprovider,
+        operation: "findconfigs",
+        dataformat: config.dataformat
+    }
+    fs.writeFileSync(path_module.join(dbDirectory, "query.flt.json"), JSON.stringify(query));
+    // Don't run conftool yet
+    //console.log(RunConfTool("findconfigs", path_module.join(dbDirectory,"findconfigs.gui.json")));
+    
+    var retjson = "" + fs.readFileSync(path_module.join(dbDirectory, "findconfigs.gui.json"));
+    var ret = JSON.parse(retjson);
+   // console.log(retjson);
+    return ret;
+}
+
+function RunBuildFilterQuery(query) {
+    console.log("Running buildfilter query");
+    fs.writeFileSync(path_module.join(dbDirectory, "query.flt.json"), JSON.stringify(query));
+    
+    // Don't run conftool yet
+    //console.log(RunConfTool("buildfilter", path_module.join(dbDirectory, "buildfilter.gui.json")));
+    
+    var retjson = "" + fs.readFileSync(path_module.join(dbDirectory, "buildfilter.gui.json"));
+    var ret = JSON.parse(retjson);
+   // console.log(retjson);
+    return ret;
+
+}
+
+function RunStoreConfigQuery() {
+    
+}
+
+function RunLoadConfigQuery(query, filebase) {
+    console.log("Running load query");
+    fs.writeFileSync(path_module.join(dbDirectory, "query.flt.json"), JSON.stringify(query));
+    
+    // Don't run conftool yet
+    //console.log(RunConfTool("load", path_module.join(dbDirectory, filebase + ".gui.json")));
+    
+    var retjson = "" + fs.readFileSync(path_module.join(dbDirectory, filebase + ".gui.json"));
+    //console.log(retjson);
+    return JSON.parse(retjson);
+}
+
+function GetConfigQuery(configName) {
+    var configs = RunGetConfigsQuery().search;
+    for (var conf in configs) {
+        if (configs.hasOwnProperty(conf)) {
+            var config = configs[conf];
+            if (config.name === configName) {
+                return config.query;
+            }
+        }
+    }
+    
+    return {};
+}
+
 function ContainsString(arr, val) {
     for (var i = 0; i < arr.length; i++) {
         if (arr[i].search(val) >= 0) {
@@ -78,24 +151,6 @@ function ContainsName(arr, val, name) {
         }
     }
     return -1;
-}
-
-function GetNamedConfigs() {
-    
-    console.log("Searching for Named Configs in path " + dbDirectory);
-    // we have a directory: do a tree walk
-    var configs = [];
-    var files = fs.readdirSync(dbDirectory);
-    var f, l = files.length;
-    for (var i = 0; i < l; i++) {
-        f = path_module.join(dbDirectory, files[i]);
-        if (files[i].search(".gui.json") > 0) {
-            DiscardWorkingDir(path_module.basename(f));
-            configs.push(files[i]);
-        }
-    }
-    console.log(JSON.stringify(configs));
-    return configs;
 }
 
 function ParseSequence(sequence) {
@@ -121,7 +176,7 @@ function ParseFhiclTable(table, sub) {
     for (var e in table.children) {
         if (table.children.hasOwnProperty(e)) {
             var element = table.children[e];
-            console.log("Element: " + JSON.stringify(element));
+            //console.log("Element: " + JSON.stringify(element));
             switch (element.type) {
                 case "table":
                     //console.log("Parsing table " + e);
@@ -182,8 +237,10 @@ function ParseFhiclTable(table, sub) {
         }
     }
     
-    var obj = { name: table.name, hasSubtables: hasSubtables, children: children,type: "table", comment: comment };
-    if (sub === 0) { console.log("Returning: " + JSON.stringify(obj)); }
+    var obj = { name: table.name, hasSubtables: hasSubtables, children: children, type: "table", comment: comment };
+    if (sub === 0) {
+        //console.log("Returning: " + JSON.stringify(obj));
+    }
     return obj;
 }
 
@@ -192,50 +249,50 @@ function ParseFhicl(path, name) {
     if (fs.existsSync(path_module.join(tmpDirectory, path))) { fileName = path_module.join(tmpDirectory, path); }
     console.log("Going to load FhiCL file: " + fileName);
     var fcl = JSON.parse("" + fs.readFileSync(fileName));
-    console.log(JSON.stringify(fcl));
+    //console.log(JSON.stringify(fcl));
     return ParseFhiclTable({ children: fcl.document.converted.guidata, name: name }, 0);
 }
 
-function GetDBStructure(configPath) {
-    var configs = GetNamedConfigs();
-    if (configs.length === 0) { return false; }
-    var index = ContainsString(configs, configPath);
-    if (index < 0) {
-        return false;
-    }
-
+function GetDBStructure(query) {
+    var configFiles = RunBuildFilterQuery(query).search;
     var retval = {
         files: []
     }
-    retval.files.push(ParseFhicl(configPath, configPath));
+    for (var file in configFiles) {
+        if (configFiles.hasOwnProperty(file)) {
+            console.log("File info: " + JSON.stringify(configFiles[file]));
+            RunLoadConfigQuery(configFiles[file].query, configFiles[file].name);
+            retval.files.push(ParseFhicl(configFiles[file].name + ".gui.json", configFiles[file].name));
+        }
+    }
     return retval;
 }
 
 function GetData(configPath, tablePath) {
-    console.log("Searching for Table " + tablePath + " in " + configPath);
+    console.log("Searching for Table " + tablePath + " from configuration " + configPath);
     var path = tablePath.split("/");
-    path.shift();
-    var fileName = path_module.join(dbDirectory, configPath);
-    if (fs.existsSync(path_module.join(tmpDirectory, configPath))) { fileName = path_module.join(tmpDirectory, configPath); }
+    var filebase = path.shift();
+    var fileName = path_module.join(dbDirectory, filebase + ".gui.json");
+    if (fs.existsSync(path_module.join(tmpDirectory, filebase + ".gui.json"))) { fileName = path_module.join(tmpDirectory, filebase + ".gui.json"); }
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-    var jsonBase = ParseFhiclTable({ children: jsonFile.document.converted.guidata, name: configPath }, 0);
+    var jsonBase = ParseFhiclTable({ children: jsonFile.document.converted.guidata, name: filebase }, 0);
     
     while (path.length > 1) {
         var index = ContainsName(jsonBase.children, path[0], "name");
-        console.log("index is " + index);
+        //console.log("index is " + index);
         jsonBase = jsonBase.children[index];
         path.shift();
     }
     
     var table = ContainsName(jsonBase.children, path[0], "name");
-    console.log("Index of table with name " + path[0] + " is " + table);
+    //console.log("Index of table with name " + path[0] + " is " + table);
     if (table >= 0) {
         var obj = {};
         obj.data = jsonBase.children[table];
         obj.columns = defaultColumns.columns;
         obj.comment = defaultColumns.comment;
         var str = JSON.stringify(obj);
-        console.log("Returning: " + str);
+       // console.log("Returning: " + str);
         return str;
         
     }
@@ -244,17 +301,18 @@ function GetData(configPath, tablePath) {
 }
 
 function SetTable(configPath, tablePath, table) {
-    console.log("SetTable: Searching for Table " + tablePath + " in " + configPath);
+    console.log("SetTable: Searching for Table " + tablePath);
     var path = tablePath.split("/");
+    var filebase = path.shift(); // Get rid of filename for now
     
-    var fileName = path_module.join(dbDirectory, configPath);
-    if (fs.existsSync(path_module.join(tmpDirectory, configPath))) { fileName = path_module.join(tmpDirectory, configPath); }
+    var fileName = path_module.join(dbDirectory, filebase + ".gui.json");
+    if (fs.existsSync(path_module.join(tmpDirectory, filebase + ".gui.json"))) { fileName = path_module.join(tmpDirectory, filebase + ".gui.json"); }
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     var fileTable = jsonFile.document.converted.guidata;
     var refs = [];
     var index;
     if (path.length > 0 && path[0] !== "Table Entries") {
-        console.log("fileTable is " + JSON.stringify(fileTable));
+        //console.log("fileTable is " + JSON.stringify(fileTable));
         index = ContainsName(fileTable, path[0], "name");
         refs.push({ ref: fileTable, index: index, first: true });
         fileTable = fileTable[index];
@@ -262,7 +320,7 @@ function SetTable(configPath, tablePath, table) {
     }
     
     while (path.length > 0 && path[0] !== "Table Entries") {
-        console.log("fileTable is " + JSON.stringify(fileTable));
+        //console.log("fileTable is " + JSON.stringify(fileTable));
         index = ContainsName(fileTable.children, path[0], "name");
         refs.push({ ref: fileTable, index: index, first: false });
         fileTable = fileTable.children[index];
@@ -272,14 +330,14 @@ function SetTable(configPath, tablePath, table) {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
                 index = ContainsName(fileTable.children, table.children[entry].name, "name");
-                console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
+                //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
                 fileTable.children[index] = table.children[entry];
             }
         }
     } else {
         fileTable = table;
     }
-
+    
     for (var i = refs.length - 1; i >= 0; --i) {
         if (!refs[i].first) {
             refs[i].ref.children[refs[i].index] = fileTable;
@@ -290,14 +348,14 @@ function SetTable(configPath, tablePath, table) {
         }
     }
     jsonFile.document.converted.guidata = fileTable;
-    console.log("Output: " + JSON.stringify(jsonFile.document.converted.guidata));
-    fs.writeFileSync(path_module.join(tmpDirectory, configPath), JSON.stringify(jsonFile));
+    //console.log("Output: " + JSON.stringify(jsonFile.document.converted.guidata));
+    fs.writeFileSync(path_module.join(tmpDirectory, filebase + ".gui.json"), JSON.stringify(jsonFile));
 
 }
 
 function UpdateTable(configPath, tablePath, data) {
     var file = GetData(configPath, tablePath);
-    console.log("Table data is " + file);
+    //console.log("Table data is " + file);
     var oldData = JSON.parse(file).data;
     
     console.log("Searching table for entry");
@@ -330,7 +388,7 @@ function UpdateTable(configPath, tablePath, data) {
         }
     }
     
-    console.log("After replacement, table data is " + JSON.stringify(oldData));
+    //console.log("After replacement, table data is " + JSON.stringify(oldData));
     SetTable(configPath, tablePath, oldData);
 }
 
@@ -341,23 +399,30 @@ function ValidatePath(path) {
     return true;
 }
 
-function DiscardWorkingDir(path) {
-    var trashPath = path_module.join(trashDirectory, path + "_" + Date.now());
-    var configPath = path_module.join(tmpDirectory, path);
-    console.log("trashPath: " + trashPath + ", configPath: " + configPath);
+function DiscardWorkingDir(configPath) {
+    var query = GetConfigQuery(configPath);
+    var data = RunBuildFilterQuery(query).search;
     
-    
-    if (!fs.existsSync(configPath)) {
-        console.log("No changes detected, returning");
-        return true;
+    for (var file in data) {
+        var path = data[file].name;
+        
+        var trashPath = path_module.join(trashDirectory, path + "_" + Date.now());
+        var tempPath = path_module.join(tmpDirectory, path);
+        console.log("trashPath: " + trashPath + ", tempPath: " + tempPath);
+        
+        
+        if (!fs.existsSync(tempPath)) {
+            console.log("No changes detected, returning");
+            return true;
+        }
+        
+        console.log("Moving configuration temporary file to TRASH directory");
+        if (!fs.existsSync(trashDirectory)) {
+            fs.mkdirSync(trashDirectory);
+        }
+        console.log("Moving config to trash: " + tempPath + " to " + trashPath);
+        fs.renameSync(tempPath, trashPath);
     }
-    
-    console.log("Moving configuration temporary directory to TRASH directory");
-    if (!fs.existsSync(trashDirectory)) {
-        fs.mkdirSync(trashDirectory);
-    }
-    console.log("Moving config to trash: " + configPath + " to " + trashPath);
-    fs.renameSync(configPath, trashPath);
     console.log("Returning...");
     return true;
 }
@@ -389,77 +454,109 @@ function rmrf(path) {
     execSync("rm -rf \"" + path + "\"");
 }
 
-function SaveConfigurationChanges(oldPath, newPath) {
-    var original = path_module.join(dbDirectory, oldPath);
-    var modified = path_module.join(tmpDirectory, oldPath);
-    var output = path_module.join(dbDirectory, newPath);
-    console.log("Original: " + original + ", Modified: " + modified + ", Output: " + output);
-    
-    var originalMetadata = JSON.parse(ReadConfigurationMetadata(original));
-    var newMetadata = JSON.parse(ReadConfigurationMetadata(modified));
-    
-    console.log("Checking metadata version strings");
-    if (originalMetadata.version === newMetadata.version) {
-        console.log("Inferring new version string...");
-        var version = newMetadata.version;
-        if (version.search(/[\d]+/) >= 0) {
-            var lastNumber = version.replace(/.*?([\d]+)[^\d]*$/g, "$1");
-            console.log("Last number in string: " + lastNumber);
-            var len = lastNumber.length;
-            lastNumber++;
-            for (var j = ("" + lastNumber).length; j < len; j++) {
-                lastNumber = "0" + lastNumber;
-            }
-            console.log("After replacement: " + lastNumber);
-            version = version.replace(/(.*?)([\d]+)([^\d]*)$/g, "$1" + lastNumber + "$3");
-        } else {
-            version = version + "2";
+function SaveConfigurationChanges(oldConfig, newConfig, files) {
+    var oldFiles = [];
+    var query = GetConfigQuery(configPath);
+    var data = RunBuildFilterQuery(query).search;
+    for (var i in data) {
+        oldFiles.push(data[i].name);
+    }
+
+    for (var f in files) {
+        if (ContainsString(oldFiles, files[f].name)) {
+            oldFiles.splice(oldFiles.indexOf(files[f].name), 1);
         }
-        console.log("Changing version from " + originalMetadata.version + " to " + version);
-        newMetadata.version = version;
+        var original = path_module.join(dbDirectory, files[f].name);
+        var modified = path_module.join(tmpDirectory, files[f].name);
+        var originalMetadata = JSON.parse(ReadConfigurationMetadata(original));
+        var newMetadata = JSON.parse(ReadConfigurationMetadata(modified));
+
+        console.log("Checking metadata version strings");
+        if (originalMetadata.version === newMetadata.version) {
+            console.log("Inferring new version string...");
+            var version = newMetadata.version;
+            if (version.search(/[\d]+/) >= 0) {
+                var lastNumber = version.replace(/.*?([\d]+)[^\d]*$/g, "$1");
+                console.log("Last number in string: " + lastNumber);
+                var len = lastNumber.length;
+                lastNumber++;
+                for (var j = ("" + lastNumber).length; j < len; j++) {
+                    lastNumber = "0" + lastNumber;
+                }
+                console.log("After replacement: " + lastNumber);
+                version = version.replace(/(.*?)([\d]+)([^\d]*)$/g, "$1" + lastNumber + "$3");
+            } else {
+                version = version + "2";
+            }
+            console.log("Changing version from " + originalMetadata.version + " to " + version);
+            newMetadata.version = version;
+            newMetadata.log = files[f].log + newMetadata.log;
+        }
+        WriteFileMetadata(newMetadata, modified);
+
+        RunStoreConfigQuery(modified, newConfig);
+        copy(modified, original);
     }
-    WriteConfigurationMetadata(newMetadata, modified);
-    
-    if (oldPath === newPath) {
-        console.log("Original will be overwritten. Saving copy to TRASH");
-        copy(original, path_module.join(trashDirectory, oldPath));
+    for (var of in oldFiles) {
+        RunStoreConfigQuery(oldFiles[of], newConfig);
     }
-    
-    console.log("Copying from " + modified + " to " + output);
-    copy(modified, output);
-    return DiscardWorkingDir(oldPath);
+    return DiscardWorkingDir(oldConfig);
 }
 
-function WriteConfigurationMetadata(newMetadata, configPath) {
-    
-    var fileName = path_module.join(dbDirectory, configPath);
-    if (fs.existsSync(configPath)) { fileName = configPath; }
-    else if (fs.existsSync(path_module.join(tmpDirectory, configPath))) { fileName = path_module.join(tmpDirectory, configPath); }
 
+function ReadConfigurationMetadata(configPath) {
+    console.log("Reading metadata for configuration " + configPath);
+    
+    var query = GetConfigQuery(configPath);
+    var data = RunBuildFilterQuery(query).search;
+    
+    var metadata = {
+        entities: []
+    }
+    for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+            metadata.entities.push(data[i].query.filter["configurable_entity.name"]);
+        }
+    }
+    
+    return JSON.stringify(metadata);
+}
+
+function ReadFileMetadata(filebase) {
+    console.log("Reading metadata from " + filebase);
+    
+    var fileName = path_module.join(dbDirectory, filebase + ".gui.json");
+    if (fs.existsSync(filebase + ".gui.json")) {
+        fileName = filebase + ".gui.json";}
+    else if (fs.existsSync(path_module.join(tmpDirectory, filebase + ".gui.json"))) { fileName = path_module.join(tmpDirectory, filebase + ".gui.json"); }
+    //console.log("Reading " + fileName);
+    
+    var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
+    var metadata = { configurable_entity: jsonFile.configurable_entity, bookkeeping: jsonFile.bookkeeping, aliases: jsonFile.aliases, configurations: jsonFile.configurations, version: jsonFile.version, log: jsonFile.log };
+    
+    //console.log("Returning: " + JSON.stringify(metadata));
+    return JSON.stringify(metadata);
+}
+
+function WriteFileMetadata(newMetadata, filebase) {
+    
+    var fileName = path_module.join(dbDirectory, filebase + ".gui.json");
+    if (fs.existsSync(filebase + ".gui.json")) {
+        fileName = filebase + ".gui.json";
+    }
+    else if (fs.existsSync(path_module.join(tmpDirectory, filebase + ".gui.json"))) { fileName = path_module.join(tmpDirectory, filebase + ".gui.json"); }
+    
     console.log("Reading file: " + fileName);
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-
+    
     jsonFile.configurable_entity = newMetadata.configurable_entity;
     jsonFile.bookkeeping = newMetadata.bookkeeping;
     jsonFile.aliases = newMetadata.aliases;
     jsonFile.configurations = newMetadata.configurations;
     jsonFile.version = newMetadata.version;
-
+    
     console.log("Writing data to file");
     fs.writeFileSync(fileName, JSON.stringify(jsonFile));
-}
-
-function ReadConfigurationMetadata(configPath) {
-    console.log("Reading metadata from " + configPath);
-    
-    var fileName = path_module.join(dbDirectory, configPath);
-    if (fs.existsSync(configPath)) { fileName = configPath; }
-    else if (fs.existsSync(path_module.join(tmpDirectory, configPath))) { fileName = path_module.join(tmpDirectory, configPath); }
-    
-    var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-    var metadata = { configurable_entity: jsonFile.configurable_entity, bookkeeping: jsonFile.bookkeeping, aliases: jsonFile.aliases, configurations: jsonFile.configurations, version: jsonFile.version };
-    
-    return JSON.stringify(metadata);
 }
 
 // POST calls
@@ -469,55 +566,45 @@ db.RO_GetData = function (post) {
         console.log("Possible break-in attempt! NOT Proceeding!");
         return "";
     }
-    var tablePath = post.path;
-    var configPath = post.configName + ".gui.json";
-    return GetData(configPath, tablePath);
+    return GetData(post.configName, post.path);
 };
 
 db.RW_saveConfig = function (post) {
     console.log("Request to save configuration recieved. Configuration data:");
     console.log(post);
-    if (post.newConfigName.search("\\.\\.") >= 0 || post.oldConfigName.search("\\.\\.") >= 0) {
-        console.log("Possible break-in attempt! NOT Proceeding!");
-        return false;
-    }
     
     console.log("Checking for Configuration Name or Path changes");
     var pathChanged = post.oldConfigName !== post.newConfigName;
     if (pathChanged) {
-        console.log("Validating path change");
-        if (!ValidatePath(post.newConfigName + ".gui.json")) {
-            var time = Date.now();
-            console.log("WARNING: Invalid path detected! I'm going to use " + post.oldConfigName + "_" + time + ".gui.json" + " instead!");
-            post.newConfigName = post.oldConfigName + "_" + time;
-        }
-    }
-    
-    if (post.log === "") {
-        console.log("Empty Log Detected: No changes were made!");
-        if (pathChanged) {
-            console.log("Path change detected. Copying old configuration to new directory.");
-            copy(post.oldConfigName + ".gui.json", post.newConfigName + ".gui.json");
-        }
+        console.log("New configuration has a different name. Good.");
     } else {
-        console.log("Updating Configuration Files");
-        SaveConfigurationChanges(post.oldConfigName + ".gui.json", post.newConfigName + ".gui.json");
+        console.log("Inferring new configuration name");
+        if (post.newConfigName.search(/[\d]+/) >= 0) {
+            var lastNumber = post.newConfigName.replace(/.*?([\d]+)[^\d]*$/g, "$1");
+            console.log("Last number in string: " + lastNumber);
+            var len = lastNumber.length;
+            lastNumber++;
+            for (var j = ("" + lastNumber).length; j < len; j++) {
+                lastNumber = "0" + lastNumber;
+            }
+            console.log("After replacement: " + lastNumber);
+            post.newConfigName = post.newConfigName.replace(/(.*?)([\d]+)([^\d]*)$/g, "$1" + lastNumber + "$3");
+        } else {
+            post.newConfigName = post.oldConfigName + "_" + Date.now();
+        }
     }
     
+    console.log("Updating Configuration Files");
+    SaveConfigurationChanges(post.oldConfigName, post.newConfigName, post.files);
     
     return "";
 };
 
 db.RO_LoadNamedConfig = function (post) {
-    console.log("Request for configuration with file name \"" + post.configName + ".gui.json" + "\" received.");
+    console.log("Request for configuration with name \"" + post.configName + "\" and search query \"" + post.query + "\" received.");
     
-    if (post.configName.search("\\.\\.") >= 0) {
-        console.log("Possible break-in attempt! NOT Proceeding!");
-        return "";
-    }
-    
-    var structure = GetDBStructure(post.configName + ".gui.json");
-    console.log("Returning DB Structure: " + JSON.stringify(structure));
+    var structure = GetDBStructure(post.query);
+    //console.log("Returning DB Structure: " + JSON.stringify(structure));
     return JSON.stringify(structure);
 };
 
@@ -527,7 +614,7 @@ db.RW_discardConfig = function (post) {
         return false;
     }
     
-    return DiscardWorkingDir(post.configName + ".gui.json");
+    return DiscardWorkingDir(post.configName);
 }
 
 db.RO_Update = function (post) {
@@ -536,30 +623,37 @@ db.RO_Update = function (post) {
         return false;
     }
     //console.log(JSON.stringify(post));
-    UpdateTable(post.configName + ".gui.json", post.table, { id: post.id, name: post.name, column: post.column, value: post.value });
+    UpdateTable(post.configName, post.table, { id: post.id, name: post.name, column: post.column, value: post.value });
     return "";
 }
 
 db.RO_LoadConfigMetadata = function (post) {
-    console.log(JSON.stringify(post));
+    //console.log(JSON.stringify(post));
     if (post.configName.search("\\.\\.") >= 0) {
         console.log("Possible break-in attempt! NOT Proceeding!");
         return false;
     }
-    return ReadConfigurationMetadata(post.configName + ".gui.json");
+    return ReadConfigurationMetadata(post.configName);
+}
+
+db.RO_LoadFileMetadata = function (post) {
+    //console.log(JSON.stringify(post));
+    if (post.configName.search("\\.\\.") >= 0) {
+        console.log("Possible break-in attempt! NOT Proceeding!");
+        return false;
+    }
+    return ReadFileMetadata(post.fileName);
 }
 
 // GET calls
 db.GET_NamedConfigs = function () {
-    var configs = GetNamedConfigs();
+    var configs = RunGetConfigsQuery().search;
     //console.log(configs);
     var configsOutput = [];
     for (var conf in configs) {
         if (configs.hasOwnProperty(conf)) {
-            if (conf) {
-                var confName = configs[conf].slice(0, configs[conf].search(".gui.json"));
-                configsOutput.push("<option value=" + confName + ">" + confName + "</option>");
-            }
+            var config = configs[conf];
+            configsOutput.push("<option value=" + JSON.stringify(config.query) + ">" + config.name + "</option>");
         }
     }
     //console.log(configsOutput);

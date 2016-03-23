@@ -206,10 +206,8 @@ if ( cluster.isMaster ) {
 					var POST = {};
 			try { 
 						POST = JSON.parse(body); 
-						//console.log("JSON Query Detected");  
 			} catch (e) { 
 						POST = qs.parse( body ); 
-						//console.log("QueryString Query Detected");
 					}
 				POST.who = username;
 				
@@ -217,41 +215,39 @@ if ( cluster.isMaster ) {
 					console.log( "Module " + moduleName + ", function " + functionName + " accessType " + ( readOnly ? "RO" : "RW" ) );
 					var dataTemp = "";
 					module_holder[moduleName].removeAllListeners( 'data' ).on( 'data',function ( data ) {
-						//res.write(JSON.stringify(data));
 						dataTemp += data;
 					} );
 					module_holder[moduleName].removeAllListeners( 'end' ).on( 'end',function ( data ) {
-						//console.log("Sending Message!");
-						//process.send( workerData );
+						//console.log("POST Operation Complete, sending data to client: " + JSON.stringify(dataTemp + data));
 						res.end( JSON.stringify( dataTemp + data ) );
 					} );
 					if ( readOnly ) {
 						try {
 							var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
-							if ( data != null ) {
+							if (data != null) {
+								//console.log("RO POST Returning: " + JSON.stringify(data));
 								res.end( JSON.stringify( data ) );
 							}
 						} catch ( err ) {
 							if ( err instanceof TypeError ) {
-								console.log( "Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName );
+								//console.log( "Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName );
 								res.end( JSON.stringify( null ) );
 							}
 						}
 					} else {
 						try {
 							var data = module_holder[moduleName]["RW_" + functionName]( POST,workerData[moduleName] );
-							if ( data != null ) {
+							if (data != null) {
+								//console.log("RW POST returned data: " + JSON.stringify(data));
 								res.end( JSON.stringify( data ) );
-								//console.log("Sending Message!");
-								//process.send( workerData );
 							}
 						} catch ( err ) {
-							//console.log("Error caught; text:");
-							//console.log(err);
+							//console.log("Error caught; text: " + JSON.stringify(err));
 							if ( err instanceof TypeError ) {
 								//RW_ version not available, try read-only version:
 								var data = module_holder[moduleName]["RO_" + functionName]( POST,workerData[moduleName] );
-								if ( data != null ) {
+								if (data != null) {
+									//console.log("RO Fallback POST returned data: " + JSON.stringify(data));
 									res.end( JSON.stringify( data ) );
 								}
 							}
@@ -326,11 +322,13 @@ if ( cluster.isMaster ) {
 					//res.write(JSON.stringify(data));
 					dataTemp += data;
 				} );
-				module_holder[moduleName].removeAllListeners( 'end' ).on( 'end',function ( data ) {
+				module_holder[moduleName].removeAllListeners('end').on('end', function (data) {
+					//console.log("GET Operation complete, sending response to client: " + JSON.stringify(dataTemp + data));
 					res.end( JSON.stringify( dataTemp + data ) );
 				} );
 				var data = module_holder[moduleName]["GET_" + functionName]( workerData[moduleName] );
-				if ( data != null ) {
+				if (data != null) {
+					//console.log("GET Returned a value, sending response to client: " + JSON.stringify(data));
 					res.end( JSON.stringify( data ) );
 				}
 			} else {

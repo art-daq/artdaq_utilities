@@ -39,12 +39,8 @@
         transition: all linear 0.15s;
     }
 
-    .value { color: #000;}
-    .editedValue {
-        color: #FF3;    
-    }
 
-.tab-links a:hover {
+        .tab-links a:hover {
             background: #a7cce5;
             text-decoration: none;
         }
@@ -58,16 +54,28 @@
         text-decoration: none;
     }
 
-    .info-tab a {
-        background: #D5E5D5;
+.configInfo-tab a {
+    background: #D5E5D5;
+}
+
+    .configInfo-tab a:hover {
+        background: #a7e5cc;
+        text-decoration: none;
     }
+
+.info-tab a {
+    background: #D5E5D5;
+}
+
     .info-tab a:hover {
         background: #a7e5cc;
         text-decoration: none;
     }
-    .file-tab a {
-        background: #E5d5e5;
-    }
+
+.file-tab a {
+    background: #E5d5e5;
+}
+
     .file-tab a:hover {
         background: #e5e5e5;
         text-decoration: none;
@@ -125,11 +133,15 @@ li.active a, li.active a:hover {
 
 /*----- Content of Tabs -----*/
 .tab-content {
-    width: 95%;
+    width: 98%;
     margin: 0;
     padding: 10px 15px;
+    -ms-border-radius: 5px;
     border-radius: 5px;
     border: 1px groove #777;
+    -webkit-box-shadow: -2px 2px 2px #000000;
+    -ms-box-shadow: -2px 2px 2px #000000;
+    box-shadow: -2px 2px 2px #000000;
     box-shadow: -2px 2px 2px rgba(0,0,0,0.15);
     background: #fff;
 }
@@ -168,4 +180,17 @@ p {
 
 .jqx-widget {
     width: 100%;
+}
+
+.value {
+    color: #000;
+}
+
+.editedValue {
+    background: #E7F29B;
+    border-style: solid;
+    border-bottom: 0 hidden;
+    border-top: 3px solid #E7F29B;
+    border-left: 2px solid #e7f29b;
+    border-right: 2px solid #e7f29b;
 }

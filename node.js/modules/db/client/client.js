@@ -107,6 +107,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                 }
             }
             for (var i in records) {
+                records[i]["edited"] = false;
                 for (var f in numberFields) {
                     var radix = numberFields[f].radix;
                     if (!radix) {
@@ -135,7 +136,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         }
     });
     // create Tree Grid
-    tag.jqxTreeGrid(
+    tag.addClass("jqxTreeGrid").jqxTreeGrid(
         {
             width: "100%",
             source: dataAdapter,
@@ -179,7 +180,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                 break;
             }
         }
-        tag.jqxTreeGrid('setCellValue', rowKey, 'edited', true);
+        tag.jqxTreeGrid("getRow", rowKey)["edited"] = true;
+        $("li.active :visible").parent().addClass("editedValue");
         // cell's value.
         var value = args.value;
         AjaxPost("/db/Update", {
@@ -191,14 +193,14 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             value: value
         }, function (retval) { });
         var now = new Date;
-        $("#changes").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#changes").val());
+        $("#changes", $(".file-tab.active").attr("href")).val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#changes").val());
         resizeTextAreas();
         updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
     });
 }
 
 function cellClass(row, dataField, cellText, rowData) {
-    var edited = rowData[edited];
+    var edited = rowData["edited"];
     if (edited) {
         return "editedValue";
     }
@@ -257,8 +259,6 @@ function loadTable(path, tag) {
 
 function getConfigList() {
     updateHeader(false, "");
-    $("#changes").val("");
-    $("#changeLog").val("");
     resizeTextAreas();
     for (var i = 2; i <= lastTabID; i++) {
         $("#tab" + i).remove();
@@ -297,13 +297,14 @@ function registerTabFunctions() {
         console.log(path.join("/"));
         loadTable(path.join("/"), $(".tabs " + $(this).attr("href")));
     });
-    $(".file-tab a").on("click", function () {
+    $(".info-tab a").on("click", function () {
         var fileName = [];
         $("li.active :visible").each(function (index, item) {
             fileName.push(item.firstChild.textContent);
         });
-        console.log(fileName.join("/") + ".gui.json");
-        loadConfigMetadata(fileName.join("/") + ".gui.json", $(this).attr("href"));
+        console.log(fileName[0] + ".gui.json");
+        loadFileMetadata(fileName[0], $(this).attr("href"));
+        resizeTextAreas();
     });
 };
 
@@ -376,7 +377,7 @@ function loadConfigMetadata(fileName, id) {
         };
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        $(id + " #metadataConfigurations").jqxTreeGrid(
+        $(id + " #metadataConfigurations").addClass("jqxTreeGrid").jqxTreeGrid(
             {
                 width: "100%",
                 source: dataAdapter,
@@ -388,6 +389,52 @@ function loadConfigMetadata(fileName, id) {
     });
 }
 
+function loadFileMetadata(fileName, id) {
+    AjaxPost("/db/LoadFileMetadata", { configName: currentNamedConfig, fileName: fileName }, function (metadata) {
+        var metadataObj = JSON.parse(metadata);
+        //console.log(metadata);
+        $(id + " #metadataEntity").val(metadataObj.configurable_entity.name);
+        $(id + " #metadataVersion").val(metadataObj.version);
+        $(id + " #changeLog").val(metadataObj.log);
+        
+        var displayColumns = [
+            {
+                text: "Name",
+                dataField: "name",
+                editable: false
+            },
+            {
+                text: "Date Assigned",
+                dataField: "assigned",
+                editable: false
+            }
+        ];
+        var dataFields = [
+            { name: "name", type: "string", editable: false, display: true },
+            { name: "assigned", type: "date", editable: false, display: true }
+        ];
+        var source = {
+            dataType: "json",
+            dataFields: dataFields,
+            id: "name",
+            hierarchy: {
+                root: "values"
+            },
+            localData: metadataObj.configurations
+        };
+        var dataAdapter = new $.jqx.dataAdapter(source);
+        // create Tree Grid
+        $(id + " #metadataConfigurations").addClass("jqxTreeGrid").jqxTreeGrid(
+            {
+                width: "100%",
+                source: dataAdapter,
+                editable: false,
+                sortable: true,
+                columnsResize: true,
+                columns: displayColumns
+            });
+    });
+}
 function loadConfig() {
     console.log("Loading Configuration");
     updateHeader(false, "");
@@ -399,9 +446,8 @@ function loadConfig() {
         $("#tablink" + i).remove();
     }
     lastTabID = 1;
-    AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig }, function (config) {
+    AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig, query: selected.val() }, function (config) {
         var configObj = JSON.parse(config);
-        //$("#changeLog").val(configObj.metadata.changeLog);
         resizeTextAreas();
         for (var file in configObj.files) {
             if (configObj.files.hasOwnProperty(file)) {
@@ -428,10 +474,15 @@ function loadConfig() {
 
 function saveConfig() {
     console.log("Saving Configuration Changes");
+    var files = [];
+    $(".file-tab.editedValue").each(function (index) {
+        var log = $("#changes", $(this).attr("href")).val();
+        files.push({ name: $(this).text(), log: log });
+    });
     AjaxPost("/db/saveConfig", {
         oldConfigName: currentNamedConfig,
         newConfigName: $("#configName").val(),
-        log: $("#changes").val()
+        changedFiles: files
     }, function (res) {
         if (res !== null && res.Success) {
             updateHeader(false, "Configuration Saved.");
@@ -505,7 +556,6 @@ $(document).ready(function () {
     
     
     $(window).smartresize(function () {
-        $(".jqx-grid").jqxTreeGrid({ width: "100%" });
+        $(".jqxTreeGrid").jqxTreeGrid({ width: "100%" }).jqxTreeGrid('refresh');
     });
-    $(".jqx-grid").jqxTreeGrid({ width: "100%" });
 });
