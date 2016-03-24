@@ -8,6 +8,7 @@ var currentNamedConfig = "";
 var currentMetadata;
 var currentTable;
 var lastTabID = 1;
+var editedValues = [];
 
 function updateHeader(error, text) {
     if (error) {
@@ -107,7 +108,15 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                 }
             }
             for (var i in records) {
-                records[i]["edited"] = false;
+                var edited = false;
+                for (var j in editedValues) {
+                    if (editedValues[j].tag === tag) {
+                        if (editedValues[j].rowData.id === i) {
+                            edited = true;
+                        }
+                    }
+                }
+                records[i]["edited"] = edited;
                 for (var f in numberFields) {
                     var radix = numberFields[f].radix;
                     if (!radix) {
@@ -181,6 +190,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             }
         }
         tag.jqxTreeGrid("getRow", rowKey)["edited"] = true;
+        editedValues.push({ tag: tag, rowKey: rowKey, rowData: rowData });
         $("li.active :visible").parent().addClass("editedValue");
         // cell's value.
         var value = args.value;
