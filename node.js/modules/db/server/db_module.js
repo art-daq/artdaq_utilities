@@ -104,8 +104,26 @@ function RunBuildFilterQuery(query) {
 
 }
 
-function RunStoreConfigQuery() {
-    
+function RunStoreConfigQuery(fileName, configName, collectionName, version, entity) {
+    console.log("RunStoreConfigQuery: fileName: " + fileName + ", configName: " + configName + ", collectionName: " + collectionName + ", version: " + version + ", entity: " + JSON.stringify(entity));
+    var query = {
+        filter: {
+            "configurable_entity.name": entity.name,
+            "configurations.name": configName
+        },
+        collection: collectionName,
+        configurable_entity: entity,
+        configuration: configName,
+        dbprovider: config.dbprovider,
+        operation: "store",
+        dataformat: "gui"
+    }
+    fs.writeFileSync(path_module.join(dbDirectory, "query.flt.json"), JSON.stringify(query));
+
+    // Don't run conftool yet
+    //console.log(RunConfTool("store", path_module.join(dbDirectory, fileName));
+
+    return;
 }
 
 function RunLoadConfigQuery(query, filebase) {
@@ -399,29 +417,29 @@ function ValidatePath(path) {
     return true;
 }
 
-function DiscardWorkingDir(configPath) {
-    var query = GetConfigQuery(configPath);
-    var data = RunBuildFilterQuery(query).search;
-    
-    for (var file in data) {
-        var path = data[file].name;
-        
-        var trashPath = path_module.join(trashDirectory, path + "_" + Date.now());
-        var tempPath = path_module.join(tmpDirectory, path);
-        console.log("trashPath: " + trashPath + ", tempPath: " + tempPath);
-        
-        
-        if (!fs.existsSync(tempPath)) {
-            console.log("No changes detected, returning");
-            return true;
+function DiscardWorkingDir(files) {
+    console.log("Discarding changed files: " + JSON.stringify(files));
+    for (var file in files) {
+        if (files.hasOwnProperty(file)) {
+            var path = files[file].name;
+
+            var trashPath = path_module.join(trashDirectory, path + "_" + Date.now() + ".gui.json");
+            var tempPath = path_module.join(tmpDirectory, path + ".gui.json");
+            console.log("trashPath: " + trashPath + ", tempPath: " + tempPath);
+
+
+            if (!fs.existsSync(tempPath)) {
+                console.log(path + ": No changes detected, continuing");
+                continue;
+            }
+
+            console.log("Moving configuration temporary file to TRASH directory");
+            if (!fs.existsSync(trashDirectory)) {
+                fs.mkdirSync(trashDirectory);
+            }
+            console.log("Moving config to trash: " + tempPath + " to " + trashPath);
+            fs.renameSync(tempPath, trashPath);
         }
-        
-        console.log("Moving configuration temporary file to TRASH directory");
-        if (!fs.existsSync(trashDirectory)) {
-            fs.mkdirSync(trashDirectory);
-        }
-        console.log("Moving config to trash: " + tempPath + " to " + trashPath);
-        fs.renameSync(tempPath, trashPath);
     }
     console.log("Returning...");
     return true;
@@ -446,6 +464,14 @@ function execSync(command) {
     return output;
 }
 
+function move(oldPath, newPath) {
+    if (fs.existsSync(newPath)) {
+        fs.unlinkSync(newPath);
+    }
+
+    fs.renameSync(oldPath, newPath);
+}
+
 function copy(oldPath, newPath) {
     execSync("cp -a \"" + oldPath + "\" \"" + newPath + "\"");
 }
@@ -455,52 +481,65 @@ function rmrf(path) {
 }
 
 function SaveConfigurationChanges(oldConfig, newConfig, files) {
-    var oldFiles = [];
-    var query = GetConfigQuery(configPath);
-    var data = RunBuildFilterQuery(query).search;
-    for (var i in data) {
-        oldFiles.push(data[i].name);
-    }
-
+    console.log("Saving Configuration Changes, oldConfig: " + oldConfig + ", newConfig: " + newConfig + ", files: " + JSON.stringify(files));
+    var query = GetConfigQuery(oldConfig);
+    var fileInfo = RunBuildFilterQuery(query).search;
+    var originalMetadata;
     for (var f in files) {
-        if (ContainsString(oldFiles, files[f].name)) {
-            oldFiles.splice(oldFiles.indexOf(files[f].name), 1);
-        }
-        var original = path_module.join(dbDirectory, files[f].name);
-        var modified = path_module.join(tmpDirectory, files[f].name);
-        var originalMetadata = JSON.parse(ReadConfigurationMetadata(original));
-        var newMetadata = JSON.parse(ReadConfigurationMetadata(modified));
-
-        console.log("Checking metadata version strings");
-        if (originalMetadata.version === newMetadata.version) {
-            console.log("Inferring new version string...");
-            var version = newMetadata.version;
-            if (version.search(/[\d]+/) >= 0) {
-                var lastNumber = version.replace(/.*?([\d]+)[^\d]*$/g, "$1");
-                console.log("Last number in string: " + lastNumber);
-                var len = lastNumber.length;
-                lastNumber++;
-                for (var j = ("" + lastNumber).length; j < len; j++) {
-                    lastNumber = "0" + lastNumber;
-                }
-                console.log("After replacement: " + lastNumber);
-                version = version.replace(/(.*?)([\d]+)([^\d]*)$/g, "$1" + lastNumber + "$3");
-            } else {
-                version = version + "2";
+        if (files.hasOwnProperty(f)) {
+            var collectionName = "";
+            var index = ContainsName(fileInfo, files[f].name, "name");
+            if (index >= 0) {
+                collectionName = fileInfo[index].query.collection;
+                fileInfo.splice(index, 1);
             }
-            console.log("Changing version from " + originalMetadata.version + " to " + version);
-            newMetadata.version = version;
-            newMetadata.log = files[f].log + newMetadata.log;
-        }
-        WriteFileMetadata(newMetadata, modified);
+            var original = path_module.join(dbDirectory, files[f].name);
+            var modified = path_module.join(tmpDirectory, files[f].name);
+            originalMetadata = JSON.parse(ReadFileMetadata(original));
+            var newMetadata = JSON.parse(ReadFileMetadata(modified));
+            console.log("originalMetadata: " + JSON.stringify(originalMetadata));
+            console.log("newMetadata: " + JSON.stringify(newMetadata));
 
-        RunStoreConfigQuery(modified, newConfig);
-        copy(modified, original);
+            console.log("Checking metadata version strings");
+            if (originalMetadata.version === newMetadata.version) {
+                console.log("Inferring new version string...");
+                var version = newMetadata.version;
+                if (version.search(/[\d]+/) >= 0) {
+                    var lastNumber = version.replace(/.*?([\d]+)[^\d]*$/g, "$1");
+                    console.log("Last number in string: " + lastNumber);
+                    var len = lastNumber.length;
+                    lastNumber++;
+                    for (var j = ("" + lastNumber).length; j < len; j++) {
+                        lastNumber = "0" + lastNumber;
+                    }
+                    console.log("After replacement: " + lastNumber);
+                    version = version.replace(/(.*?)([\d]+)([^\d]*)$/g, "$1" + lastNumber + "$3");
+                } else {
+                    version = version + "2";
+                }
+                console.log("Changing version from " + originalMetadata.version + " to " + version);
+                newMetadata.version = version;
+                newMetadata.log = files[f].changelog + newMetadata.changelog;
+            }
+            WriteFileMetadata(newMetadata, modified);
+
+            console.log("Running store query");
+            RunStoreConfigQuery(modified + ".gui.json", newConfig, collectionName, newMetadata.version, newMetadata.configurable_entity);
+            console.log("Moving " + modified + " to " + original);
+            move(modified + ".gui.json", original + ".gui.json");
+        }
     }
-    for (var of in oldFiles) {
-        RunStoreConfigQuery(oldFiles[of], newConfig);
+
+    console.log("Running store query on remaining files from configuration: " + JSON.stringify(fileInfo));
+    for (var of in fileInfo) {
+        if (fileInfo.hasOwnProperty(of)) {
+            originalMetadata = JSON.parse(ReadFileMetadata(path_module.join(dbDirectory,fileInfo[of].name)));
+            RunStoreConfigQuery(fileInfo[of].name + ".gui.json", newConfig, fileInfo[of].query.collection, originalMetadata.version, originalMetadata.configurable_entity);
+        }
     }
-    return DiscardWorkingDir(oldConfig);
+
+    console.log("Discarding changed configuration");
+    return DiscardWorkingDir(files);
 }
 
 
@@ -515,10 +554,11 @@ function ReadConfigurationMetadata(configPath) {
     }
     for (var i in data) {
         if (data.hasOwnProperty(i)) {
-            metadata.entities.push(data[i].query.filter["configurable_entity.name"]);
+            metadata.entities.push({ name: data[i].query.filter["configurable_entity.name"] });
         }
     }
-    
+
+    console.log("Returning entity list: " + JSON.stringify(metadata.entities));
     return JSON.stringify(metadata);
 }
 
@@ -532,7 +572,7 @@ function ReadFileMetadata(filebase) {
     //console.log("Reading " + fileName);
     
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-    var metadata = { configurable_entity: jsonFile.configurable_entity, bookkeeping: jsonFile.bookkeeping, aliases: jsonFile.aliases, configurations: jsonFile.configurations, version: jsonFile.version, log: jsonFile.log };
+    var metadata = { configurable_entity: jsonFile.configurable_entity, bookkeeping: jsonFile.bookkeeping, aliases: jsonFile.aliases, configurations: jsonFile.configurations, version: jsonFile.version, changelog: jsonFile.changelog };
     
     //console.log("Returning: " + JSON.stringify(metadata));
     return JSON.stringify(metadata);
@@ -554,8 +594,10 @@ function WriteFileMetadata(newMetadata, filebase) {
     jsonFile.aliases = newMetadata.aliases;
     jsonFile.configurations = newMetadata.configurations;
     jsonFile.version = newMetadata.version;
+    jsonFile.converted.changelog = newMetadata.changelog;
     
     console.log("Writing data to file");
+    //console.log("fileName: " + fileName + ", metadata: " + JSON.stringify(jsonFile));
     fs.writeFileSync(fileName, JSON.stringify(jsonFile));
 }
 
@@ -614,7 +656,7 @@ db.RW_discardConfig = function (post) {
         return false;
     }
     
-    return DiscardWorkingDir(post.configName);
+    return DiscardWorkingDir(post.files);
 }
 
 db.RO_Update = function (post) {

@@ -66,16 +66,12 @@
                             <fieldset data-role="collapsible" data-collapsed="true" id="configMetadata" data-disabled="true">
                                 <legend>Configuration Information</legend>
                                 <div data-role="fieldcontain">
-                                    <label for="metadataVersion">Configuration Version</label>
-                                    <input type="text" name="metadataVersion" id="metadataVersion" class="triggersModified">
+                                    <label for="masterChanges">All Changes Since Last Save</label>
+                                    <textarea id="masterChanges" readonly style="height: auto;"></textarea>
                                 </div>
                                 <div data-role="fieldcontain">
-                                    <label for="metadataEntity">Configuration Entity Name</label>
-                                    <input type="text" name="metadataEntity" id="metadataEntity" class="triggersModified">
-                                </div>
-                                <div data-role="fieldcontain">
-                                    <label for="metadataConfigurations">Assigned Global Configurations</label>
-                                    <div id="metadataConfigurations"></div>
+                                    <label for="configurationEntities">Entities in Configuration</label>
+                                    <div id="configurationEntities"></div>
                                 </div>
                             </fieldset>
                         </form>
