@@ -9,6 +9,22 @@ var currentMetadata;
 var currentTable;
 var lastTabID = 1;
 var editedValues = [];
+//var userId = generateUUID();
+// For Testing
+var userId = "1";
+
+function generateUUID() {
+    var d = Date.now();
+    if (window.performance && typeof window.performance.now === "function") {
+        d += performance.now(); //use high-precision timer if available
+    }
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    return uuid;
+}
 
 function updateHeader(error, text) {
     if (error) {
@@ -200,7 +216,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             column: columnDataField,
             id: rowData.id,
             name: rowData.name,
-            value: value
+            value: value,
+            user: userId
         }, function (retval) { });
         var now = new Date;
         var selector = $("#changes", $(".file-tab.active a").attr("href"));
@@ -221,7 +238,7 @@ function cellClass(row, dataField, cellText, rowData) {
 
 function loadTable(path, tag) {
     currentTable = path;
-    AjaxPost("/db/GetData", { configName: currentNamedConfig, path: path }, function (data) {
+    AjaxPost("/db/GetData", { configName: currentNamedConfig, path: path, user: userId }, function (data) {
         var dataObj = JSON.parse(data);
         var columns = dataObj.columns;
         
@@ -283,6 +300,7 @@ function getConfigList() {
         if (config !== undefined) {
             $("#configs").val(config);
         }
+        $("#oldConfigName").html(data.join("")).trigger("create").selectmenu("refresh");
     });
     $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
     $("#configSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
@@ -310,7 +328,10 @@ function registerTabFunctions() {
         console.log(path.join("/"));
         loadTable(path.join("/"), $(".tabs " + $(this).attr("href")));
     });
-    $(".file-tab a").on("click", function() {
+    $(".file-tab a").on("click", function () {
+        var fileName = $(this).text();
+        var parentTab = $(this).attr("href").substring(4);
+        loadFile(fileName, parentTab);
         resizeTextAreas();
     });
     $(".info-tab a").on("click", function () {
@@ -360,7 +381,7 @@ function getUrlParameter(sParam) {
 };
 
 function loadConfigMetadata() {
-    AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig }, function (metadata) {
+    AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig, user: userId }, function (metadata) {
         var metadataObj = JSON.parse(metadata);
         //console.log(metadata);
         
@@ -369,10 +390,22 @@ function loadConfigMetadata() {
                 text: "Entity Name",
                 dataField: "name",
                 editable: false
+            },
+            {
+                text: "Config File Name",
+                dataField: "file",
+                editable: false
+            },
+            {
+                text: "Version",
+                dataField: "version",
+                editable: false
             }
         ];
         var dataFields = [
-            { name: "name", type: "string", editable: false, display: true }
+            { name: "name", type: "string", editable: false, display: true },
+            { name: "file", type: "string", edable: false, display: true },
+            { name: "version", type: "string", editable: false, display: true }
         ];
         var source = {
             dataType: "json",
@@ -398,7 +431,7 @@ function loadConfigMetadata() {
 }
 
 function loadFileMetadata(fileName, id) {
-    AjaxPost("/db/LoadFileMetadata", { configName: currentNamedConfig, fileName: fileName }, function (metadata) {
+    AjaxPost("/db/LoadFileMetadata", { configName: currentNamedConfig, fileName: fileName, user: userId }, function (metadata) {
         var metadataObj = JSON.parse(metadata);
         //console.log(metadata);
         $(id + " #metadataEntity").val(metadataObj.configurable_entity.name);
@@ -455,13 +488,12 @@ function loadConfig() {
         $("#tablink" + i).remove();
     }
     lastTabID = 1;
-    AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig, query: selected.val() }, function (config) {
+    AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig, query: selected.val(), user: userId }, function (config) {
         var configObj = JSON.parse(config);
         resizeTextAreas();
         for (var file in configObj.files) {
             if (configObj.files.hasOwnProperty(file)) {
-                var name = configObj.files[file].name;
-                if (name.length === 0) { name = configObj.files[file]; }
+                var name = configObj.files[file];
                 
                 lastTabID++;
                 var parentTab = lastTabID;
@@ -472,7 +504,6 @@ function loadConfig() {
                 $("#tab" + parentTab + " #tabLinks").first().append("<li id=\"tablink" + lastTabID + "\" class=\"info-tab\"><a href=\"#tab" + lastTabID + "\">File Information</a></li>");
                 $("#tab" + parentTab + " #tabContents").first().append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
                 $("#tab" + lastTabID).html(infoHTML).trigger("create");
-                createTabLevel(configObj.files[file], parentTab);
             }
         }
         $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", true);
@@ -482,6 +513,148 @@ function loadConfig() {
         registerTabFunctions();
     });
 };
+
+function loadFile(fileName, parentTab) {
+    var selector = $("#tab" + parentTab + " #tabLinks");
+    if (selector.length <= 1) {
+        console.log("Loading Configuration File");
+        AjaxPost("/db/LoadConfigFile", { configName: fileName, user: userId }, function (config) {
+            var configObj = JSON.parse(config);
+            
+            createTabLevel(configObj, parentTab);
+            registerTabFunctions();
+        });
+    }
+};
+
+function baseConfig() {
+    AjaxPost("/db/LoadConfigMetadata", { configName: $("#oldConfigName :selected").text(), user: userId }, function (metadata) {
+        var metadataObj = JSON.parse(metadata);
+        
+        // Unselect Everything!
+        $("#newConfigName").val($("#oldConfigName :selected").text());
+        var rows = $("#configurationPicker").jqxTreeGrid("getRows");
+        for (var r in rows) {
+            if (rows.hasOwnProperty(r)) {
+                if (rows[r].checked) {
+                    $("#configurationPicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                }
+            }
+        }
+        
+        for (var e in metadataObj.entities) {
+            if (metadataObj.entities.hasOwnProperty(e)) {
+                var entity = metadataObj.entities[e];
+                $("#configurationPicker").jqxTreeGrid("updateRow", entity.name, { name: entity.name, version: entity.version });
+                $("#configurationPicker").jqxTreeGrid("checkRow", entity.name);
+            }
+        }
+
+    });
+};
+
+function saveNewConfig() {
+    console.log("Saving New Configuration");
+    var rows = $("#configurationPicker").jqxTreeGrid("getCheckedRows");
+    var configObj = {
+        entities: []
+    };
+    
+    for (var r in rows) {
+        if (rows.hasOwnProperty(r)) {
+            configObj.entities.push({ name: rows[r].name, version: rows[r].version, collection: rows[r].collection });
+        }
+    }
+    
+    AjaxPost("/db/MakeNewConfig", { user: userId, config: JSON.stringify(configObj), name: $("#newConfigName").val() }, function(retval) {
+        $("#newConfig").collapsible("option", "collapsed", true);
+    });
+};
+
+function setupNewConfigArea() {
+    AjaxGet("/db/EntitiesAndVersions", function (entities) {
+        var entitiesObj = JSON.parse(entities);
+        var dataObj = [];
+        for (var e in entitiesObj.entities) {
+            if (entitiesObj.entities.hasOwnProperty(e)) {
+                var entity = entitiesObj.entities[e];
+                var versions = [];
+                var search = entity.versions.search;
+                for (var v in search) {
+                    if (search.hasOwnProperty(v)) {
+                        versions.push({ name: search[v].name });
+                    }
+                }
+                dataObj.push({ name: entity.name, edited: false, collection: entity.collection, version: versions[0].name, versions: versions });
+            }
+        }
+        
+        var displayColumns = [
+            {
+                text: "Entity Name",
+                dataField: "name",
+                editable: false,
+                cellClassName: cellClass
+            },
+            {
+                text: "Version",
+                dataField: "version",
+                editable: true,
+                columntype: 'template',
+                createEditor: function (row, value, editor) {
+                    var index = -1;
+                    for (var r in dataObj) {
+                        if (dataObj.hasOwnProperty(r)) {
+                            if (dataObj[r].name === row) {
+                                index = r;
+                            }
+                        }
+                    }
+                    var versionsSource = { datatype: "array", datafields: [{ name: "name", type: "string" }], localdata: dataObj[index].versions };
+                    var versionsAdapter = new $.jqx.dataAdapter(versionsSource, { autoBind: true });
+                    editor.jqxDropDownList({ source: versionsAdapter, displayMember: 'name', valueMember: 'name', selectedIndex: 0 }).jqxDropDownList("refresh");
+                },
+                initEditor: function (row, cellvalue, editor, celltext, width, height) {
+                    // set the editor's current value. The callback is called each time the editor is displayed.
+                    editor.jqxDropDownList('selectItem', cellvalue);
+                },
+                getEditorValue: function (row, cellvalue, editor) {
+                    // return the editor's value.
+                    return editor.val();
+                },
+                cellClassName: cellClass
+            }
+        ];
+        
+        var dataFields = [
+            { name: "name", type: "string", editable: false, display: true },
+            { name: "version", type: "string", editable: true, display: true },
+            { name: "versions", type: "array", editable: false, display: false },
+            { name: "collection", type: "string", editable: false, display: false },
+            { name: "edited", type: "boolean", editable: false, display: false }
+        ];
+        var source = {
+            dataType: "json",
+            dataFields: dataFields,
+            id: "name",
+            hierarchy: {
+                root: "values"
+            },
+            localData: dataObj
+        };
+        var dataAdapter = new $.jqx.dataAdapter(source);
+        // create Tree Grid
+        $("#configurationPicker").addClass("jqxTreeGrid").jqxTreeGrid({
+            width: "100%",
+            source: dataAdapter,
+            sortable: true,
+            editable: true,
+            columnsResize: true,
+            checkboxes: true,
+            columns: displayColumns
+        });
+    });
+}
 
 function saveConfig() {
     console.log("Saving Configuration Changes");
@@ -493,7 +666,8 @@ function saveConfig() {
     AjaxPost("/db/saveConfig", {
         oldConfigName: currentNamedConfig,
         newConfigName: $("#configName").val(),
-        files: files
+        files: files,
+        user: userId
     }, function (res) {
         if (res !== null && res.Success) {
             updateHeader(false, "Configuration Saved.");
@@ -510,7 +684,7 @@ function discardConfig() {
     $(".file-tab.editedValue").each(function (index) {
         files.push({ name: $(this).text() });
     });
-    AjaxPost("/db/discardConfig", { configName: currentNamedConfig , files: files}, function (res) {
+    AjaxPost("/db/discardConfig", { configName: currentNamedConfig , files: files, user: userId }, function (res) {
         if (res) {
             getConfigList();
         } else {
@@ -558,11 +732,11 @@ $(document).ready(function () {
     $.get("/db/FileInfo.html", function (data) {
         infoHTML = data;
     });
-
-    $(".configInfo-tab").on("click", function() {
+    
+    $(".configInfo-tab").on("click", function () {
         resizeTextAreas();
     });
-
+    
     registerTabFunctions();
     $(".tabs #tab1").show().siblings().hide();
     
@@ -572,8 +746,11 @@ $(document).ready(function () {
         updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
     });
     
-    
     $(window).smartresize(function () {
         $(".jqxTreeGrid").jqxTreeGrid({ width: "100%" }).jqxTreeGrid('refresh');
+    });
+    
+    $("#newConfig").on("collapsibleexpand", function () {
+        setupNewConfigArea();
     });
 });

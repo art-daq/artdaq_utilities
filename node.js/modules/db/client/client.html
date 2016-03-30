@@ -74,6 +74,27 @@
                                     <div id="configurationEntities"></div>
                                 </div>
                             </fieldset>
+                            <fieldset data-role="collapsible" data-collapsed="true" id="newConfig">
+                                <legend>Create New Configuration</legend>
+                                <div data-role="fieldcontain">
+                                    <label for="newConfigName">New Configuration Name</label>
+                                    <input type="text" name="newConfigName" id="newConfigName">
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <label for="configurationPicker">Define New Configuration</label>
+                                    <div id="configurationPicker"></div>
+                                </div>
+                                <div data-role="fieldContain">
+                                    <label for="oldConfigName">Existing Configuration</label>
+                                    <select name="oldConfigName" id="oldConfigName">
+                                        <option value="Default">No Basis Configuration</option>
+                                    </select>
+                                    <button type="button" id="baseConfigButton" onclick="baseConfig()">Rebase New Configuration</button>
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <button type="button" id="saveNewConfigButton" onclick="saveNewConfig()">Save New Configuration</button>
+                                </div>
+                            </fieldset>
                         </form>
                     </div>
                 </div>
