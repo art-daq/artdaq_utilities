@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.11 $$Date: 2016/03/22 17:53:55 $'
+ # rev='$Revision: 1.12 $$Date: 2016/04/05 01:58:13 $'
 
 
 USAGE="\
@@ -179,7 +179,7 @@ else
     uev_files=`/bin/ls /sys/class/net/$IF/slave*/device/uevent /sys/class/net/$IF/device/uevent 2>/dev/null`
     for uevf in $uev_files;do
         . $uevf;   : set PCI_SLOT_NAME
-        gg=`lspci -s $PCI_SLOT_NAME | grep -o '[0-9]*-Gigabit' | sed 's/-Gigabit//'`
+        gg=`lspci -s $PCI_SLOT_NAME | egrep -o '[0-9]*(-Gigabit|GbE)' | grep -o '[0-9]*'`
         Mb=`expr $Mb + $gg \* 1000 2>/dev/null`
     done
     vecho 2 BW=$Mb Mb
@@ -188,6 +188,9 @@ if [ -n "$Mb" -a "$Mb" != 0 ];then
     MB=`expr $Mb / 8`
     BWdly_B=`awk "BEGIN{print $MB*$min_ms*1000/2;exit}"`   # 1/2 rtt
     vecho 0 "BW:${Mb}Mb minRTT:${min_ms}ms linkBW*delay: $BWdly_B Bytes"
+else
+    vecho 0 "\
+linkBW (and linkBW*delay) could not be determined - consider --bw=#[mg] option"
 fi
 
 if [ -z "${opt_local-}" ];then
