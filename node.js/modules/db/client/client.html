@@ -95,6 +95,45 @@
                                     <button type="button" id="saveNewConfigButton" onclick="saveNewConfig()">Save New Configuration</button>
                                 </div>
                             </fieldset>
+                            <fieldset data-role="collapsible" data-collapsed="true" id="exportFile">
+                                <legend>Export FHiCL</legend>
+
+                                <div data-role="fieldcontain">
+                                    <label for="filePicker">Select Files to Export</label>
+                                    <div id="filePicker"></div>
+                                </div>
+                                <div data-role="fieldContain">
+                                    <label for="exportConfigName">Existing Configuration</label>
+                                    <select name="exportConfigName" id="exportConfigName">
+                                        <option value="Default">No Configuration Selected</option>
+                                    </select>
+                                    <button type="button" id="selectConfigElementsButton" onclick="baseExportConfig()">Select Configuration Elements</button>
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <button type="button" id="exportFileButton" onclick="exportFiles()">Export Files</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                        <form enctype="multipart/form-data" id="uploadFileForm">
+                            <fieldset data-role="collapsible" data-collpased="true" id="uploadFile">
+                                <legend>Store FHiCL in Database</legend>
+                                <div data-role="fieldcontain">
+                                    <label for="fhiclFile">FHiCL File to Upload</label>
+                                    <input type="file" id="fhiclFile"/>
+                                    <!--<p>OR</p>
+                                    <label for="localFile">Path to file on SERVER</label>
+                                    <input type="text" id="localFile"/>-->
+                                </div>
+                                <div data-role="fieldcontain">
+                                    <label for="newFileEntity">Entity</label>
+                                    <input type="text" id="newFileEntity" />
+                                    <label for="newFileCollection">Collection</label>
+                                    <input type="text" id="newFileCollection"/>
+                                    <label for="newFileVersion">Version</label>
+                                    <input type="text" id="newFileVersion"/>
+                                </div>
+                                <button type="button" id="uploadFileButton" onclick="uploadFhiclFile()">Store Selected File In Database</button>
+                            </fieldset>
                         </form>
                     </div>
                 </div>

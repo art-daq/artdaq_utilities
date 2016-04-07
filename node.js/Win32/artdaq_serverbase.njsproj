@@ -16,6 +16,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
+    <Compile Include="modules\db\server\Utils.js" />
     <Content Include="client.html" />
     <Compile Include="serverbase.js" />
     <Content Include="modules\artdaq-runcontrol\client\UDPDump.html" />

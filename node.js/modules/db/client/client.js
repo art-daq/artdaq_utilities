@@ -21,14 +21,17 @@ function generateUUID() {
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = (d + Math.random() * 16) % 16 | 0;
         d = Math.floor(d / 16);
-        return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
     return uuid;
-}
+};
 
-function updateHeader(error, text) {
+function updateHeader(error, change, text) {
     if (error) {
-        $("#header").css("background-color", "#D59595").css("text-shadow", '#D99 0 1px 0px');
+        $("#header").css("background-color", "#D59595").css("text-shadow", '#D99 0 1px 0');
+        $("#info").text(text);
+    } else if (change) {
+        $("#header").css("background-color", "#E7F29B").css("text-shadow", '#EF9 0 1px 0');
         $("#info").text(text);
     } else {
         $("#header").css("background-color", defaultColor).css("text-shadow", defaultShadow);
@@ -40,7 +43,7 @@ function resizeTextAreas() {
     $("textarea").each(function (i, el) {
         $(el).height(el.scrollHeight);
     });
-}
+};
 
 function createRowEditor(row, cellvalue, editor, cellText, width, height) {
     editor.after("<div></div><div></div>");
@@ -67,11 +70,11 @@ function createRowEditor(row, cellvalue, editor, cellText, width, height) {
         return;
     }
     editor.parent().jqxFormattedInput({ radix: radix, value: cellvalue, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
-}
+};
 
-function initRowEditor(row, cellvalue, editor, celltext, width, height) {
+function initRowEditor(row, cellvalue, editor) {
     editor.parent().val(cellvalue);
-}
+};
 
 function getRowEditorValue(row, cellvalue, editor) {
     if (editor.parent()) {
@@ -80,13 +83,13 @@ function getRowEditorValue(row, cellvalue, editor) {
             return "";
         }
         var radix = editor.parent().jqxFormattedInput("radix");
-        if (radix == 2 || radix === "binary") {
+        if (radix === 2 || radix === "binary") {
             return editor.val() + "b";
         }
-        if (radix == 16 || radix === "hexadecimal") {
+        if (radix === 16 || radix === "hexadecimal") {
             return "0x" + editor.val().toUpperCase();
         }
-        if (radix == 8 || radix === "octal") {
+        if (radix === 8 || radix === "octal") {
             if (editor.val()[0] === '0') {
                 return editor.val();
             }
@@ -98,7 +101,7 @@ function getRowEditorValue(row, cellvalue, editor) {
         }
     }
     return editor.val();
-}
+};
 
 function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
     // prepare the data
@@ -115,43 +118,52 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         localData: data,
         comment: comment
     };
+// ReSharper disable once InconsistentNaming
     var dataAdapter = new $.jqx.dataAdapter(source, {
         beforeLoadComplete: function (records) {
             var numberFields = [];
             for (var c in source.dataFields) {
-                if (source.dataFields[c].dataType === "number") {
-                    numberFields.push({ name: source.dataFields[c].name, radix: source.dataFields[c].radix });
+                if (source.dataFields.hasOwnProperty(c)) {
+                    if (source.dataFields[c].dataType === "number") {
+                        numberFields.push({ name: source.dataFields[c].name, radix: source.dataFields[c].radix });
+                    }
                 }
             }
             for (var i in records) {
-                var edited = false;
-                for (var j in editedValues) {
-                    if (editedValues[j].tag === tag) {
-                        if (editedValues[j].rowData.id === i) {
-                            edited = true;
+                if (records.hasOwnProperty(i)) {
+                    var edited = false;
+                    for (var j in editedValues) {
+                        if (editedValues.hasOwnProperty(j)) {
+                            if (editedValues[j].tag === tag) {
+                                if (editedValues[j].rowData.id === i) {
+                                    edited = true;
+                                }
+                            }
                         }
                     }
-                }
-                records[i]["edited"] = edited;
-                for (var f in numberFields) {
-                    var radix = numberFields[f].radix;
-                    if (!radix) {
-                        radix = 10;
-                    }
-                    var value = records[i][numberFields[f].name];
-                    if (value) {
-                        if (typeof value === "number" || !(value.search("0x") === 0 || value.search("0") === 0 || value.search("b") === value.length - 1)) {
-                            
-                            value = parseInt(value).toString(radix).toUpperCase();
-                            records[i][numberFields[f].name] = value;
-                            if (radix === 2) {
-                                records[i][numberFields[f].name] += "b";
+                    records[i]["edited"] = edited;
+                    for (var f in numberFields) {
+                        if (numberFields.hasOwnProperty(f)) {
+                            var radix = numberFields[f].radix;
+                            if (!radix) {
+                                radix = 10;
                             }
-                            if (radix === 16) {
-                                records[i][numberFields[f].name] = "0x" + value;
-                            }
-                            if (radix === 8) {
-                                records[i][numberFields[f].name] = "0" + value;
+                            var value = records[i][numberFields[f].name];
+                            if (value) {
+                                if (typeof value === "number" || !(value.search("0x") === 0 || value.search("0") === 0 || value.search("b") === value.length - 1)) {
+
+                                    value = parseInt(value).toString(radix).toUpperCase();
+                                    records[i][numberFields[f].name] = value;
+                                    if (radix === 2) {
+                                        records[i][numberFields[f].name] += "b";
+                                    }
+                                    if (radix === 16) {
+                                        records[i][numberFields[f].name] = "0x" + value;
+                                    }
+                                    if (radix === 8) {
+                                        records[i][numberFields[f].name] = "0" + value;
+                                    }
+                                }
                             }
                         }
                     }
@@ -180,7 +192,9 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
                         }
                     }
                     for (var trow in rowObject.records) {
-                        setupRow(rowObject.records[trow]);
+                        if (rowObject.records.hasOwnProperty(trow)) {
+                            setupRow(rowObject.records[trow]);
+                        }
                     }
                 };
                 var rows = tag.jqxTreeGrid("getRows");
@@ -200,9 +214,11 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         // column name
         var columnName = args.dataField;
         for (var i in args.owner._columns) {
-            if (args.owner._columns[i].dataField === columnName) {
-                columnName = args.owner._columns[i].text;
-                break;
+            if (args.owner._columns.hasOwnProperty(i)) {
+                if (args.owner._columns[i].dataField === columnName) {
+                    columnName = args.owner._columns[i].text;
+                    break;
+                }
             }
         }
         tag.jqxTreeGrid("getRow", rowKey)["edited"] = true;
@@ -218,15 +234,20 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
             name: rowData.name,
             value: value,
             user: userId
-        }, function (retval) { });
-        var now = new Date;
-        var selector = $("#changes", $(".file-tab.active a").attr("href"));
-        selector.val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + selector.val());
-        $("#masterChanges").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#masterChanges").val());
-        resizeTextAreas();
-        updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+        }, function(retval) {
+            if (retval.Success) {
+                var now = new Date;
+                var selector = $("#changes", $(".file-tab.active a").attr("href"));
+                selector.val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + selector.val());
+                $("#masterChanges").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + rowData.name + ", Column: " + columnName + ", Value: " + value + "\n" + $("#masterChanges").val());
+                resizeTextAreas();
+                updateHeader(false, true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+            } else {
+                updateHeader(true, false, "Sending Update to server failed");
+            }
+        });
     });
-}
+};
 
 function cellClass(row, dataField, cellText, rowData) {
     var edited = rowData["edited"];
@@ -234,13 +255,16 @@ function cellClass(row, dataField, cellText, rowData) {
         return "editedValue";
     }
     return "value";
-}
+};
 
 function loadTable(path, tag) {
     currentTable = path;
     AjaxPost("/db/GetData", { configName: currentNamedConfig, path: path, user: userId }, function (data) {
-        var dataObj = JSON.parse(data);
-        var columns = dataObj.columns;
+        if (!data.Success) {
+            updateHeader(true, false, "Fetch of data from database failed");
+            return;
+        }
+        var columns = data.data.columns;
         
         columns.push({
             name: "edited",
@@ -252,42 +276,44 @@ function loadTable(path, tag) {
         var displayColumns = [];
         
         for (var c in columns) {
-            var title = columns[c].title;
-            if (typeof title === "undefined" || title.length === 0) {
-                title = columns[c].name.charAt(0).toUpperCase() + columns[c].name.slice(1);
-            }
-            if (columns[c].type === "string" && columns[c].display) {
-                displayColumns.push({
-                    text: title,
-                    dataField: columns[c].name,
-                    editable: columns[c].editable,
-                    createEditor: createRowEditor,
-                    initEditor: initRowEditor,
-                    getEditorValue: getRowEditorValue,
-                    cellClassName: cellClass
-                });
-            } else if (columns[c].type === "number" && columns[c].display) {
-                columns[c].type = "string";
-                columns[c].dataType = "number";
-                displayColumns.push({
-                    text: title,
-                    dataField: columns[c].name,
-                    editable: columns[c].editable,
-                    createEditor: createRowEditor,
-                    initEditor: initRowEditor,
-                    getEditorValue: getRowEditorValue,
-                    cellClassName: cellClass
-                });
+            if (columns.hasOwnProperty(c)) {
+                var title = columns[c].title;
+                if (title === undefined || title === null || title.length === 0) {
+                    title = columns[c].name.charAt(0).toUpperCase() + columns[c].name.slice(1);
+                }
+                if (columns[c].type === "string" && columns[c].display) {
+                    displayColumns.push({
+                        text: title,
+                        dataField: columns[c].name,
+                        editable: columns[c].editable,
+                        createEditor: createRowEditor,
+                        initEditor: initRowEditor,
+                        getEditorValue: getRowEditorValue,
+                        cellClassName: cellClass
+                    });
+                } else if (columns[c].type === "number" && columns[c].display) {
+                    columns[c].type = "string";
+                    columns[c].dataType = "number";
+                    displayColumns.push({
+                        text: title,
+                        dataField: columns[c].name,
+                        editable: columns[c].editable,
+                        createEditor: createRowEditor,
+                        initEditor: initRowEditor,
+                        getEditorValue: getRowEditorValue,
+                        cellClassName: cellClass
+                    });
+                }
             }
         }
         
-        makeTreeGrid(tag, displayColumns, columns, dataObj.data.children, dataObj.comment); //.trigger('create');
+        makeTreeGrid(tag, displayColumns, columns, data.data.data.children, data.data.comment); //.trigger('create');
 
     });
 };
 
 function getConfigList() {
-    updateHeader(false, "");
+    updateHeader(false, false, "");
     $("#masterChanges").val("");
     resizeTextAreas();
     for (var i = 2; i <= lastTabID; i++) {
@@ -295,16 +321,23 @@ function getConfigList() {
         $("#tablink" + i).remove();
     }
     AjaxGet("/db/NamedConfigs", function (data) {
-        $("#configs").html(data.join("")).trigger("create").selectmenu("refresh");
+        if (!data.Success) {
+            updateHeader(true, false, "Error retrieving Configuration list. Please contact an expert!");
+            return;
+        }
+        $("#configs").html(data.data.join("")).trigger("create").selectmenu("refresh");
         var config = getUrlParameter("configs");
         if (config !== undefined) {
             $("#configs").val(config);
         }
-        $("#oldConfigName").html(data.join("")).trigger("create").selectmenu("refresh");
+        $("#oldConfigName").html(data.data.join("")).trigger("create").selectmenu("refresh");
+        $("#exportConfigName").html(data.data.join("")).trigger("create").selectmenu("refresh");
     });
     $("#configLoad").collapsible("option", "disabled", false).collapsible("option", "collapsed", false);
     $("#configSave").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
     $("#configMetadata").collapsible("option", "disabled", true).collapsible("option", "collapsed", true);
+    $("#exportFile").collapsible("option", "collapsed", true);
+    $("#newConfig").collapsible("option", "collapsed", true);
 };
 
 function registerTabFunctions() {
@@ -382,7 +415,11 @@ function getUrlParameter(sParam) {
 
 function loadConfigMetadata() {
     AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig, user: userId }, function (metadata) {
-        var metadataObj = JSON.parse(metadata);
+        if (!metadata.Success) {
+            updateHeader(true, false, "Error loading configuration metadata from database");
+            return;
+        }
+        var metadataObj = metadata.data;
         //console.log(metadata);
         
         var displayColumns = [
@@ -391,11 +428,11 @@ function loadConfigMetadata() {
                 dataField: "name",
                 editable: false
             },
-            {
-                text: "Config File Name",
-                dataField: "file",
-                editable: false
-            },
+        {
+                text: "Collection Name",
+                dataField: "collection",
+            editable: false
+        },
             {
                 text: "Version",
                 dataField: "version",
@@ -404,18 +441,20 @@ function loadConfigMetadata() {
         ];
         var dataFields = [
             { name: "name", type: "string", editable: false, display: true },
-            { name: "file", type: "string", edable: false, display: true },
+            { name: "collection", type: "string", editable: false, display: true },
+            { name: "file", type: "string", editable: false, display: false },
             { name: "version", type: "string", editable: false, display: true }
         ];
         var source = {
             dataType: "json",
             dataFields: dataFields,
-            id: "name",
+            id: "file",
             hierarchy: {
                 root: "values"
             },
             localData: metadataObj.entities
         };
+// ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
         $("#configurationEntities").addClass("jqxTreeGrid").jqxTreeGrid(
@@ -428,13 +467,18 @@ function loadConfigMetadata() {
                 columns: displayColumns
             });
     });
-}
+};
 
 function loadFileMetadata(fileName, id) {
     AjaxPost("/db/LoadFileMetadata", { configName: currentNamedConfig, fileName: fileName, user: userId }, function (metadata) {
-        var metadataObj = JSON.parse(metadata);
+        if (!metadata.Success) {
+            updateHeader(true, false, "Error loading file metadata from database");
+            return;
+        }
+        var metadataObj = metadata.data;
         //console.log(metadata);
         $(id + " #metadataEntity").val(metadataObj.configurable_entity.name);
+        $(id + " #metadataCollection").val(metadataObj.collection);
         $(id + " #metadataVersion").val(metadataObj.version);
         $(id + " #changeLog").val(metadataObj.changelog);
         
@@ -463,6 +507,7 @@ function loadFileMetadata(fileName, id) {
             },
             localData: metadataObj.configurations
         };
+// ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
         $(id + " #metadataConfigurations").addClass("jqxTreeGrid").jqxTreeGrid(
@@ -475,11 +520,12 @@ function loadFileMetadata(fileName, id) {
                 columns: displayColumns
             });
     });
-}
+};
+
 function loadConfig() {
     console.log("Loading Configuration");
     $("#masterChanges").val("");
-    updateHeader(false, "");
+    updateHeader(false, false, "");
     var selected = $("#configs").find(":selected");
     currentNamedConfig = selected.text();
     $("#configName").val(currentNamedConfig);
@@ -489,11 +535,14 @@ function loadConfig() {
     }
     lastTabID = 1;
     AjaxPost("/db/LoadNamedConfig", { configName: currentNamedConfig, query: selected.val(), user: userId }, function (config) {
-        var configObj = JSON.parse(config);
+        if (!config.Success) {
+            updateHeader(true, false, "Error loading configuration files from database");
+            return;
+        }
         resizeTextAreas();
-        for (var file in configObj.files) {
-            if (configObj.files.hasOwnProperty(file)) {
-                var name = configObj.files[file];
+        for (var file in config.files) {
+            if (config.files.hasOwnProperty(file)) {
+                var name = config.files[file];
                 
                 lastTabID++;
                 var parentTab = lastTabID;
@@ -519,9 +568,11 @@ function loadFile(fileName, parentTab) {
     if (selector.length <= 1) {
         console.log("Loading Configuration File");
         AjaxPost("/db/LoadConfigFile", { configName: fileName, user: userId }, function (config) {
-            var configObj = JSON.parse(config);
-            
-            createTabLevel(configObj, parentTab);
+            if (!config.Success) {
+                updateHeader(true, false, "Error loading configuration file");
+                return;
+            }
+            createTabLevel(config.data, parentTab);
             registerTabFunctions();
         });
     }
@@ -529,7 +580,11 @@ function loadFile(fileName, parentTab) {
 
 function baseConfig() {
     AjaxPost("/db/LoadConfigMetadata", { configName: $("#oldConfigName :selected").text(), user: userId }, function (metadata) {
-        var metadataObj = JSON.parse(metadata);
+        if (!metadata.Success) {
+            updateHeader(true, false, "Error loading configuration metadata from database");
+            return;
+        }
+        var metadataObj = metadata.data;
         
         // Unselect Everything!
         $("#newConfigName").val($("#oldConfigName :selected").text());
@@ -545,8 +600,37 @@ function baseConfig() {
         for (var e in metadataObj.entities) {
             if (metadataObj.entities.hasOwnProperty(e)) {
                 var entity = metadataObj.entities[e];
-                $("#configurationPicker").jqxTreeGrid("updateRow", entity.name, { name: entity.name, version: entity.version });
-                $("#configurationPicker").jqxTreeGrid("checkRow", entity.name);
+                $("#configurationPicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#configurationPicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
+            }
+        }
+
+    });
+};
+
+function baseExportConfig() {
+    AjaxPost("/db/LoadConfigMetadata", { configName: $("#exportConfigName :selected").text(), user: userId }, function (metadata) {
+        if (!metadata.Success) {
+            updateHeader(true, false, "Error loading configuration metadata from database");
+            return;
+        }
+        var metadataObj = metadata.data;
+        
+        // Unselect Everything!
+        var rows = $("#filePicker").jqxTreeGrid("getRows");
+        for (var r in rows) {
+            if (rows.hasOwnProperty(r)) {
+                if (rows[r].checked) {
+                    $("#filePicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                }
+            }
+        }
+        
+        for (var e in metadataObj.entities) {
+            if (metadataObj.entities.hasOwnProperty(e)) {
+                var entity = metadataObj.entities[e];
+                $("#filePicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#filePicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
             }
         }
 
@@ -561,31 +645,148 @@ function saveNewConfig() {
     };
     
     for (var r in rows) {
-        if (rows.hasOwnProperty(r)) {
+        if (rows.hasOwnProperty(r) && 
+            (typeof rows[r].collection !== "undefined" && rows[r].collection.length > 0) && 
+            (typeof rows[r].version !== "undefined" && rows[r].version.length > 0)) {
             configObj.entities.push({ name: rows[r].name, version: rows[r].version, collection: rows[r].collection });
         }
     }
     
-    AjaxPost("/db/MakeNewConfig", { user: userId, config: JSON.stringify(configObj), name: $("#newConfigName").val() }, function(retval) {
-        $("#newConfig").collapsible("option", "collapsed", true);
+    AjaxPost("/db/MakeNewConfig", { user: userId, config: JSON.stringify(configObj), name: $("#newConfigName").val() }, function (retval) {
+        if (retval.Success) {
+            $("#newConfig").collapsible("option", "collapsed", true);
+            getConfigList();
+        } else {
+            updateHeader(true, false, "MakeNewConfig operation failed.");
+        }
     });
 };
 
-function setupNewConfigArea() {
-    AjaxGet("/db/EntitiesAndVersions", function (entities) {
-        var entitiesObj = JSON.parse(entities);
+function exportFiles() {
+    console.log("Exporting Files");
+    var rows = $("#filePicker").jqxTreeGrid("getCheckedRows");
+    var configObj = {
+        entities: []
+    };
+    
+    for (var r in rows) {
+        if (rows.hasOwnProperty(r) && 
+            (typeof rows[r].collection !== "undefined" && rows[r].collection.length > 0) && 
+            (typeof rows[r].version !== "undefined" && rows[r].version.length > 0)) {
+            configObj.entities.push({ name: rows[r].name, version: rows[r].version, collection: rows[r].collection });
+        }
+    }
+    
+    //http://stackoverflow.com/questions/16086162/handle-file-download-from-ajax-post
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "/db/DownloadConfigurationFile", true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
+        if (this.status === 200) {
+            var filename = "";
+            var disposition = xhr.getResponseHeader('Content-Disposition');
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                var matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+            }
+            var type = xhr.getResponseHeader('Content-Type');
+            
+            var blob = new Blob([this.response], { type: type });
+            if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                // IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
+                window.navigator.msSaveBlob(blob, filename);
+            } else {
+                var url = window.URL || window.webkitURL;
+                var downloadUrl = url.createObjectURL(blob);
+                
+                if (filename) {
+                    // use HTML5 a[download] attribute to specify filename
+                    var a = document.createElement("a");
+                    // safari doesn't support this yet
+                    if (typeof a.download === 'undefined') {
+                        window.location = downloadUrl;
+                    } else {
+                        a.href = downloadUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                    }
+                } else {
+                    window.location = downloadUrl;
+                }
+                
+                setTimeout(function () { url.revokeObjectURL(downloadUrl); }, 100); // cleanup
+            }
+        } else if (this.status === 500) {
+            updateHeader(true, false, "An error occurred on the server. Contact an expert if the situation persists");
+        }
+    };
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.send($.param({ user: userId, config: JSON.stringify(configObj) }));
+
+};
+
+function uploadFhiclFile() {
+    //http://www.htmlgoodies.com/beyond/javascript/read-text-files-using-the-javascript-filereader.html
+    //Retrieve the first (and only!) File from the FileList object
+    var f = document.getElementById("fhiclFile").files[0];
+    
+    if (!f) {
+        alert("Failed to load file");
+    } else if (!f.type.match('text.*') && f.name.search(".fcl") === -1) {
+        alert(f.name + " is not a valid text file.");
+    } else {
+        var r = new FileReader();
+        r.onload = function (e) {
+            var contents = e.target.result;
+            AjaxPost("/db/UploadConfigurationFile", { fhicl: contents, collection: $("#newFileCollection").val(), version: $("#newFileVersion").val(), entity: $("#newFileEntity").val(), user: userId }, function(res) {
+                if (!res.Success) {
+                    updateHeader(true, false, "File upload failed");
+                    return;
+                }
+                $("#newFileCollection").val("");
+                $("#newFileVersion").val("");
+                $("#newFileEntity").val("");
+                $("#fhiclFile").val("");
+                $("#uploadFile").collapsible("option", "collapsed", true);
+                $("#exportFile").collapsible("option", "collapsed", true);
+                $("#newConfig").collapsible("option", "collapsed", true);
+            });
+        }
+        r.readAsText(f);
+    }
+};
+
+function setupEntityVersionPicker(tag) {
+    AjaxGet("/db/EntitiesAndVersions", function (data) {
+        console.log(JSON.stringify(data));
+        if (!data.Success) {
+            updateHeader(true, false, "Error retrieving entities and versions lists. Please contact an expert!");
+            return;
+        }
+        var collectionsObj = data.collections;
         var dataObj = [];
-        for (var e in entitiesObj.entities) {
-            if (entitiesObj.entities.hasOwnProperty(e)) {
-                var entity = entitiesObj.entities[e];
-                var versions = [];
-                var search = entity.versions.search;
-                for (var v in search) {
-                    if (search.hasOwnProperty(v)) {
-                        versions.push({ name: search[v].name });
+        var collectionNames = [];
+        for (var c in collectionsObj) {
+            if (collectionsObj.hasOwnProperty(c)) {
+                var collection = [];
+                var entitiesObj = collectionsObj[c];
+                for (var e in entitiesObj.entities) {
+                    if (entitiesObj.entities.hasOwnProperty(e)) {
+                        var entity = entitiesObj.entities[e];
+                        var versions = [];
+                        var search = entity.versions.search;
+                        for (var v in search) {
+                            if (search.hasOwnProperty(v)) {
+                                versions.push({ name: search[v].name });
+                            }
+                        }
+                        collection.push({ id: entitiesObj.name + entity.name, name: entity.name, collection: entity.collection, edited: false, version: versions[0].name, versions: versions });
                     }
                 }
-                dataObj.push({ name: entity.name, edited: false, collection: entity.collection, version: versions[0].name, versions: versions });
+                dataObj.push({ id: entitiesObj.name, name: entitiesObj.name, entities: collection });
+                collectionNames.push(entitiesObj.name);
             }
         }
         
@@ -601,20 +802,32 @@ function setupNewConfigArea() {
                 dataField: "version",
                 editable: true,
                 columntype: 'template',
-                createEditor: function (row, value, editor) {
-                    var index = -1;
+                initEditor: function (row, cellvalue, editor) {
+                    var index1 = -1;
+                    var index2 = -1;
                     for (var r in dataObj) {
                         if (dataObj.hasOwnProperty(r)) {
-                            if (dataObj[r].name === row) {
-                                index = r;
+                            if (row.indexOf(dataObj[r].name) === 0) {
+                                index1 = r;
                             }
                         }
                     }
-                    var versionsSource = { datatype: "array", datafields: [{ name: "name", type: "string" }], localdata: dataObj[index].versions };
-                    var versionsAdapter = new $.jqx.dataAdapter(versionsSource, { autoBind: true });
-                    editor.jqxDropDownList({ source: versionsAdapter, displayMember: 'name', valueMember: 'name', selectedIndex: 0 }).jqxDropDownList("refresh");
-                },
-                initEditor: function (row, cellvalue, editor, celltext, width, height) {
+                    if (index1 >= 0) {
+                        var localData = dataObj[index1];
+                        for (var rr in localData.entities) {
+                            if (localData.entities.hasOwnProperty(rr)) {
+                                if (row === localData.entities[rr].uid) {
+                                    index2 = rr;
+                                }
+                            }
+                        }
+                        if (index2 >= 0) {
+                            var versionsSource = { datatype: "array", datafields: [{ name: "name", type: "string" }], localdata: dataObj[index1].entities[index2].versions };
+                            // ReSharper disable once InconsistentNaming
+                            var versionsAdapter = new $.jqx.dataAdapter(versionsSource, { autoBind: true });
+                            editor.jqxDropDownList({ source: versionsAdapter, displayMember: 'name', valueMember: 'name', selectedIndex: 0 }).jqxDropDownList("refresh");
+                        }
+                    }
                     // set the editor's current value. The callback is called each time the editor is displayed.
                     editor.jqxDropDownList('selectItem', cellvalue);
                 },
@@ -627,41 +840,51 @@ function setupNewConfigArea() {
         ];
         
         var dataFields = [
+            { name: "id", type: "string", editable: false, display: false },
             { name: "name", type: "string", editable: false, display: true },
             { name: "version", type: "string", editable: true, display: true },
             { name: "versions", type: "array", editable: false, display: false },
-            { name: "collection", type: "string", editable: false, display: false },
-            { name: "edited", type: "boolean", editable: false, display: false }
+            { name: "edited", type: "boolean", editable: false, display: false },
+            { name: "entities", type: "array", editable: false, display: false }
         ];
         var source = {
             dataType: "json",
             dataFields: dataFields,
-            id: "name",
+            id: "id",
             hierarchy: {
-                root: "values"
+                root: "entities"
             },
             localData: dataObj
         };
+        // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        $("#configurationPicker").addClass("jqxTreeGrid").jqxTreeGrid({
+        tag.addClass("jqxTreeGrid").jqxTreeGrid({
             width: "100%",
             source: dataAdapter,
             sortable: true,
             editable: true,
             columnsResize: true,
             checkboxes: true,
+            hierarchicalCheckboxes: true,
             columns: displayColumns
         });
+        for (var n in collectionNames) {
+            if (collectionNames.hasOwnProperty(n)) {
+                tag.jqxTreeGrid("lockRow", collectionNames[n]);
+            }
+        }
     });
 }
 
 function saveConfig() {
     console.log("Saving Configuration Changes");
     var files = [];
-    $(".file-tab.editedValue").each(function (index) {
+    $(".file-tab.editedValue").each(function () {
         var log = $("#changes", $(this).attr("href")).val();
-        files.push({ name: $(this).text(), changelog: log });
+        var collectionS = $("#metadataCollection", $(this).attr("href"));
+        var collection = collectionS.val();
+        files.push({ name: $(this).text(), changelog: log, collection: collection });
     });
     AjaxPost("/db/saveConfig", {
         oldConfigName: currentNamedConfig,
@@ -669,26 +892,26 @@ function saveConfig() {
         files: files,
         user: userId
     }, function (res) {
-        if (res !== null && res.Success) {
-            updateHeader(false, "Configuration Saved.");
+        if (res !== null && res !== undefined && res.Success) {
+            updateHeader(false, false, "Configuration Saved.");
+            getConfigList();
         } else {
-            updateHeader(true, "Failed to save configuration!");
+            updateHeader(true, false, "Failed to save configuration!");
         }
-        getConfigList();
     });
 };
 
 function discardConfig() {
     console.log("Discarding Configuration Changes");
     var files = [];
-    $(".file-tab.editedValue").each(function (index) {
+    $(".file-tab.editedValue").each(function () {
         files.push({ name: $(this).text() });
     });
     AjaxPost("/db/discardConfig", { configName: currentNamedConfig , files: files, user: userId }, function (res) {
-        if (res) {
+        if (res.Success) {
             getConfigList();
         } else {
-            updateHeader(true, "Failed to discard configuration. Make sure you have a valid configuration selected.\nIf this problem persists, call an expert.");
+            updateHeader(true, false, "Failed to discard configuration. Make sure you have a valid configuration selected.\nIf this problem persists, call an expert.");
         }
     });
 };
@@ -717,6 +940,7 @@ function discardConfig() {
         };
     }
     // smartresize 
+// ReSharper disable once UseOfImplicitGlobalInFunctionScope
     jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
 
 })(jQuery, 'smartresize');
@@ -743,7 +967,7 @@ $(document).ready(function () {
     getConfigList();
     
     $(".triggersModified").change(function () {
-        updateHeader(true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+        updateHeader(false, true, "There are pending unsaved changes. Please save or discard before closing the editor!");
     });
     
     $(window).smartresize(function () {
@@ -751,6 +975,10 @@ $(document).ready(function () {
     });
     
     $("#newConfig").on("collapsibleexpand", function () {
-        setupNewConfigArea();
+        setupEntityVersionPicker($("#configurationPicker"));
+    });
+    
+    $("#exportFile").on("collapsibleexpand", function () {
+        setupEntityVersionPicker($("#filePicker"));
     });
 });
