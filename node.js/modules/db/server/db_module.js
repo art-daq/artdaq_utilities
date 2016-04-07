@@ -272,10 +272,11 @@ function RunStoreQuery(data, collectionName, version, entity, type, configName) 
 /**
  * Loads a configuration file from the database
  * @param {Object} query - The query to run (as returned by buildfilter)
+ * @param {Boolean} noparse - If set, will not run JSON.parse on output (for FHiCL)
  * @returns {Object} Object from database
  * @throws DBOperationFailedException: More information in ex.message
  */
-function RunLoadQuery(query) {
+function RunLoadQuery(query, noparse) {
     console.log("Running load query");
     
     var output = conftool.load_configuration_ui(JSON.stringify(query));
@@ -284,6 +285,9 @@ function RunLoadQuery(query) {
         throw { name: "DBOperationFailedException", message: output.second };
     }
     
+    if (noparse !== undefined && noparse !== null && noparse) {
+        return output.second;
+    }
     return JSON.parse(output.second);
 };
 
@@ -925,7 +929,7 @@ function FetchFhiclFile(fileInfo, dbdirectory) {
         operation: "load",
         dataformat: "fhicl"
     };
-    var fhiclData = RunLoadQuery(query);
+    var fhiclData = RunLoadQuery(query, true);
     fs.writeFileSync(filePath, fhiclData);
     
     var stat = fs.statSync(filePath);
@@ -1173,7 +1177,11 @@ db.RO_DownloadConfigurationFile = function (post) {
         s._read = function noop() { };
         s.push("ERROR");
         s.push(null);
-        db.emit("stream", s, 500);
+        
+        var errhdrs = {
+            'Content-Type': 'text/plain',
+        }
+        db.emit("stream", s,errhdrs, 500);
     }
     //Stream emit has its own 'end', no return value necessary
 };

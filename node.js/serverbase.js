@@ -220,6 +220,7 @@ if (cluster.isMaster) {
                         res.end(JSON.stringify(dataTemp + data));
                     });
                     module_holder[moduleName].removeAllListeners('stream').on('stream', function (str, hdrs, code) {
+                        console.log("Stream message received: " + hdrs + " CODE: " + code);
                         res.writeHead(code, hdrs);
                         str.pipe(res);
                     });
@@ -328,8 +329,8 @@ if (cluster.isMaster) {
                     //console.log("GET Operation complete, sending response to client: " + JSON.stringify(dataTemp + data));
                     res.end(JSON.stringify(dataTemp + data));
                 });
-                module_holder[moduleName].removeAllListeners('stream').on('stream', function (str, hdrs) {
-                    res.writeHead(200, hdrs);
+                module_holder[moduleName].removeAllListeners('stream').on('stream', function (str, hdrs, code) {
+                    res.writeHead(code, hdrs);
                     str.pipe(res);
                 });
                 var data = module_holder[moduleName]["GET_" + functionName](workerData[moduleName]);
