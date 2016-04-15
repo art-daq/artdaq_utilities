@@ -364,11 +364,12 @@ function ParseSequence(sequence, name) {
             }
         }
     }
+    var comment = sequence.comment ? sequence.comment : " ";
     output.table = {
         type: "table",
         isSequence: true,
         name: name,
-        comment: sequence.comment,
+        comment: comment,
         children: output.rows,
         columns: output.columns
     }
@@ -386,7 +387,7 @@ function ParseFhiclTable(table, sub) {
     var children = [];
     var atoms = [];
     var hasSubtables = false;
-    var comment = table.comment ? table.comment : "";
+    var comment = table.comment ? table.comment : " ";
     //console.log("Table name is " + name);
     
     for (var e in table.children) {
@@ -742,10 +743,12 @@ function UpdateTable(configPath, tablePath, data, dirs) {
             children: []
         }
         for (var child in parentTable.children) {
-            if (parentTable.children[child].name !== oldData.name) {
-                newParentTable.children.push(parentTable.children[child]);
-            } else {
-                newParentTable.children.push(newData);
+            if (parentTable.children.hasOwnProperty(child)) {
+                if (parentTable.children[child].name !== oldData.name) {
+                    newParentTable.children.push(parentTable.children[child]);
+                } else {
+                    newParentTable.children.push(newData);
+                }
             }
         }
         console.log("After replacement, parent table data is " + JSON.stringify(newParentTable));
@@ -1053,12 +1056,20 @@ function GetDirectories(userId) {
  * @param {string} fileInfo.name - Configurable Entity Name
  * @param {string} fileInfo.collection - Collection Name
  * @param {string} fileInfo.version - Configuration Version
+ * @param {string} dataFormat - Data format (fhicl, json, gui)
  * @param {string} dbdirectory - Database storage directory
  * @returns {Object} Information abouit the output: fileName, filePath, and size
  * @throws DBOperationFailedException: More information in ex.message
  */
-function FetchFhiclFile(fileInfo, dbdirectory) {
-    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version + ".fcl";
+function FetchFile(fileInfo,dataFormat, dbdirectory) {
+    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
+    if (dataFormat === "fhicl") {
+        fileName += ".fcl";
+    } else if (dataFormat === "gui") {
+        fileName += ".gui.json";
+    } else {
+        fileName += ".json";
+    }
     var filePath = path_module.join(dbdirectory, fileName);
     
     var query = {
@@ -1069,7 +1080,7 @@ function FetchFhiclFile(fileInfo, dbdirectory) {
         collection: fileInfo.collection,
         dbprovider: config.dbprovider,
         operation: "load",
-        dataformat: "fhicl"
+        dataformat: dataFormat
     };
     var fhiclData = RunLoadQuery(query, true);
     fs.writeFileSync(filePath, fhiclData);
@@ -1102,7 +1113,7 @@ function VersionExists(entity, collection, version) {
 };
 
 function lock(workerData) {
-    if (workerData["db"].dbLocked) {
+    if (workerData.dbLocked) {
         return false;
     }
     db.emit("message", { name: "db", target: "dbLocked", data: true });
@@ -1297,7 +1308,7 @@ db.RW_UploadConfigurationFile = function (post, workerData) {
         if (!error) {
             console.log("Running store fhicl query");
             try {
-                RunStoreQuery(post.fhicl, post.collection, post.version, { name: post.entity }, "fhicl");
+                RunStoreQuery(post.file, post.collection, post.version, { name: post.entity }, post.type);
                 ret.Success = true;
             } catch (e) {
                 console.log("Exception caught: " + e.name + ": " + e.message);
@@ -1316,7 +1327,7 @@ db.RO_DownloadConfigurationFile = function (post) {
     var configObj = JSON.parse(post.config);
     try {
         if (configObj.entities.length === 1) {
-            var fileInfo = FetchFhiclFile(configObj.entities[0], dirs.db);
+            var fileInfo = FetchFile(configObj.entities[0], post.type, dirs.db);
             
             var fclhdrs = {
                 'Content-Type': 'text/plain',
@@ -1330,13 +1341,13 @@ db.RO_DownloadConfigurationFile = function (post) {
             var args = ['cz'];
             for (var e in configObj.entities) {
                 if (configObj.entities.hasOwnProperty(e)) {
-                    args.push(FetchFhiclFile(configObj.entities[e], dirs.db).fileName);
+                    args.push(FetchFile(configObj.entities[e],post.type, dirs.db).fileName);
                 }
             }
-            
+            var fileName = post.tarFileName + ".tar.gz";
             var tarhdrs = {
                 'Content-Type': 'application/x-gzip',
-                'Content-Disposition': 'attachment filename=export.tar.gz'
+                'Content-Disposition': 'attachment filename=' + fileName
             }
             
             console.log("Spawning: tar " + args.join(" "));

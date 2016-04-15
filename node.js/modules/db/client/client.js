@@ -9,6 +9,7 @@ var currentMetadata;
 var currentTable;
 var lastTabID = 1;
 var editedValues = [];
+var exportTarFileName = "export";
 //var userId = generateUUID();
 // For Testing
 var userId = "1";
@@ -612,6 +613,7 @@ function baseExportConfig() {
             updateHeader(true, false, "Error loading configuration metadata from database");
             return;
         }
+        exportTarFileName = $("#exportConfigName :selected").text();
         var metadataObj = metadata.data;
         
         // Unselect Everything!
@@ -721,8 +723,8 @@ function exportFiles() {
         }
     };
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send($.param({ user: userId, config: JSON.stringify(configObj) }));
-
+    xhr.send($.param({ user: userId, config: JSON.stringify(configObj), tarFileName: exportTarFileName, type: $("#exportFileFormat :selected").val() }));
+    exportTarFileName = "export";
 };
 
 function uploadFhiclFile() {
@@ -738,7 +740,7 @@ function uploadFhiclFile() {
         var r = new FileReader();
         r.onload = function (e) {
             var contents = e.target.result;
-            AjaxPost("/db/UploadConfigurationFile", { fhicl: contents, collection: $("#newFileCollection").val(), version: $("#newFileVersion").val(), entity: $("#newFileEntity").val(), user: userId }, function(res) {
+            AjaxPost("/db/UploadConfigurationFile", { file: contents, collection: $("#newFileCollection").val(), version: $("#newFileVersion").val(), entity: $("#newFileEntity").val(), user: userId, type:$("#uploadFileFormat :selected").val() }, function(res) {
                 if (!res.Success) {
                     updateHeader(true, false, "File upload failed");
                     return;

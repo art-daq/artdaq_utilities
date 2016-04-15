@@ -96,7 +96,7 @@
                                 </div>
                             </fieldset>
                             <fieldset data-role="collapsible" data-collapsed="true" id="exportFile">
-                                <legend>Export FHiCL</legend>
+                                <legend>Export</legend>
 
                                 <div data-role="fieldcontain">
                                     <label for="filePicker">Select Files to Export</label>
@@ -110,19 +110,26 @@
                                     <button type="button" id="selectConfigElementsButton" onclick="baseExportConfig()">Select Configuration Elements</button>
                                 </div>
                                 <div data-role="fieldcontain">
+                                    <label for="exportFileFormat">File Format</label>
+                                    <select name="exportFileFormat" id="exportFileFormat">
+                                        <option value="fhicl" selected>FHiCL</option>
+                                        <option value="json">JSON</option>
+                                    </select>
                                     <button type="button" id="exportFileButton" onclick="exportFiles()">Export Files</button>
                                 </div>
                             </fieldset>
                         </form>
                         <form enctype="multipart/form-data" id="uploadFileForm">
                             <fieldset data-role="collapsible" data-collpased="true" id="uploadFile">
-                                <legend>Store FHiCL in Database</legend>
+                                <legend>Store File in Database</legend>
                                 <div data-role="fieldcontain">
-                                    <label for="fhiclFile">FHiCL File to Upload</label>
+                                    <label for="fhiclFile">File to Upload</label>
                                     <input type="file" id="fhiclFile"/>
-                                    <!--<p>OR</p>
-                                    <label for="localFile">Path to file on SERVER</label>
-                                    <input type="text" id="localFile"/>-->
+                                    <label for="uploadFileFormat">File Format</label>
+                                    <select name="uploadFileFormat" id="uploadFileFormat">
+                                        <option value="fhicl" selected>FHiCL</option>
+                                        <option value="json">JSON</option>
+                                    </select>
                                 </div>
                                 <div data-role="fieldcontain">
                                     <label for="newFileEntity">Entity</label>
