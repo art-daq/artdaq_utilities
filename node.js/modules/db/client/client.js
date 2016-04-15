@@ -30,12 +30,17 @@ function updateHeader(error, change, text) {
     if (error) {
         $("#header").css("background-color", "#D59595").css("text-shadow", '#D99 0 1px 0');
         $("#info").text(text);
+        text = "ERROR: " + text;
     } else if (change) {
         $("#header").css("background-color", "#E7F29B").css("text-shadow", '#EF9 0 1px 0');
         $("#info").text(text);
+        text = "CHANGE: " + text;
     } else {
         $("#header").css("background-color", defaultColor).css("text-shadow", defaultShadow);
         $("#info").text(text);
+    }
+    if (text.length > 0) {
+        console.log(text);
     }
 };
 
@@ -103,7 +108,7 @@ function getRowEditorValue(row, cellvalue, editor) {
     return editor.val();
 };
 
-function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
+function makeTreeGrid(tag, displayColumns, dataFields, data) {
     // prepare the data
     console.log("Data is " + JSON.stringify(data));
     console.log("DisplayColumns is " + JSON.stringify(displayColumns));
@@ -116,7 +121,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data, comment) {
         },
         id: "name",
         localData: data,
-        comment: comment
+        comment: "comment"
     };
 // ReSharper disable once InconsistentNaming
     var dataAdapter = new $.jqx.dataAdapter(source, {
@@ -266,13 +271,6 @@ function loadTable(path, tag) {
         }
         var columns = data.data.columns;
         
-        columns.push({
-            name: "edited",
-            type: "bool",
-            editable: false,
-            display: true
-        });
-        
         var displayColumns = [];
         
         for (var c in columns) {
@@ -307,7 +305,7 @@ function loadTable(path, tag) {
             }
         }
         
-        makeTreeGrid(tag, displayColumns, columns, data.data.data.children, data.data.comment); //.trigger('create');
+        makeTreeGrid(tag, displayColumns, columns, data.data.children); //.trigger('create');
 
     });
 };
@@ -564,7 +562,7 @@ function loadConfig() {
 };
 
 function loadFile(fileName, parentTab) {
-    var selector = $("#tab" + parentTab + " #tabLinks");
+    var selector = $("li", "#tab" + parentTab + " #tabLinks");
     if (selector.length <= 1) {
         console.log("Loading Configuration File");
         AjaxPost("/db/LoadConfigFile", { configName: fileName, user: userId }, function (config) {

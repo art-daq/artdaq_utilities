@@ -18,7 +18,7 @@ var module_holder = {};
 var workerData = {};
 
 var util = require('util');
-var log_file = fs.createWriteStream(__dirname + '/server.log', { flags : 'a' });
+var log_file = fs.createWriteStream('/tmp/server.' + process.env["USER"] + '.log', { flags : 'a' });
 var log_stdout = process.stdout;
 
 console.log = function (d) { //
@@ -52,6 +52,7 @@ function LoadModules(path) {
     } else if (path.search("_module.js") > 0 && path.search("js~") < 0) {
         console.log("Loading Submodule " + path);
         // we have a file: load it
+        // ReSharper disable once UseOfImplicitGlobalInFunctionScope
         require(path)(module_holder);
         console.log("Initialized Submodule " + path);
     }
@@ -95,12 +96,16 @@ if (cluster.isMaster) {
     
     // Call Master Init functions
     for (var name in module_holder) {
-        try {
-            module_holder[name].MasterInitFunction(workerData);
-        } catch (err) {            ; }
-        module_holder[name].on("message", messageHandler);
+        if (module_holder.hasOwnProperty(name)) {
+            try {
+                module_holder[name].MasterInitFunction(workerData);
+            } catch (err) {
+                ;
+            }
+            module_holder[name].on("message", messageHandler);
+        }
     }
-    fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
+    //fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
     
     cluster.on('online', function (worker) {
         worker.send(workerData);
@@ -113,7 +118,7 @@ if (cluster.isMaster) {
     }
     
     // If one dies, start a new one!
-    cluster.on("exit", function (worker, code, signal) {
+    cluster.on("exit", function () {
         var newWorker = cluster.fork();
         newWorker.on('message', messageHandler);
     });
@@ -142,13 +147,18 @@ if (cluster.isMaster) {
     process.on('message', workerMessageHandler);
     
     for (var name in module_holder) {
-        module_holder[name].on("message", function (data) {
-            //console.log("Received message from module " + data.name);
-            process.send(data);
-        });
-        try {
-            module_holder[name].WorkerInitFunction(workerData);
-        } catch (err) {            ; }
+        if (module_holder.hasOwnProperty(name)) {
+            module_holder[name].on("message", function (data) {
+                //console.log("Received message from module " + data.name);
+                // ReSharper disable once UseOfImplicitGlobalInFunctionScope
+                process.send(data);
+            });
+            try {
+                module_holder[name].WorkerInitFunction(workerData);
+            } catch (err) {
+                ;
+            }
+        }
     }
     
     function serve(req, res, readOnly, username) {
@@ -163,25 +173,30 @@ if (cluster.isMaster) {
         var functionName = pathname.substr(pathname.indexOf('/') + 1);
         
         var dnsDone = false;
-        var peerName = require('dns').reverse(req.connection.remoteAddress, function (err, domains) {
+        // ReSharper disable once UseOfImplicitGlobalInFunctionScope
+        require('dns').reverse(req.connection.remoteAddress, function (err, domains) {
             dnsDone = true;
             if (!err) {
                 if (functionName.search(".min.map") < 0) {
+                    // ReSharper disable UseOfImplicitGlobalInFunctionScope
                     console.log("Received " + req.method + ", Client: " + domains[0] + " [" + req.connection.remoteAddress + "], PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+// ReSharper restore UseOfImplicitGlobalInFunctionScope
                 }
                 return domains[0];
             } else {
                 if (functionName.search(".min.map") < 0) {
+                    // ReSharper disable UseOfImplicitGlobalInFunctionScope
                     console.log("Received " + req.method + ", Client: " + req.connection.remoteAddress + ", PID: " + process.pid + " Module: " + moduleName + ", function: " + functionName);
+// ReSharper restore UseOfImplicitGlobalInFunctionScope
                 }
                 return "";
             }
         });
-        if (moduleName == ".." || functionName.search("\\.\\.") >= 0) {
+        if (moduleName === ".." || functionName.search("\\.\\.") >= 0) {
             console.log("Possible break-in attempt!: " + pathname);
             res.writeHeader(404, { 'Content-Type': 'text/html' });
             res.end("Error");
-            return "";
+            return;
         }
         res.setHeader("Content-Type", "application/json");
         res.statusCode = 200;
@@ -201,13 +216,13 @@ if (cluster.isMaster) {
             
             req.on('end', function () {
                 // Get the content of the POST request 
-                var POST = {};
+                var post;
                 try {
-                    POST = JSON.parse(body);
+                    post = JSON.parse(body);
                 } catch (e) {
-                    POST = qs.parse(body);
+                    post = qs.parse(body);
                 }
-                POST.who = username;
+                post.who = username;
                 
                 if (module_holder[moduleName] != null) {
                     console.log("Module " + moduleName + ", function " + functionName + " accessType " + (readOnly ? "RO" : "RW"));
@@ -224,9 +239,10 @@ if (cluster.isMaster) {
                         res.writeHead(code, hdrs);
                         str.pipe(res);
                     });
+                    var data;
                     if (readOnly) {
                         try {
-                            var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
+                            data = module_holder[moduleName]["RO_" + functionName](post, workerData[moduleName]);
                             if (data != null) {
                                 //console.log("RO POST Returning: " + JSON.stringify(data));
                                 res.end(JSON.stringify(data));
@@ -239,16 +255,16 @@ if (cluster.isMaster) {
                         }
                     } else {
                         try {
-                            var data = module_holder[moduleName]["RW_" + functionName](POST, workerData[moduleName]);
+                            data = module_holder[moduleName]["RW_" + functionName](post, workerData[moduleName]);
                             if (data != null) {
                                 //console.log("RW POST returned data: " + JSON.stringify(data));
                                 res.end(JSON.stringify(data));
                             }
-                        } catch (err) {
-                            //console.log("Error caught; text: " + JSON.stringify(err));
-                            if (err instanceof TypeError) {
+                        } catch (err2) {
+                            console.log("Error caught; text: " + JSON.stringify(err2));
+                            if (err2 instanceof TypeError) {
                                 //RW_ version not available, try read-only version:
-                                var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
+                                data = module_holder[moduleName]["RO_" + functionName](post, workerData[moduleName]);
                                 if (data != null) {
                                     //console.log("RO Fallback POST returned data: " + JSON.stringify(data));
                                     res.end(JSON.stringify(data));
@@ -300,7 +316,6 @@ if (cluster.isMaster) {
                     res.setHeader("Content-Length", fs.statSync(filename)["size"]);
                     if (req.headers.range != null) {
                         var range = req.headers.range;
-                        var fd = fs.openSync(filename, 'r');
                         var offset = parseInt(range.substr(range.indexOf('=') + 1, range.indexOf('-') - (range.indexOf('=') + 1)));
                         var endOffset = parseInt(range.substr(range.indexOf('-') + 1));
                         console.log("Reading (" + offset + ", " + endOffset + ")");
@@ -346,7 +361,7 @@ if (cluster.isMaster) {
                 console.log("Done sending client.html");
             }
         }
-    }
+    };
     
     console.log("Setting up options");
     var options = {

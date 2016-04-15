@@ -32,48 +32,51 @@ var config = {
     baseDir: path_module.join(process.env["HOME"], "databases")
 };
 
-var defaultColumns = {
-    columns: [
-        {
-            name: "name",
-            type: "string",
-            editable: false,
-            display: true
-        },
-        {
-            name: "value",
-            type: "string",
-            editable: true,
-            display: true
-        },
-        {
-            name: "annotation",
-            title: "User Comment",
-            type: "string",
-            editable: true,
-            display: true
-        },
-        {
-            name: "comment",
-            type: "comment",
-            editable: false,
-            display: false
-        },
-        {
-            name: "type",
-            type: "string",
-            editable: false,
-            display: false
-        },
-        {
-            name: "values",
-            type: "array",
-            editable: false,
-            display: false
-        }
-    ],
-    comment: "comment"
-};
+var defaultColumns = [
+    {
+        name: "name",
+        type: "string",
+        editable: false,
+        display: true
+    },
+    {
+        name: "value",
+        type: "string",
+        editable: true,
+        display: true
+    },
+    {
+        name: "annotation",
+        title: "User Comment",
+        type: "string",
+        editable: true,
+        display: true
+    },
+    {
+        name: "comment",
+        type: "comment",
+        editable: false,
+        display: false
+    },
+    {
+        name: "type",
+        type: "string",
+        editable: false,
+        display: false
+    },
+    {
+        name: "values",
+        type: "array",
+        editable: false,
+        display: false
+    },
+    {
+        name: "edited",
+        type: "bool",
+        editable: false,
+        display: true
+    }
+];
 
 /**
  * Runs a findconfigs query against the database
@@ -126,7 +129,7 @@ function RunGetEntitiesQuery() {
     };
     
     var output = conftool.find_configuration_entities_ui(JSON.stringify(query));
-   // console.log("Findentities output: " + JSON.stringify(output));
+    // console.log("Findentities output: " + JSON.stringify(output));
     if (!output.first) {
         throw { name: "DBOperationFailedException", message: output.second };
     }
@@ -177,6 +180,14 @@ function RunBuildFilterQuery(configName, queryIn) {
     
     console.log("Running buildfilter query: " + JSON.stringify(query));
     var output = conftool.build_global_configuration_search_filter_ui(JSON.stringify(query));
+    
+    for (var file in output.search) {
+        if (output.search.hasOwnProperty(file) && query !== null && query !== undefined) {
+            if (output.search[file].query.filter["configurations.name"] !== query.filter["configurations.name"]) {
+                output.search.splice(file, 1);
+            }
+        }
+    }
     
     //console.log("buildfilter output: " + JSON.stringify(output));
     if (!output.first) {
@@ -294,21 +305,75 @@ function RunLoadQuery(query, noparse) {
 
 /**
  * Transforms FHiCL sequences into arrays of objects for display by GUI editor
- * @param {Object} sequence - Sequence object
- * @param {Object[]} sqeuence.values - Array of data stored in the sequence
+ * @param {Object} sequence - Sequence array
+ * @param {string} name - Name of the Sequence
  * @returns {Object} Sqeuence object after transform
  */
-function ParseSequence(sequence) {
+function ParseSequence(sequence, name) {
+    var output = { values: [], rows: [], columns: [], table: {}, hasTable: false };
+    output.columns.push({ name: "name", type: "string", editable: false, display: true });
     //console.log("SEQUENCE BEFORE: " + JSON.stringify(sequence));
-    if (sequence.values) {
-        for (var i = 0; i < sequence.values.length; ++i) {
-            var name = sequence.name + "_" + i;
-            var value = sequence.values[i];
-            sequence.values[i] = { name: name, value: value };
+    for (var i = 0; i < sequence.length; ++i) {
+        if (sequence[i] === Object(sequence[i])) {
+            // Is an Object or Array
+            if (sequence[i].constructor === Array) {
+                // Is an array
+                var arr = ParseSequence(sequence[i], name + "_" + i);
+                if (arr.values.length > 0) {
+                    output.values.push({ name: name + "_" + i, values: arr.values });
+                    output.rows.push({ name: name + "_" + i, values: arr.values });
+                    if (Utils.ContainsName(output.columns, "values", "name") < 0) {
+                        output.columns.push({ name: "values", type: "array", editable: false, display: false });
+                    }
+                }
+                if (arr.rows.length > 0) {
+                    if (arr.hasTable) {
+                        output.hasTable = true;
+                    }
+                    for (var r in arr.rows) {
+                        if (arr.rows.hasOwnProperty(r)) {
+                            output.rows.push(arr.rows[r]);
+                        }
+                    }
+                    for (var c in arr.columns) {
+                        if (arr.columns.hasOwnProperty(c) && Utils.ContainsName(output.columns, arr.columns[c].name, "name") < 0) {
+                            output.columns.push(arr.columns[c]);
+                        }
+                    }
+                }
+            } else {
+                // We need to make a new table
+                output.hasTable = true;
+                if (!sequence[i].hasOwnProperty("name") || sequence[i].name.length === 0) {
+                    sequence[i].name = name + "_" + i;
+                }
+                output.rows.push(sequence[i]);
+                for (var p in sequence[i]) {
+                    if (sequence[i].hasOwnProperty(p) && Utils.ContainsName(output.columns, p, "name") < 0) {
+                        output.columns.push({ name: p, type: "string", editable: true, display: true });
+                    }
+                }
+            }
+        } else {
+            var vname = name + "_" + i;
+            var value = sequence[i];
+            output.values.push({ name: vname, value: value });
+            output.rows.push({ name: vname, value: value });
+            if (Utils.ContainsName(output.columns, "value", "name") < 0) {
+                output.columns.push({ name: "value", type: "string", editable: true, display: true });
+            }
         }
     }
+    output.table = {
+        type: "table",
+        isSequence: true,
+        name: name,
+        comment: sequence.comment,
+        children: output.rows,
+        columns: output.columns
+    }
     //console.log("SEQUENCE AFTER: " + JSON.stringify(sequence));
-    return sequence;
+    return output;
 };
 
 /**
@@ -335,7 +400,14 @@ function ParseFhiclTable(table, sub) {
                     children.push(ParseFhiclTable(element, 1));
                     break;
                 case "sequence":
-                    atoms.push(ParseSequence(element));
+                    var parsed = ParseSequence(element.children, element.name);
+                    element.values = parsed.values;
+                    if (parsed.hasTable) {
+                        hasSubtables = true;
+                        children.push(parsed.table);
+                    } else {
+                    atoms.push(element);
+                    }
                     break;
                 case "number":
                 case "string":
@@ -357,6 +429,7 @@ function ParseFhiclTable(table, sub) {
         newTable.type = "table";
         newTable.name = "Table Entries";
         newTable.comment = table.comment;
+        newTable.columns = defaultColumns;
         
         for (atom in atoms) {
             if (atoms.hasOwnProperty(atom)) {
@@ -380,6 +453,7 @@ function ParseFhiclTable(table, sub) {
                     newTable.name = children[i].name;
                     newTable.comment = children[i].comment;
                     newTable.type = children[i].type;
+                    newTable.columns = children[i].columns;
                     newTable.hasSubtables = false;
 
                 }
@@ -387,7 +461,7 @@ function ParseFhiclTable(table, sub) {
         }
     }
     
-    var obj = { name: table.name, hasSubtables: hasSubtables, children: children, type: "table", comment: comment };
+    var obj = { name: table.name, hasSubtables: hasSubtables, children: children, type: "table", comment: comment, columns: defaultColumns };
     if (sub === 0 || sub === undefined) {
         //console.log("Returning: " + JSON.stringify(obj));
     }
@@ -491,10 +565,8 @@ function GetData(configPath, tablePath, dirs) {
     var table = Utils.ContainsName(jsonBase.children, path[0], "name");
     //console.log("Index of table with name " + path[0] + " is " + table);
     if (table >= 0) {
-        var obj = {};
-        obj.data = jsonBase.children[table];
-        obj.columns = defaultColumns.columns;
-        obj.comment = defaultColumns.comment;
+        console.log("Returning table with index " + table);
+        var obj = jsonBase.children[table];
         return obj;
 
     }
@@ -506,7 +578,7 @@ function GetData(configPath, tablePath, dirs) {
  * Saves a change from UpdateTable to a temporary file on disk.
  * @param {string} configPath - Name of the Configuration
  * @param {string} tablePath - Path to the table, unix style (Config File Name/path/to/table)
- * @param {string} table - Modified table data
+ * @param {Object} table - Modified table data
  * @param {Object} dirs - Object containing paths to important directories
  * @param {string} dirs.tmp - The temporary directory for this editing session
  * @param {string} dirs.db - The database temporary storage directory
@@ -515,7 +587,7 @@ function GetData(configPath, tablePath, dirs) {
 function SetTable(configPath, tablePath, table, dirs) {
     console.log("SetTable: Searching for Table " + tablePath);
     var path = tablePath.split("/");
-    var filebase = path.shift(); // Get rid of filename for now
+    var filebase = path.shift();
     
     var fileName = path_module.join(dirs.db, filebase + ".gui.json");
     if (fs.existsSync(path_module.join(dirs.tmp, filebase + ".gui.json"))) {
@@ -545,7 +617,7 @@ function SetTable(configPath, tablePath, table, dirs) {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
                 index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
-                //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
+                console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
                 fileTable.children[index] = table.children[entry];
             }
         }
@@ -568,6 +640,45 @@ function SetTable(configPath, tablePath, table, dirs) {
 };
 
 /**
+ * Collapses the Web Display's view of a sequence down to the database format
+ * @param {Object} oldSequence - The sequence to collapse
+ * @param {string} oldSequence.name - The name of the sequence
+ * @param {Array} oldSequence.values - Array of sequence items
+ * @param {Object} data - The Data to replace
+ * @param {string} data.name - Name of the row
+ * @param {string} data.column - Column name
+ * @param {string} data.value - New value
+ * @returns {Array} Array with replacement done and extra information discarded
+ */
+function CollapseSequence(oldSequence, data) {
+    console.log("Collapsing sequence: " + oldSequence.name);
+    var newSequence = [];
+    //Check for Fhicl Sequence:
+    var values = oldSequence.values;
+    for (var element in values) {
+        if (values.hasOwnProperty(element)) {
+            console.log("SEQUENCE: Checking if " + values[element].name + " contains " + data.name);
+            if (values[element].name === data.name) {
+                console.log("Setting " + JSON.stringify(values[element]) + " field " + data.column + " to " + data.value);
+                values[element][data.column] = data.value;
+            } else if (data.name.search(values[element].name) === 0) {
+                values[element].value = CollapseSequence(values[element], data);
+            }
+            if (values[element].name.search(oldSequence.name) === 0) {
+                if (values[element].hasOwnProperty("values") && values[element].values.length > 0) {
+                    newSequence.push(CollapseSequence(values[element], data));
+                } else {
+                    newSequence.push(values[element].value);
+                }
+            } else {
+                newSequence.push(values[element]);
+            }
+        }
+    }
+    return newSequence;
+};
+
+/**
  * Updates a value in a table and calles SetTable to save changes to disk
  * @param {string} configPath - Name of the Configuration
  * @param {string} tablePath - Path to the table, unix style (Config File Name/path/to/table)
@@ -577,9 +688,19 @@ function SetTable(configPath, tablePath, table, dirs) {
  * @param {string} dirs.db - The database temporary storage directory
  */
 function UpdateTable(configPath, tablePath, data, dirs) {
-    var file = GetData(configPath, tablePath, dirs);
-    //console.log("Table data is " + file);
-    var oldData = file.data;
+    console.log("Updating table " + tablePath + " from configuration " + configPath + " with data " + JSON.stringify(data));
+    var oldData = GetData(configPath, tablePath, dirs);
+    var type = "table";
+    if (oldData.isSequence) {
+        type = "sequence";
+    }
+    console.log("Table data is " + JSON.stringify(oldData));
+    var newData = {
+        type: type,
+        name: oldData.name,
+        comment: oldData.comment,
+        children: []
+    };
     
     console.log("Searching table for entry");
     for (var entryN in oldData.children) {
@@ -588,31 +709,52 @@ function UpdateTable(configPath, tablePath, data, dirs) {
             var index = data.name.search(entry.name);
             //console.log("Checking if " + data.name + " contains " + entry.name + " (" + index + ")");
             if (index === 0) {
+                var newEntry = {
+                    type: entry.type,
+                    name: entry.name,
+                    comment: entry.comment
+                };
                 if (data.name === entry.name) {
                     console.log("Setting " + JSON.stringify(entry) + " field " + data.column + " to " + data.value);
-                    if (entry.type === "number") {
-                        data.value = parseInt(data.value);
-                    }
-                    entry[data.column] = data.value;
+                    newEntry[data.column] = data.value;
+                } else if (entry.type === "sequence") {
+                    newEntry.children = CollapseSequence(entry, data);
                 } else {
-                    //Check for Fhicl Sequence:
-                    var values = entry.values;
-                    for (var element in values) {
-                        if (values.hasOwnProperty(element)) {
-                            console.log("SEQUENCE: Checking if " + values[element].name + " is equal to " + data.name);
-                            if (values[element].name === data.name) {
-                                console.log("Setting " + values[element] + " field " + data.column + " to " + data.value);
-                                values[element][data.column] = data.value;
-                            }
-                        }
-                    }
+                    console.log("Entry not supported: " + JSON.stringify(entry));
                 }
+                newData.children.push(newEntry);
+            } else {
+                newData.children.push(entry);
             }
         }
     }
-    
-    //console.log("After replacement, table data is " + JSON.stringify(oldData));
-    SetTable(configPath, tablePath, oldData, dirs);
+
+    if (oldData.isSequence) {
+        var parentTableArray = tablePath.split('/');
+        parentTableArray.pop();
+        var parentTablePath = parentTableArray.join('/');
+        var parentTable = GetData(configPath, parentTablePath, dirs);
+
+        var newParentTable = {
+            type: "table",
+            name: parentTable.name,
+            comment: parentTable.comment,
+            children: []
+        }
+        for (var child in parentTable.children) {
+            if (parentTable.children[child].name !== oldData.name) {
+                newParentTable.children.push(parentTable.children[child]);
+            } else {
+                newParentTable.children.push(newData);
+            }
+        }
+        console.log("After replacement, parent table data is " + JSON.stringify(newParentTable));
+        SetTable(configPath, parentTablePath, newParentTable, dirs);
+
+    } else {
+        console.log("After replacement, table data is " + JSON.stringify(newData));
+        SetTable(configPath, tablePath, newData, dirs);
+    }
 };
 
 /**
@@ -692,7 +834,7 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             console.log("Running store query");
             var data = "" + fs.readFileSync(modified + ".gui.json");
             console.log("Writing " + data + " to database");
-            RunStoreQuery(data, collectionName, newMetadata.version, newMetadata.configurable_entity,"gui", newConfig);
+            RunStoreQuery(data, collectionName, newMetadata.version, newMetadata.configurable_entity, "gui", newConfig);
         }
     }
     
@@ -783,7 +925,7 @@ function GetVersion(entityName, collection, configName) {
             }
         }
     }
-    throw {name:"DBOperationFailedException", message:"Failed to find the entity/collection ("+entityName+"/"+collection+") in the database"}
+    throw { name: "DBOperationFailedException", message: "Failed to find the entity/collection (" + entityName + "/" + collection + ") in the database" }
     //// This doesn't work yet...
     //var query = {
     //    collection: collection,
@@ -937,7 +1079,7 @@ function FetchFhiclFile(fileInfo, dbdirectory) {
 };
 
 /**
- * Check if a given version exists for a given entity/collection
+ * Check if a given version exists for a given entity-collection
  * @param {string} entity.name - Name of the Configurable Entity
  * @param {string} collection - Collection name
  * @param {string} version - Version identifier
@@ -959,9 +1101,22 @@ function VersionExists(entity, collection, version) {
     return Utils.ContainsName(vers, version, "name") >= 0;
 };
 
+function lock(workerData) {
+    if (workerData["db"].dbLocked) {
+        return false;
+    }
+    db.emit("message", { name: "db", target: "dbLocked", data: true });
+    return true;
+}
+
+function unlock() {
+    db.emit("message", { name: "db", target: "dbLocked", data: false });
+    return true;
+}
+
 // POST calls
 db.RO_GetData = function (post) {
-    console.log(JSON.stringify(post));
+    console.log("Request for table data received: " + JSON.stringify(post));
     var ret = { Success: false, data: {} };
     try {
         ret.data = GetData(post.configName, post.path, GetDirectories(post.user));
@@ -969,71 +1124,82 @@ db.RO_GetData = function (post) {
     } catch (e) {
         console.log("Exception occurred: " + e.name + ": " + e.message);
     }
-    
+
+    console.log("GetData complete");
     return ret;
 };
 
-db.RW_MakeNewConfig = function (post) {
-    console.log("Request to make new configuration received: " + JSON.stringify(post));
-    var res = { Success: false };
-    var error = false;
-    var e;
-    try {
-        var configs = RunGetConfigsQuery().search;
-        if (!Utils.ValidatePath(post.name)) {
-            console.log("Invalid name detected!");
-            error = true;
-        }
-        while (Utils.ContainsName(configs, post.name, "name") >= 0) {
-            console.log("Inferring new configuration name");
-            post.name = Utils.Uniquify(post.name);
-        }
-    } catch (e) {
-        error = true;
-        console.log("Exception occurred: " + e.name + ": " + e.message);
-    }
-    if (!error) {
-        console.log("Creating Configuration");
+db.RW_MakeNewConfig = function (post, workerData) {
+    if (lock(workerData)) {
+        console.log("Request to make new configuration received: " + JSON.stringify(post));
+        var res = { Success: false };
+        var error = false;
+        var e;
         try {
-            CreateNewConfiguration(post.name, JSON.parse(post.config));
-            res.Success = true;
+            var configs = RunGetConfigsQuery().search;
+            if (!Utils.ValidatePath(post.name)) {
+                console.log("Invalid name detected!");
+                error = true;
+            }
+            while (Utils.ContainsName(configs, post.name, "name") >= 0) {
+                console.log("Inferring new configuration name");
+                post.name = Utils.Uniquify(post.name);
+            }
         } catch (e) {
+            error = true;
             console.log("Exception occurred: " + e.name + ": " + e.message);
         }
+        if (!error) {
+            console.log("Creating Configuration");
+            try {
+                CreateNewConfiguration(post.name, JSON.parse(post.config));
+                res.Success = true;
+            } catch (e) {
+                console.log("Exception occurred: " + e.name + ": " + e.message);
+            }
+        }
+        unlock();
+        console.log("MakeNewConfig completed");
+        return res;
     }
-    return res;
+    return null;
 };
 
-db.RW_saveConfig = function (post) {
-    console.log("Request to save configuration recieved. Configuration data: " + JSON.stringify(post));
-    var res = { Success: false };
-    var error = false;
-    var e;
-    try {
-        console.log("Checking for unique Configuration name");
-        var configs = RunGetConfigsQuery().search;
-        if (!Utils.ValidatePath(post.newConfigName) || Utils.ContainsName(configs, post.oldConfigName, "name") < 0) {
-            console.log("Invalid name detected!");
-            error = true;
-        }
-        while (Utils.ContainsName(configs, post.newConfigName, "name") >= 0) {
-            console.log("Inferring new configuration name");
-            post.newConfigName = Utils.Uniquify(post.newConfigName);
-        }
-    } catch (e) {
-        error = true;
-        console.log("Exception occurred: " + e.name + ": " + e.message);
-    }
-    if (!error) {
+db.RW_saveConfig = function (post, workerData) {
+    if (lock(workerData)) {
+        console.log("Request to save configuration recieved. Configuration data: " + JSON.stringify(post));
+        var res = { Success: false };
+        var error = false;
+        var e;
         try {
-            console.log("Updating Configuration Files");
-            SaveConfigurationChanges(post.oldConfigName, post.newConfigName, post.files, GetDirectories(post.user));
-            res.Success = true;
+            console.log("Checking for unique Configuration name");
+            var configs = RunGetConfigsQuery().search;
+            if (!Utils.ValidatePath(post.newConfigName) || Utils.ContainsName(configs, post.oldConfigName, "name") < 0) {
+                console.log("Invalid name detected!");
+                error = true;
+            }
+            while (Utils.ContainsName(configs, post.newConfigName, "name") >= 0) {
+                console.log("Inferring new configuration name");
+                post.newConfigName = Utils.Uniquify(post.newConfigName);
+            }
         } catch (e) {
+            error = true;
             console.log("Exception occurred: " + e.name + ": " + e.message);
         }
+        if (!error) {
+            try {
+                console.log("Updating Configuration Files");
+                SaveConfigurationChanges(post.oldConfigName, post.newConfigName, post.files, GetDirectories(post.user));
+                res.Success = true;
+            } catch (e) {
+                console.log("Exception occurred: " + e.name + ": " + e.message);
+            }
+        }
+        unlock();
+        console.log("SaveConfig completed");
+        return res;
     }
-    return res;
+    return null;
 };
 
 db.RO_LoadNamedConfig = function (post) {
@@ -1050,6 +1216,7 @@ db.RO_LoadConfigFile = function (post) {
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);
     }
+    console.log("LoadConfigFile completed");
     return ret;
 };
 
@@ -1060,13 +1227,14 @@ db.RW_discardConfig = function (post) {
 };
 
 db.RO_Update = function (post) {
-    //console.log(JSON.stringify(post));
+    console.log("Request to update table received: " + JSON.stringify(post));
     UpdateTable(post.configName, post.table, { id: post.id, name: post.name, column: post.column, value: post.value }, GetDirectories(post.user));
+    console.log("Update Complete");
     return { Success: true };
 };
 
 db.RO_LoadConfigMetadata = function (post) {
-    //console.log(JSON.stringify(post));
+    console.log("Request to load configuration metadata received: " + JSON.stringify(post));
     var ret = { Success: false, data: {} };
     try {
         ret.data = ReadConfigurationMetadata(post.configName, GetDirectories(post.user));
@@ -1074,11 +1242,12 @@ db.RO_LoadConfigMetadata = function (post) {
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);
     }
+    console.log("LoadConfigMetadata complete");
     return ret;
 };
 
 db.RO_LoadFileMetadata = function (post) {
-    //console.log(JSON.stringify(post));
+    console.log("Request to load file metadata received: " + JSON.stringify(post));
     var ret = { Success: false, data: {} };
     var dirs = GetDirectories(post.user);
     var error = false;
@@ -1105,35 +1274,40 @@ db.RO_LoadFileMetadata = function (post) {
             console.log("Exception caught: " + e.name + ": " + e.message);
         }
     }
-    
+    console.log("LoadFileMetadata complete");
     return ret;
 };
 
-db.RW_UploadConfigurationFile = function (post) {
-    console.log("Recieved request to upload file: " + JSON.stringify(post));
-    var e;
-    var error = false;
-    var ret = { Success: false };
-    try {
-        while (VersionExists(post.entity, post.collection, post.version)) {
-            console.log("Version already exists. Running uniquifier...");
-            post.version = Utils.Uniquify(post.version);
-        }
-    } catch (e) {
-        error = true;
-        console.log("Exception caught: " + e.name + ": " + e.message);
-    }
-    
-    if (!error) {
-        console.log("Running store fhicl query");
+db.RW_UploadConfigurationFile = function (post, workerData) {
+    if (lock(workerData)) {
+        console.log("Recieved request to upload file: " + JSON.stringify(post));
+        var e;
+        var error = false;
+        var ret = { Success: false };
         try {
-            RunStoreQuery(post.fhicl, post.collection, post.version, { name: post.entity }, "fhicl");
-            ret.Success = true;
+            while (VersionExists(post.entity, post.collection, post.version)) {
+                console.log("Version already exists. Running uniquifier...");
+                post.version = Utils.Uniquify(post.version);
+            }
         } catch (e) {
+            error = true;
             console.log("Exception caught: " + e.name + ": " + e.message);
         }
+
+        if (!error) {
+            console.log("Running store fhicl query");
+            try {
+                RunStoreQuery(post.fhicl, post.collection, post.version, { name: post.entity }, "fhicl");
+                ret.Success = true;
+            } catch (e) {
+                console.log("Exception caught: " + e.name + ": " + e.message);
+            }
+        }
+        unlock();
+        console.log("UploadConfigurationFile complete");
+        return ret;
     }
-    return ret;
+    return null;
 };
 
 db.RO_DownloadConfigurationFile = function (post) {
@@ -1179,9 +1353,9 @@ db.RO_DownloadConfigurationFile = function (post) {
         s.push(null);
         
         var errhdrs = {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'text/plain'
         }
-        db.emit("stream", s,errhdrs, 500);
+        db.emit("stream", s, errhdrs, 500);
     }
     //Stream emit has its own 'end', no return value necessary
 };
@@ -1202,10 +1376,12 @@ db.GET_NamedConfigs = function () {
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);
     }
+    console.log("NamedConfigs complete");
     return configsOutput;
 };
 
 db.GET_EntitiesAndVersions = function () {
+    console.log("Request for current Entities and Versions received");
     var output = {
         Success: false,
         collections: []
@@ -1234,12 +1410,15 @@ db.GET_EntitiesAndVersions = function () {
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);
     }
+    console.log("EntitiesAndVersions complete");
     return output;
 };
 
 // Serverbase Module definition
 db.MasterInitFunction = function (workerData) {
-    var data = {};
+    var data = {
+        dbLocked: false
+    };
     workerData["db"] = data;
     GetDirectories("");
 };

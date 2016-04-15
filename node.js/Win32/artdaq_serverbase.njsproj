@@ -23,10 +23,10 @@
     <Content Include="modules\artdaq-runcontrol\client\client.html" />
     <Content Include="modules\artdaq-runcontrol\client\viewer.html" />
     <Content Include="modules\artdaq-runcontrol\client\client.css" />
-    <Compile Include="modules\artdaq-runcontrol\client\client.js" />
-    <Compile Include="modules\artdaq-runcontrol\client\MakeEventGraph.js" />
-    <Compile Include="modules\artdaq-runcontrol\client\UDPDump.js" />
-    <Compile Include="modules\artdaq-runcontrol\client\viewer.js" />
+    <Content Include="modules\artdaq-runcontrol\client\client.js" />
+    <Content Include="modules\artdaq-runcontrol\client\MakeEventGraph.js" />
+    <Content Include="modules\artdaq-runcontrol\client\UDPDump.js" />
+    <Content Include="modules\artdaq-runcontrol\client\viewer.js" />
     <Compile Include="modules\artdaq-runcontrol\server\artdaq-runcontrol_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
@@ -36,11 +36,11 @@
     <Compile Include="modules\procstat\server\procstat_module.js" />
     <Content Include="modules\db\client\client.html" />
     <Content Include="modules\db\client\client.css" />
-    <Compile Include="modules\db\client\client.js" />
+    <Content Include="modules\db\client\client.js" />
     <Compile Include="modules\db\server\db_module.js" />
     <Content Include="modules\base\client\ReadServerLog.html" />
-    <Compile Include="modules\base\client\MakeGraph.js" />
-    <Compile Include="modules\base\client\AjaxPostAndGet.js" />
+    <Content Include="modules\base\client\MakeGraph.js" />
+    <Content Include="modules\base\client\AjaxPostAndGet.js" />
     <Compile Include="modules\base\server\base_module.js" />
     <Content Include="modules\base\client\images\ajax-loader.gif" />
     <Content Include="modules\base\client\images\favicon.ico" />
@@ -53,7 +53,7 @@
     <Content Include="modules\artdaq-configuration\client\ASCII_simulator.html" />
     <Content Include="modules\artdaq-configuration\client\TOY1_simulator.html" />
     <Content Include="modules\artdaq-configuration\client\V172X_reader.html" />
-    <Compile Include="modules\artdaq-configuration\client\ConfigurationEditor.js" />
+    <Content Include="modules\artdaq-configuration\client\ConfigurationEditor.js" />
     <Compile Include="modules\artdaq-configuration\server\artdaq-configuration_module.js" />
   </ItemGroup>
   <ItemGroup>
