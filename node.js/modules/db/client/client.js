@@ -124,7 +124,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         localData: data,
         comment: "comment"
     };
-// ReSharper disable once InconsistentNaming
+    // ReSharper disable once InconsistentNaming
     var dataAdapter = new $.jqx.dataAdapter(source, {
         beforeLoadComplete: function (records) {
             var numberFields = [];
@@ -157,7 +157,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                             var value = records[i][numberFields[f].name];
                             if (value) {
                                 if (typeof value === "number" || !(value.search("0x") === 0 || value.search("0") === 0 || value.search("b") === value.length - 1)) {
-
+                                    
                                     value = parseInt(value).toString(radix).toUpperCase();
                                     records[i][numberFields[f].name] = value;
                                     if (radix === 2) {
@@ -240,7 +240,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             name: rowData.name,
             value: value,
             user: userId
-        }, function(retval) {
+        }, function (retval) {
             if (retval.Success) {
                 var now = new Date;
                 var selector = $("#changes", $(".file-tab.active a").attr("href"));
@@ -427,11 +427,11 @@ function loadConfigMetadata() {
                 dataField: "name",
                 editable: false
             },
-        {
+            {
                 text: "Collection Name",
                 dataField: "collection",
-            editable: false
-        },
+                editable: false
+            },
             {
                 text: "Version",
                 dataField: "version",
@@ -453,7 +453,7 @@ function loadConfigMetadata() {
             },
             localData: metadataObj.entities
         };
-// ReSharper disable once InconsistentNaming
+        // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
         $("#configurationEntities").addClass("jqxTreeGrid").jqxTreeGrid(
@@ -506,7 +506,7 @@ function loadFileMetadata(fileName, id) {
             },
             localData: metadataObj.configurations
         };
-// ReSharper disable once InconsistentNaming
+        // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
         $(id + " #metadataConfigurations").addClass("jqxTreeGrid").jqxTreeGrid(
@@ -734,28 +734,37 @@ function uploadFhiclFile() {
     
     if (!f) {
         alert("Failed to load file");
-    } else if (!f.type.match('text.*') && f.name.search(".fcl") === -1) {
-        alert(f.name + " is not a valid text file.");
-    } else {
-        var r = new FileReader();
-        r.onload = function (e) {
-            var contents = e.target.result;
-            AjaxPost("/db/UploadConfigurationFile", { file: contents, collection: $("#newFileCollection").val(), version: $("#newFileVersion").val(), entity: $("#newFileEntity").val(), user: userId, type:$("#uploadFileFormat :selected").val() }, function(res) {
-                if (!res.Success) {
-                    updateHeader(true, false, "File upload failed");
-                    return;
-                }
-                $("#newFileCollection").val("");
-                $("#newFileVersion").val("");
-                $("#newFileEntity").val("");
-                $("#fhiclFile").val("");
-                $("#uploadFile").collapsible("option", "collapsed", true);
-                $("#exportFile").collapsible("option", "collapsed", true);
-                $("#newConfig").collapsible("option", "collapsed", true);
-            });
-        }
-        r.readAsText(f);
+        return;
     }
+    
+    if ($("#uploadFileFormat :selected").val() === "fhicl" && (!f.type.match("text.*") || f.name.search(".fcl") === -1)) {
+        alert(f.name + " is not a valid fhicl file.");
+        return;
+    }
+    
+    if ($("#uploadFileFormat :selected").val() === "json" && (!f.type.match("application/json") || f.name.search(".json") === -1)) {
+        alert(f.name + " is not a valid json file.");
+        return;
+    }
+    
+    var r = new FileReader();
+    r.onload = function (e) {
+        var contents = e.target.result;
+        AjaxPost("/db/UploadConfigurationFile", { file: contents, collection: $("#newFileCollection").val(), version: $("#newFileVersion").val(), entity: $("#newFileEntity").val(), user: userId, type: $("#uploadFileFormat :selected").val() }, function (res) {
+            if (!res.Success) {
+                updateHeader(true, false, "File upload failed");
+                return;
+            }
+            $("#newFileCollection").val("");
+            $("#newFileVersion").val("");
+            $("#newFileEntity").val("");
+            $("#fhiclFile").val("");
+            $("#uploadFile").collapsible("option", "collapsed", true);
+            $("#exportFile").collapsible("option", "collapsed", true);
+            $("#newConfig").collapsible("option", "collapsed", true);
+        });
+    }
+    r.readAsText(f);
 };
 
 function setupEntityVersionPicker(tag) {
@@ -940,7 +949,7 @@ function discardConfig() {
         };
     }
     // smartresize 
-// ReSharper disable once UseOfImplicitGlobalInFunctionScope
+    // ReSharper disable once UseOfImplicitGlobalInFunctionScope
     jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
 
 })(jQuery, 'smartresize');

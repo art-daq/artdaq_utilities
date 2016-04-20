@@ -407,7 +407,7 @@ function ParseFhiclTable(table, sub) {
                         hasSubtables = true;
                         children.push(parsed.table);
                     } else {
-                    atoms.push(element);
+                        atoms.push(element);
                     }
                     break;
                 case "number":
@@ -729,13 +729,13 @@ function UpdateTable(configPath, tablePath, data, dirs) {
             }
         }
     }
-
+    
     if (oldData.isSequence) {
         var parentTableArray = tablePath.split('/');
         parentTableArray.pop();
         var parentTablePath = parentTableArray.join('/');
         var parentTable = GetData(configPath, parentTablePath, dirs);
-
+        
         var newParentTable = {
             type: "table",
             name: parentTable.name,
@@ -1061,7 +1061,7 @@ function GetDirectories(userId) {
  * @returns {Object} Information abouit the output: fileName, filePath, and size
  * @throws DBOperationFailedException: More information in ex.message
  */
-function FetchFile(fileInfo,dataFormat, dbdirectory) {
+function FetchFile(fileInfo, dataFormat, dbdirectory) {
     var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
     if (dataFormat === "fhicl") {
         fileName += ".fcl";
@@ -1112,6 +1112,11 @@ function VersionExists(entity, collection, version) {
     return Utils.ContainsName(vers, version, "name") >= 0;
 };
 
+/**
+ * Either takes the database lock or returns false
+ * @param {Object} workerData - DB module worker data
+ * @returns {Boolean} If the caller has the lock
+ */
 function lock(workerData) {
     if (workerData.dbLocked) {
         return false;
@@ -1120,6 +1125,10 @@ function lock(workerData) {
     return true;
 }
 
+/**
+ * Releases the database lock
+ * @returns {Boolean}  True when complete
+ */
 function unlock() {
     db.emit("message", { name: "db", target: "dbLocked", data: false });
     return true;
@@ -1135,7 +1144,7 @@ db.RO_GetData = function (post) {
     } catch (e) {
         console.log("Exception occurred: " + e.name + ": " + e.message);
     }
-
+    
     console.log("GetData complete");
     return ret;
 };
@@ -1304,7 +1313,7 @@ db.RW_UploadConfigurationFile = function (post, workerData) {
             error = true;
             console.log("Exception caught: " + e.name + ": " + e.message);
         }
-
+        
         if (!error) {
             console.log("Running store fhicl query");
             try {
@@ -1341,7 +1350,7 @@ db.RO_DownloadConfigurationFile = function (post) {
             var args = ['cz'];
             for (var e in configObj.entities) {
                 if (configObj.entities.hasOwnProperty(e)) {
-                    args.push(FetchFile(configObj.entities[e],post.type, dirs.db).fileName);
+                    args.push(FetchFile(configObj.entities[e], post.type, dirs.db).fileName);
                 }
             }
             var fileName = post.tarFileName + ".tar.gz";
@@ -1432,6 +1441,7 @@ db.MasterInitFunction = function (workerData) {
     };
     workerData["db"] = data;
     GetDirectories("");
+    setInterval(function () { unlock() }, 3000);
 };
 
 module.exports = function (moduleHolder) {

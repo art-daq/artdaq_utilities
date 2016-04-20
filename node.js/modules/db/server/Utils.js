@@ -16,7 +16,7 @@ var Utils = new Emitter();
  * @param {string} name - Name to uniquify
  * @returns {string} Uniquified name 
  */
-Utils.Uniquify = function(name) {
+Utils.Uniquify = function (name) {
     if (name.search(/[\d]+/) >= 0) {
         var lastNumber = name.replace(/.*?([\d]+)[^\d]*$/g, "$1");
         console.log("Last number in string: " + lastNumber);
@@ -39,20 +39,28 @@ Utils.Uniquify = function(name) {
  * @param {string} command - Command to run
  * @returns {string} Command Output 
  */
-Utils.ExecSync = function(command) {
+Utils.ExecSync = function (command) {
     // Run the command in a subshell
-    child_process.exec(command + " 2>&1 1>output && echo done! > done || echo fail > done");
+    child_process.exec(command + " 2>&1 1>output && echo done >done || echo fail >done");
     
     // Block the event loop until the command has executed.
+    var output = "";
     while (!fs.existsSync("done")) {
-// Do nothing
+        if (fs.existsSync("output")) {
+            var outputDiff = "" + fs.readFileSync("output");
+            fs.unlinkSync("output");
+            console.log(outputDiff);
+            output += outputDiff;
+        }
     }
-    
-    // Read the output
-    var output = fs.readFileSync("output");
-    
-    // Delete temporary files.
-    fs.unlinkSync("output");
+
+    if (fs.existsSync("output")) {
+        // Read the output
+        output += fs.readFileSync("output");
+        fs.unlinkSync("output");
+    }
+
+    // Delete status file
     fs.unlinkSync("done");
     
     return output;
@@ -63,7 +71,7 @@ Utils.ExecSync = function(command) {
  * @param {string} oldPath - Old path for file
  * @param {string} newPath - New path for file
  */
-Utils.MoveFileSync = function(oldPath, newPath) {
+Utils.MoveFileSync = function (oldPath, newPath) {
     if (fs.existsSync(newPath)) {
         fs.unlinkSync(newPath);
     }
@@ -77,7 +85,7 @@ Utils.MoveFileSync = function(oldPath, newPath) {
  * @param {string} path - Path to check for invalid characters
  * @returns {Boolean} If the path is okay
  */
-Utils.ValidatePath = function(path) {
+Utils.ValidatePath = function (path) {
     var re = /^[a-zA-Z0-9\-_]+$/;
     if (!path.match(re)) {
         return false;
@@ -92,7 +100,7 @@ Utils.ValidatePath = function(path) {
  * @param {string} val - Value to search for
  * @returns {Number} Index of value in array (-1 for no match)
  */
- Utils.ContainsString = function(arr, val) {
+ Utils.ContainsString = function (arr, val) {
     for (var i = 0; i < arr.length; i++) {
         if (arr[i].search(val) >= 0) {
             return i;
@@ -108,7 +116,7 @@ Utils.ValidatePath = function(path) {
  * @param {string} name - Property name to search
  * @returns {Number} Index of object matching search (-1 for no match) 
  */
-Utils.ContainsName = function(arr, val, name) {
+Utils.ContainsName = function (arr, val, name) {
     for (var i = 0; i < arr.length; i++) {
         //console.log("Checking if " + arr[i][name] + " is equal to " + val);
         if (arr[i][name] === val) {

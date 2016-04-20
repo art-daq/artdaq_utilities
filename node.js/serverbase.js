@@ -113,6 +113,7 @@ if (cluster.isMaster) {
     
     // Start workers for each CPU on the host
     for (var i = 0; i < numCPUs; i++) {
+        //for (var i = 0; i < 1; i++) {
         var worker = cluster.fork();
         worker.on('message', messageHandler);
     }
@@ -386,11 +387,20 @@ if (cluster.isMaster) {
                 readOnly = false;
             }
         }
-        serve(req, res, readOnly, username);
+
+        try {
+            serve(req, res, readOnly, username);
+        } catch (e) {
+            console.trace("Unhandled error in serve: " + JSON.stringify(e));
+        }
     });
     var insecureServer = http.createServer(function (req, res) {
         //     serve( req,res,true,"HTTP User" );
-        serve(req, res, false, "HTTP User");
+        try {
+            serve(req, res, false, "HTTP User");
+        } catch (e) {
+            console.trace("Unhandled error in serve: " + JSON.stringify(e));
+        }
     });
     
     var baseport = 8080;
