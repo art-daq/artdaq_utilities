@@ -318,10 +318,10 @@ function ParseSequence(sequence, name) {
             // Is an Object or Array
             if (sequence[i].constructor === Array) {
                 // Is an array
-                var arr = ParseSequence(sequence[i], name + "_" + i);
+                var arr = ParseSequence(sequence[i], name + "___" + i);
                 if (arr.values.length > 0) {
-                    output.values.push({ name: name + "_" + i, values: arr.values });
-                    output.rows.push({ name: name + "_" + i, values: arr.values });
+                    output.values.push({ name: name + "___" + i, values: arr.values });
+                    output.rows.push({ name: name + "___" + i, values: arr.values });
                     if (Utils.ContainsName(output.columns, "values", "name") < 0) {
                         output.columns.push({ name: "values", type: "array", editable: false, display: false });
                     }
@@ -345,7 +345,7 @@ function ParseSequence(sequence, name) {
                 // We need to make a new table
                 output.hasTable = true;
                 if (!sequence[i].hasOwnProperty("name") || sequence[i].name.length === 0) {
-                    sequence[i].name = name + "_" + i;
+                    sequence[i].name = name + "___" + i;
                 }
                 output.rows.push(sequence[i]);
                 for (var p in sequence[i]) {
@@ -393,6 +393,9 @@ function ParseFhiclTable(table, sub) {
     for (var e in table.children) {
         if (table.children.hasOwnProperty(e)) {
             var element = table.children[e];
+            if (element.type === "table" && element.isSequence) {
+                element.type = "sequence";
+            }
             //console.log("Element: " + JSON.stringify(element));
             switch (element.type) {
                 case "table":
@@ -604,6 +607,8 @@ function SetTable(configPath, tablePath, table, dirs) {
         index = Utils.ContainsName(fileTable, path[0], "name");
         refs.push({ ref: fileTable, index: index, first: true });
         fileTable = fileTable[index];
+        delete fileTable.columns;
+        delete fileTable.hasSubtables;
         path.shift();
     }
     
@@ -612,8 +617,11 @@ function SetTable(configPath, tablePath, table, dirs) {
         index = Utils.ContainsName(fileTable.children, path[0], "name");
         refs.push({ ref: fileTable, index: index, first: false });
         fileTable = fileTable.children[index];
+        delete fileTable.columns;
+        delete fileTable.hasSubtables;
         path.shift();
     }
+
     if (path[0] === "Table Entries") {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
@@ -624,6 +632,8 @@ function SetTable(configPath, tablePath, table, dirs) {
         }
     } else {
         fileTable = table;
+        delete fileTable.columns;
+        delete fileTable.hasSubtables;
     }
     
     for (var i = refs.length - 1; i >= 0; --i) {
@@ -655,7 +665,10 @@ function CollapseSequence(oldSequence, data) {
     console.log("Collapsing sequence: " + oldSequence.name);
     var newSequence = [];
     //Check for Fhicl Sequence:
-    var values = oldSequence.values;
+    var values = oldSequence.children;
+    if (oldSequence.values !== undefined && oldSequence.values.length > 0) {
+        values = oldSequence.values;
+    }
     for (var element in values) {
         if (values.hasOwnProperty(element)) {
             console.log("SEQUENCE: Checking if " + values[element].name + " contains " + data.name);
@@ -665,13 +678,16 @@ function CollapseSequence(oldSequence, data) {
             } else if (data.name.search(values[element].name) === 0) {
                 values[element].value = CollapseSequence(values[element], data);
             }
-            if (values[element].name.search(oldSequence.name) === 0) {
-                if (values[element].hasOwnProperty("values") && values[element].values.length > 0) {
-                    newSequence.push(CollapseSequence(values[element], data));
-                } else {
-                    newSequence.push(values[element].value);
-                }
+            
+            if ((values[element].hasOwnProperty("values") && values[element].values.length > 0) ||
+                    (values[element].hasOwnProperty("children") && values[element].children.length > 0)) {
+                console.log("Parsing sub-sequence");
+                newSequence.push(CollapseSequence(values[element], data));
             } else {
+                if (values[element].name.search(oldSequence.name + "___") === 0) {
+                    delete values[element].name;
+                }
+                console.log("Adding " + JSON.stringify(values[element]) + " to output sequence");
                 newSequence.push(values[element]);
             }
         }
@@ -691,17 +707,33 @@ function CollapseSequence(oldSequence, data) {
 function UpdateTable(configPath, tablePath, data, dirs) {
     console.log("Updating table " + tablePath + " from configuration " + configPath + " with data " + JSON.stringify(data));
     var oldData = GetData(configPath, tablePath, dirs);
-    var type = "table";
+    
     if (oldData.isSequence) {
-        type = "sequence";
+        oldData.type = "sequence";
+        delete oldData.columns;
+        delete oldData.isSequence;
+        var parentTableArray = tablePath.split('/');
+        parentTableArray.pop();
+        var parentTablePath = parentTableArray.join('/');
+        var parentTable = GetData(configPath, parentTablePath, dirs);
+        
+        for (var child in parentTable.children) {
+            if (parentTable.children.hasOwnProperty(child)) {
+                if (parentTable.children[child].name === oldData.name) {
+                    parentTable.children[child] = oldData;
+                } else {
+                    delete parentTable.children[child].columns;
+                    delete parentTable.children[child].hasSubtables;
+                    
+                }
+            }
+        }
+        oldData = parentTable;
+        tablePath = parentTablePath + "/Table Entries";
     }
+    delete oldData.columns;
+    delete oldData.hasSubtables;
     console.log("Table data is " + JSON.stringify(oldData));
-    var newData = {
-        type: type,
-        name: oldData.name,
-        comment: oldData.comment,
-        children: []
-    };
     
     console.log("Searching table for entry");
     for (var entryN in oldData.children) {
@@ -710,54 +742,21 @@ function UpdateTable(configPath, tablePath, data, dirs) {
             var index = data.name.search(entry.name);
             //console.log("Checking if " + data.name + " contains " + entry.name + " (" + index + ")");
             if (index === 0) {
-                var newEntry = {
-                    type: entry.type,
-                    name: entry.name,
-                    comment: entry.comment
-                };
                 if (data.name === entry.name) {
                     console.log("Setting " + JSON.stringify(entry) + " field " + data.column + " to " + data.value);
-                    newEntry[data.column] = data.value;
+                    entry[data.column] = data.value;
                 } else if (entry.type === "sequence") {
-                    newEntry.children = CollapseSequence(entry, data);
+                    entry.children = CollapseSequence(entry, data);
                 } else {
                     console.log("Entry not supported: " + JSON.stringify(entry));
                 }
-                newData.children.push(newEntry);
-            } else {
-                newData.children.push(entry);
             }
+            oldData.children[entryN] = entry;
         }
     }
     
-    if (oldData.isSequence) {
-        var parentTableArray = tablePath.split('/');
-        parentTableArray.pop();
-        var parentTablePath = parentTableArray.join('/');
-        var parentTable = GetData(configPath, parentTablePath, dirs);
-        
-        var newParentTable = {
-            type: "table",
-            name: parentTable.name,
-            comment: parentTable.comment,
-            children: []
-        }
-        for (var child in parentTable.children) {
-            if (parentTable.children.hasOwnProperty(child)) {
-                if (parentTable.children[child].name !== oldData.name) {
-                    newParentTable.children.push(parentTable.children[child]);
-                } else {
-                    newParentTable.children.push(newData);
-                }
-            }
-        }
-        console.log("After replacement, parent table data is " + JSON.stringify(newParentTable));
-        SetTable(configPath, parentTablePath, newParentTable, dirs);
-
-    } else {
-        console.log("After replacement, table data is " + JSON.stringify(newData));
-        SetTable(configPath, tablePath, newData, dirs);
-    }
+    console.log("After replacement, table data is " + JSON.stringify(oldData));
+    SetTable(configPath, tablePath, oldData, dirs);
 };
 
 /**
