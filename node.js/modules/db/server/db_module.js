@@ -522,9 +522,12 @@ function LoadConfigFiles(configName, dbDirectory, query) {
                 if (configFiles.hasOwnProperty(file)) {
                     console.log("File info: " + JSON.stringify(configFiles[file]));
                     var filebase = configFiles[file].name + "_" + configFiles[file].query.collection;
+                    console.log("Adding " + filebase + " to output list");
                     retval.files.push(filebase);
+                    console.log("Loading file from database");
                     var data = RunLoadQuery(configFiles[file].query);
                     var filePath = path_module.join(dbDirectory, filebase + ".gui.json");
+                    console.log("Writing file " + filePath);
                     fs.writeFileSync(filePath, JSON.stringify(data));
                 }
             }
@@ -621,7 +624,7 @@ function SetTable(configPath, tablePath, table, dirs) {
         delete fileTable.hasSubtables;
         path.shift();
     }
-
+    
     if (path[0] === "Table Entries") {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
@@ -1113,14 +1116,18 @@ function VersionExists(entity, collection, version) {
 
 /**
  * Either takes the database lock or returns false
- * @param {Object} workerData - DB module worker data
  * @returns {Boolean} If the caller has the lock
  */
-function lock(workerData) {
-    if (workerData.dbLocked) {
+function lock() {
+    
+    if (fs.existsSync("lockfile")) {
+        if (Date.now() - fs.fstatSync("lockfile").ctime.getTime() > 1000) {
+            return unlock();
+        }
         return false;
     }
-    db.emit("message", { name: "db", target: "dbLocked", data: true });
+    
+    fs.writeFileSync("lockfile", "locked");
     return true;
 }
 
@@ -1129,7 +1136,7 @@ function lock(workerData) {
  * @returns {Boolean}  True when complete
  */
 function unlock() {
-    db.emit("message", { name: "db", target: "dbLocked", data: false });
+    fs.unlinkSync("lockfile");
     return true;
 }
 
@@ -1435,12 +1442,8 @@ db.GET_EntitiesAndVersions = function () {
 
 // Serverbase Module definition
 db.MasterInitFunction = function (workerData) {
-    var data = {
-        dbLocked: false
-    };
     workerData["db"] = data;
     GetDirectories("");
-    setInterval(function () { unlock() }, 3000);
 };
 
 module.exports = function (moduleHolder) {
