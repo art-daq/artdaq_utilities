@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.12 $$Date: 2016/04/05 01:58:13 $'
+ # rev='$Revision: 1.13 $$Date: 2016/04/27 00:58:47 $'
 
 
 USAGE="\
@@ -14,7 +14,8 @@ options:
 --local
 --time=test_time_s
 --rcvbuf=#[KM]   could be space or comma list
---sndbuf=#[KM]
+--sndbuf=#[KM]   (current not used)
+-P, --parallel # number of parallel_connection
 --num-tests=#    default=1
 -q
 --bw=#[mg]       megabit or gigabits
@@ -38,7 +39,7 @@ eval "set -- $env_opts \"\$@\""
 # Process script arguments and options
 op1chr='rest=`expr "$op" : "[^-]\(.*\)"`; test -n "$rest" && set -- "-$rest" "$@"'
 op1arg='rest=`expr "$op" : "[^-]\(.*\)"`; test -n "$rest" && set -- "$rest"  "$@"'
-reqarg='test -z "${1+1}" &&echo opt -$op requires arg. &&echo "$USAGE" &&exit'
+reqarg="$op1arg;"'test -z "${1+1}" &&echo opt -$op requires arg. &&echo "$USAGE" &&exit'
 args= do_help= opt_v=0
 while [ -n "${1-}" ];do
     if expr "x${1-}" : 'x-' >/dev/null;then
@@ -50,6 +51,7 @@ while [ -n "${1-}" ];do
         v*)           eval $op1chr; opt_v=`expr $opt_v + 1`;;
         q*)           eval $op1chr; opt_v=`expr $opt_v - 1`;opt_q=1;;
         x*)           eval $op1chr; test $opt_v -ge 1 && set -xv || set -x;;
+        P*|-parallel) eval $reqarg; opt_P=$1;               shift;;
         -help)        do_help=1;;
         -rgang)       eval $reqarg; RGANG=$1;               shift;;
         -time)        eval $reqarg; opt_time=$1;            shift;;
@@ -249,7 +251,7 @@ rcmd1="num_nodes=$num_nodes num_servers=$num_servers"
 rcmd2='poff=`awk "BEGIN{nps=$num_nodes/$num_servers;xx=$RGANG_MACH_ID/nps;print int(xx);exit;}"`
 port=`expr 5001 + $poff`
 markRetrans;taskset -c $cpulist '"\
-iperf -c $myIP --reportexclude=CMSV --format=$format --port=\$port --time=$opt_time $interval"'
+iperf -c $myIP --reportexclude=CMSV --format=$format --port=\$port ${opt_P+-P$opt_P} --time=$opt_time $interval"'
 echo deltaRetrans: `deltaRetrans`
 /sbin/ethtool --show-pause $itf
 dmesg | tail -20 | grep $itf | tail -5'
@@ -296,7 +298,7 @@ for nfile in $files;do
         vecho 2 iperf server pid=$srvr_pid
         sleep .5 # give server a chance to output info for next line
         rwin=`awk '/TCP window/{print $4;exit;}' $srvr_ofile.0`
-        inflight=`awk "BEGIN{print $num_nodes * $rwin;exit;}"`
+        inflight=`awk "BEGIN{print $num_nodes * $rwin${opt_P+ * $opt_P};exit;}"`  # note: * num_parallel
 
         nn=`expr $num_tests + 1` # so while num_test=`expr... gives expect results
         while nn=`expr $nn - 1`;do
