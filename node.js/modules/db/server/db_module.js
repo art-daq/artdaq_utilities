@@ -1230,6 +1230,9 @@ db.RW_saveConfig = function (post, workerData) {
 
 db.RO_LoadNamedConfig = function (post) {
     console.log("Request for configuration with name \"" + post.configName + "\" and search query \"" + post.query + "\" received.");
+    if (post.query.length === 0 || post.configName === "No Configurations Found") {
+        return {files: []};
+    }
     return LoadConfigFiles(post.configName, GetDirectories(post.user).db, JSON.parse(post.query));
 };
 
@@ -1386,17 +1389,22 @@ db.RO_DownloadConfigurationFile = function (post) {
     //Stream emit has its own 'end', no return value necessary
 };
 
-// GET calls
-db.GET_NamedConfigs = function () {
+db.RO_NamedConfigs = function (post) {
     console.log("Request for Named Configurations received");
+    var filter = "" + post.configFilter;
     var configsOutput = { Success: false, data: [] };
     try {
         var configs = RunGetConfigsQuery().search;
         for (var conf in configs) {
             if (configs.hasOwnProperty(conf)) {
                 var config = configs[conf];
-                configsOutput.data.push("<option value=" + JSON.stringify(config.query) + ">" + config.name + "</option>");
+                if (config.name.search(filter) >= 0) {
+                    configsOutput.data.push("<option value=" + JSON.stringify(config.query) + ">" + config.name + "</option>");
+                }
             }
+        }
+        if (configsOutput.data.length === 0) {
+            configsOutput.data.push("<option value=\"\">No Configurations Found</option>");
         }
         configsOutput.Success = true;
     } catch (e) {
@@ -1406,6 +1414,7 @@ db.GET_NamedConfigs = function () {
     return configsOutput;
 };
 
+// GET calls
 db.GET_EntitiesAndVersions = function () {
     console.log("Request for current Entities and Versions received");
     var output = {

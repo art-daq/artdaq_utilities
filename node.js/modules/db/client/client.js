@@ -319,7 +319,10 @@ function getConfigList() {
         $("#tab" + i).remove();
         $("#tablink" + i).remove();
     }
-    AjaxGet("/db/NamedConfigs", function (data) {
+
+    $("#reloadConfigsButton").text("Reload Configurations");
+
+    AjaxPost("/db/NamedConfigs", { configFilter: $("#configurationFilter").val(), user: userId }, function (data) {
         if (!data.Success) {
             updateHeader(true, false, "Error retrieving Configuration list. Please contact an expert!");
             return;
@@ -526,6 +529,7 @@ function loadConfig() {
     $("#masterChanges").val("");
     updateHeader(false, false, "");
     var selected = $("#configs").find(":selected");
+    if (selected.text() === "No Configurations Found" || selected.text() === "Click \"Load Configurations\" To Load Configuration Names") { return; }
     currentNamedConfig = selected.text();
     $("#configName").val(currentNamedConfig);
     for (var i = 2; i <= lastTabID; i++) {
@@ -972,8 +976,6 @@ $(document).ready(function () {
     
     registerTabFunctions();
     $(".tabs #tab1").show().siblings().hide();
-    
-    getConfigList();
     
     $(".triggersModified").change(function () {
         updateHeader(false, true, "There are pending unsaved changes. Please save or discard before closing the editor!");

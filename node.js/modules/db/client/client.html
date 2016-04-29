@@ -47,12 +47,14 @@
                         <form>
                             <fieldset data-role="collapsible" data-collapsed="false" id="configLoad">
                                 <legend>Select Configuration</legend>
+                                <label for="configurationFilter">Configuration Name Filter</label>
+                                <input type="text" id="configurationFilter"/>
                                 <label for="configs">Configuration List</label>
                                 <select name="configs" id="configs">
-                                    <option value="Default">No Named Configurations Found</option>
+                                    <option value="Default" selected>Click "Load Configurations" To Load Configuration Names</option>
                                 </select>
                                 <button type="button" id="loadConfigButton" onclick="loadConfig()">Load Selected Configuration</button>
-                                <button type="button" id="reloadConfigsButton" onclick="getConfigList()">Reload Configurations</button>
+                                <button type="button" id="reloadConfigsButton" onclick="getConfigList()">Load Configurations</button>
                             </fieldset>
                             <fieldset data-role="collapsible" data-collapsed="true" id="configSave" data-disabled="true">
                                 <legend>Save or Discard Changes</legend>
