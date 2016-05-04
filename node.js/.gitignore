@@ -1,0 +1,6 @@
+server.crt
+server.key
+authorized_users
+server.log
+node_modules/*
+

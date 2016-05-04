@@ -44,7 +44,7 @@ function AjaxPost(postUrl, postData, fnCallback) {
         type: "post",
         url: postUrl,
         dataType: "json",
-        data: postData,
+        data: JSON.stringify(postData),
         // Our success handler.
         success: function (objData) {
             // At this point, we have data coming back

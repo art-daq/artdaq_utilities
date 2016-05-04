@@ -22,13 +22,13 @@ function generateDefaultConfig() {
     output.dataLogger.fileMode = "Events";
     output.dataLogger.runValue = -1;
     output.dataLogger.runMode = "Events";
-    output.dataLogger.hostname = "localhost"
-    output.dataLogger.name = "DataLogger"
+    output.dataLogger.hostname = "localhost";
+    output.dataLogger.name = "DataLogger";
     output.onlineMonitor = {};
     output.onlineMonitor.enabled = false;
     output.onlineMonitor.viewerEnabled = false;
-    output.onlineMonitor.hostname = "localhost"
-    output.onlineMonitor.name = "OnlineMonitor"
+    output.onlineMonitor.hostname = "localhost";
+    output.onlineMonitor.name = "OnlineMonitor";
     output.eventBuilders = {};
     output.eventBuilders.basename = "EVB";
     output.eventBuilders.count = 2;
@@ -69,11 +69,11 @@ function traverse( obj, parent ) {
 function serializeXML( config,who,fileName ) {
     console.log( "Saving Configuration to " + fileName );
     var xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    
-    var configurationXML = "<author>" + who + "</author>\n"
+
+    var configurationXML = "<author>" + who + "</author>\n";
     configurationXML += traverse( config, "" );
-    
-    console.log( "Putting Generated configuration into artdaq-configuration block" )
+
+    console.log("Putting Generated configuration into artdaq-configuration block");
     xmlData += "<artdaq-configuration>\n" + configurationXML + "</artdaq-configuration>";
     
     console.log( "Writing out file" );
@@ -164,8 +164,8 @@ ac.GET_GeneratorTypes = function () {
 
 ac.GET_NamedConfigs = function () {
     var configs = getFiles( ".xml" );
-    
-    configs.push( "<option value=\"Default\">Default Configuration</option>" )
+
+    configs.push("<option value=\"Default\">Default Configuration</option>");
     if ( configs.length < 2 ) {
         console.log( "I found no named configs!" );
 
