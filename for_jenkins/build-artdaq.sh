@@ -37,7 +37,7 @@ s15:e6)
    s31:e9)
        basequal=e9
        squal=s31
-       artver=v1_08_05
+       artver=v1_18_05
        ;;
   s21:e9)
      basequal=e9
