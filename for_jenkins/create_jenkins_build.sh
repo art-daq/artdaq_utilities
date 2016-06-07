@@ -94,8 +94,8 @@ else
 fi
 
 
-major_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}).*/\1/p' $packagedepsfile )
-full_art_version=$( sed -r -n 's/^art\s+(v1_[0-9]{2}_[0-9]+).*/\1/p' $packagedepsfile )
+major_art_version=$( sed -r -n 's/^art\s+(v[0-9]_[0-9]{2}).*/\1/p' $packagedepsfile )
+full_art_version=$( sed -r -n 's/^art\s+(v[0-9]_[0-9]{2}_[0-9]+).*/\1/p' $packagedepsfile )
 
 if [[ "$major_art_version" == "v2_00" ]]; then
     build_framework_branch="master"
