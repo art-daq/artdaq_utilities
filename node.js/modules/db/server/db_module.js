@@ -834,12 +834,16 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             newMetadata.changelog = files[f].changelog + newMetadata.changelog;
             
             console.log("Writing new metadata to file");
-            WriteFileMetadata(newMetadata, modified, dirs);
-            
-            console.log("Running store query");
-            var data = "" + fs.readFileSync(modified + ".gui.json");
-            console.log("Writing " + data + " to database");
-            RunStoreQuery(data, collectionName, newMetadata.version, newMetadata.configurable_entity, "gui", newConfig);
+            if (WriteFileMetadata(newMetadata, modified)) {
+
+                console.log("Running store query");
+                var data = "" + fs.readFileSync(modified + ".gui.json");
+                console.log("Writing " + data + " to database");
+                RunStoreQuery(data, collectionName, newMetadata.version, newMetadata.configurable_entity, "gui", newConfig);
+            } else {
+                console.log("ERROR: Could not find file " + modified + ".gui.json!");
+                console.log("Please check if it exists.");
+            }
         }
     }
     
@@ -995,22 +999,13 @@ function ReadFileMetadata(filebase, dirs, query) {
  * Writes metadata objects to a file (for temporary storage)
  * @param {Object} newMetadata - Metadata object
  * @param {string} filebase - Display name of the configuration file to read
- * @param {Object} dirs - Object containing paths to important directories
- * @param {string} dirs.tmp - The temporary directory for this editing session
- * @param {string} dirs.db - The database temporary storage directory
- * @throws FileNotFoundException - The requested file was not found
+ * @returns {Boolean} - True if succeeded
  */
-function WriteFileMetadata(newMetadata, filebase, dirs) {
-    
-    var fileName = path_module.join(dirs.db, filebase + ".gui.json");
-    if (fs.existsSync(filebase + ".gui.json")) {
-        fileName = filebase + ".gui.json";
-    } else if (fs.existsSync(path_module.join(dirs.tmp, filebase + ".gui.json"))) {
-        fileName = path_module.join(dirs.tmp, filebase + ".gui.json");
-    }
+function WriteFileMetadata(newMetadata, filebase) {
+    var fileName = filebase + ".gui.json";
     
     console.log("Reading file: " + fileName);
-    if (!fs.existsSync(fileName)) { throw { name: "FileNotFoundException", message: "The requested file was not found" }; }
+    if (!fs.existsSync(fileName)) return false;
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     
     
@@ -1025,6 +1020,8 @@ function WriteFileMetadata(newMetadata, filebase, dirs) {
     console.log("Writing data to file");
     //console.log("fileName: " + fileName + ", metadata: " + JSON.stringify(jsonFile));
     fs.writeFileSync(fileName, JSON.stringify(jsonFile));
+
+    return true;
 };
 
 /**
