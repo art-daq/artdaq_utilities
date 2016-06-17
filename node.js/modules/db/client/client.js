@@ -741,12 +741,12 @@ function uploadFhiclFile() {
         return;
     }
     
-    if ($("#uploadFileFormat :selected").val() === "fhicl" && (!f.type.match("text.*") || f.name.search(".fcl") === -1)) {
+    if ($("#uploadFileFormat :selected").val() === "fhicl" && f.name.search(".fcl") === -1) {
         alert(f.name + " is not a valid fhicl file.");
         return;
     }
     
-    if ($("#uploadFileFormat :selected").val() === "json" && (!f.type.match("application/json") || f.name.search(".json") === -1)) {
+    if ($("#uploadFileFormat :selected").val() === "json" && f.name.search(".json") === -1) {
         alert(f.name + " is not a valid json file.");
         return;
     }
