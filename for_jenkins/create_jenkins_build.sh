@@ -99,7 +99,7 @@ full_art_version=$( sed -r -n 's/^art\s+(v[0-9]_[0-9]{2}_[0-9]+).*/\1/p' $packag
 
 if [[ "$major_art_version" == "v2_01" ]]; then
     build_framework_branch="master"
-if [[ "$major_art_version" == "v2_00" ]]; then
+elif [[ "$major_art_version" == "v2_00" ]]; then
     build_framework_branch="for_art_v2_00"
 elif [[ "$major_art_version" == "v1_19" ]]; then
     build_framework_branch="for_art_v1_19"
