@@ -229,7 +229,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                     grid.jqxTreeGrid({ disabled: false });
                 });
                 dialog.jqxWindow({
-                    resizable: false,
+                    resizable: true,
                     width: 270,
                     position: { left: grid.offset().left + 75, top: grid.offset().top + 35 },
                     autoOpen: false
@@ -237,7 +237,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                 dialog.css('visibility', 'visible');
             }
         });
-
+    
     // create context menu
     contextMenu.jqxMenu({ width: 200, height: 87, autoOpenPopup: false, mode: 'popup' });
     grid.on('contextmenu', function () {
@@ -252,12 +252,26 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             return false;
         }
     });
-    var edit = function(row, key) {
+    var edit = function (row, key) {
         // update the widgets inside jqxWindow.
         dialog.jqxWindow('setTitle', "Edit Row: " + row.name);
+        
+        for (var i in dataFields) {
+            if (dataFields.hasOwnProperty(i)) {
+                var name = dataFields[i].name;
+                var value = row[name];
+                if (dataFields[i].editable) {
+                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" /></td></tr>");
+                } else {
+                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" readonly=\"true\" disabled=\"disabled\" /></td></tr>");
+                }
+            }
+        }
+        
         dialog.jqxWindow('open');
         dialog.attr('data-row', key);
         // disable jqxTreeGrid.
+        
         grid.jqxTreeGrid({ disabled: true });
     }
     grid.on('rowDoubleClick', function (event) {
@@ -278,7 +292,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         } else {
         }
     });
-
+    
     // Cell End Edit
     grid.on("cellEndEdit", function (event) {
         var args = event.args;
@@ -389,9 +403,9 @@ function getConfigList() {
         $("#tab" + i).remove();
         $("#tablink" + i).remove();
     }
-
+    
     $("#reloadConfigsButton").text("Reload Configurations");
-
+    
     AjaxPost("/db/NamedConfigs", { configFilter: $("#configurationFilter").val(), user: userId }, function (data) {
         if (!data.Success) {
             updateHeader(true, false, "Error retrieving Configuration list. Please contact an expert!");
@@ -1039,8 +1053,8 @@ $(document).ready(function () {
     $.get("/db/FileInfo.html", function (data) {
         infoHTML = data;
     });
-
-    $.get("/db/TreeGrid.html", function(data) {
+    
+    $.get("/db/TreeGrid.html", function (data) {
         treeGridHTML = data;
     });
     

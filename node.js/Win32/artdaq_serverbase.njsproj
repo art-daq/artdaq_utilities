@@ -16,11 +16,11 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <PropertyGroup>
-   <!-- Specifies the directories which are ignored. Any paths which contain these directory names
+    <!-- Specifies the directories which are ignored. Any paths which contain these directory names
       will be ignored. The directory name must completely match and no wild cards are allowed
    -->
-   <AnalysisIgnoredDirectories>node_modules</AnalysisIgnoredDirectories>
-</PropertyGroup>
+    <AnalysisIgnoredDirectories>node_modules</AnalysisIgnoredDirectories>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="modules\db\server\Utils.js" />
     <Content Include="client.html" />
@@ -37,6 +37,7 @@
     <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
     <Content Include="modules\db\client\FileInfo.html" />
+    <Content Include="modules\db\client\TreeGrid.html" />
     <Content Include="modules\db\client\Tables.html" />
     <Content Include="modules\procstat\client\client.html" />
     <Compile Include="modules\procstat\server\procstat_module.js" />
