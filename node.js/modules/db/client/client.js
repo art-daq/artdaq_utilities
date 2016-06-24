@@ -113,6 +113,8 @@ function getRowEditorValue(row, cellvalue, editor) {
 function makeTreeGrid(tag, displayColumns, dataFields, data) {
     tag.html(treeGridHTML);
     var grid = tag.find("#treeGrid");
+    var contextMenu = tag.find("#Menu");
+    var dialog = tag.find("#dialog");
     // prepare the data
     console.log("Data is " + JSON.stringify(data));
     console.log("DisplayColumns is " + JSON.stringify(displayColumns));
@@ -186,8 +188,6 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         {
             width: "100%",
             source: dataAdapter,
-            editable: true,
-            editSettings: { saveOnPageChange: true, saveOnBlur: true, saveOnSelectionChange: true, cancelOnEsc: true, saveOnEnter: true, editSingleCell: true, editOnDoubleClick: true, editOnF2: true },
             sortable: true,
             columnsResize: true,
             columns: displayColumns,
@@ -210,11 +210,36 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                 for (var ttrow = 0; ttrow < rows.length; ttrow++) {
                     setupRow(rows[ttrow]);
                 }
+            },
+            ready: function () {
+                dialog.find("#save").jqxButton({ height: 30, width: 80 });
+                dialog.find("#cancel").jqxButton({ height: 30, width: 80 });
+                dialog.find("#cancel").mousedown(function () {
+                    dialog.jqxWindow('close');
+                });
+                dialog.find("#save").mousedown(function () {
+                    dialog.jqxWindow('close');
+                    var editRow = parseInt(dialog.attr('data-row'));
+                    var rowData = {
+                    };
+                    grid.jqxTreeGrid('updateRow', editRow, rowData);
+                });
+                dialog.on('close', function () {
+                    // enable jqxTreeGrid.
+                    grid.jqxTreeGrid({ disabled: false });
+                });
+                dialog.jqxWindow({
+                    resizable: false,
+                    width: 270,
+                    position: { left: grid.offset().left + 75, top: grid.offset().top + 35 },
+                    autoOpen: false
+                });
+                dialog.css('visibility', 'visible');
             }
         });
 
     // create context menu
-    var contextMenu = tag.find("#Menu").jqxMenu({ width: 200, height: 87, autoOpenPopup: false, mode: 'popup' });
+    contextMenu.jqxMenu({ width: 200, height: 87, autoOpenPopup: false, mode: 'popup' });
     grid.on('contextmenu', function () {
         return false;
     });
@@ -227,13 +252,27 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             return false;
         }
     });
+    var edit = function(row, key) {
+        // update the widgets inside jqxWindow.
+        dialog.jqxWindow('setTitle', "Edit Row: " + row.name);
+        dialog.jqxWindow('open');
+        dialog.attr('data-row', key);
+        // disable jqxTreeGrid.
+        grid.jqxTreeGrid({ disabled: true });
+    }
+    grid.on('rowDoubleClick', function (event) {
+        var args = event.args;
+        var key = args.key;
+        var row = args.row;
+        edit(row, key);
+    });
     contextMenu.on('itemclick', function (event) {
         var args = event.args;
         var selection = grid.jqxTreeGrid('getSelection');
         var rowid = selection[0].uid;
         var text = $.trim($(args).text());
         if (text === "Edit Selected Row") {
-            grid.jqxTreeGrid('beginRowEdit', rowid);
+            edit(selection[0], rowid);
         } else if (text === "Delete Selected Row") {
             grid.jqxTreeGrid('deleteRow', rowid);
         } else {
