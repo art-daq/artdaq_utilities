@@ -4,6 +4,7 @@ var defaultShadow = "";
 var tableHTML;
 var infoHTML;
 var radixButtonHTML;
+var treeGridHTML;
 var currentNamedConfig = "";
 var currentMetadata;
 var currentTable;
@@ -110,6 +111,8 @@ function getRowEditorValue(row, cellvalue, editor) {
 };
 
 function makeTreeGrid(tag, displayColumns, dataFields, data) {
+    tag.html(treeGridHTML);
+    var grid = tag.find("#treeGrid");
     // prepare the data
     console.log("Data is " + JSON.stringify(data));
     console.log("DisplayColumns is " + JSON.stringify(displayColumns));
@@ -140,7 +143,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                     var edited = false;
                     for (var j in editedValues) {
                         if (editedValues.hasOwnProperty(j)) {
-                            if (editedValues[j].tag === tag) {
+                            if (editedValues[j].grid === grid) {
                                 if (editedValues[j].rowData.id === i) {
                                     edited = true;
                                 }
@@ -179,7 +182,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         }
     });
     // create Tree Grid
-    tag.addClass("jqxTreeGrid").jqxTreeGrid(
+    grid.addClass("jqxTreeGrid").jqxTreeGrid(
         {
             width: "100%",
             source: dataAdapter,
@@ -203,14 +206,42 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                         }
                     }
                 };
-                var rows = tag.jqxTreeGrid("getRows");
+                var rows = grid.jqxTreeGrid("getRows");
                 for (var ttrow = 0; ttrow < rows.length; ttrow++) {
                     setupRow(rows[ttrow]);
                 }
             }
         });
+
+    // create context menu
+    var contextMenu = tag.find("#Menu").jqxMenu({ width: 200, height: 87, autoOpenPopup: false, mode: 'popup' });
+    grid.on('contextmenu', function () {
+        return false;
+    });
+    grid.on('rowClick', function (event) {
+        var args = event.args;
+        if (args.originalEvent.button == 2) {
+            var scrollTop = $(window).scrollTop();
+            var scrollLeft = $(window).scrollLeft();
+            contextMenu.jqxMenu('open', parseInt(event.args.originalEvent.clientX) + 5 + scrollLeft, parseInt(event.args.originalEvent.clientY) + 5 + scrollTop);
+            return false;
+        }
+    });
+    contextMenu.on('itemclick', function (event) {
+        var args = event.args;
+        var selection = grid.jqxTreeGrid('getSelection');
+        var rowid = selection[0].uid;
+        var text = $.trim($(args).text());
+        if (text === "Edit Selected Row") {
+            grid.jqxTreeGrid('beginRowEdit', rowid);
+        } else if (text === "Delete Selected Row") {
+            grid.jqxTreeGrid('deleteRow', rowid);
+        } else {
+        }
+    });
+
     // Cell End Edit
-    tag.on("cellEndEdit", function (event) {
+    grid.on("cellEndEdit", function (event) {
         var args = event.args;
         // row key
         var rowKey = args.key;
@@ -227,8 +258,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                 }
             }
         }
-        tag.jqxTreeGrid("getRow", rowKey)["edited"] = true;
-        editedValues.push({ tag: tag, rowKey: rowKey, rowData: rowData });
+        grid.jqxTreeGrid("getRow", rowKey)["edited"] = true;
+        editedValues.push({ grid: grid, rowKey: rowKey, rowData: rowData });
         $("li.active :visible").parent().addClass("editedValue");
         // cell's value.
         var value = args.value;
@@ -968,6 +999,10 @@ $(document).ready(function () {
     
     $.get("/db/FileInfo.html", function (data) {
         infoHTML = data;
+    });
+
+    $.get("/db/TreeGrid.html", function(data) {
+        treeGridHTML = data;
     });
     
     $(".configInfo-tab").on("click", function () {
