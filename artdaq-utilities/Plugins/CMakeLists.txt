@@ -31,4 +31,4 @@ basic_plugin("graphite" "metric"
 
 install_headers()
 install_source()
-install_fhicl(LIST fcl/file_metric.fcl fcl/graphite_metric.fcl fcl/msgFacility_metric.fcl)
+install_fhicl(SUBDIRS fcl)
