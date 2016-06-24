@@ -8,6 +8,10 @@
 .tab-links {
     margin-top: 2px;
     margin-bottom: 0;
+    width: auto;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
     /* Clearfix */
@@ -19,7 +23,7 @@
 
     .tab-links li {
         margin: 0 2px 0;
-        float: left;
+        display: inline-block;
         list-style: none;
     }
 
