@@ -66,15 +66,15 @@ function getRadix(value) {
     } else if (value.search("0") === 0) {
         output.value = value.slice(1);
         output.radix = 8;
-        if (isNaN(value)) { output.radix = -1; }
+        if (isNaN(output.value)) { output.radix = -1; }
     } else if (value.search("b") === value.length - 1) {
         output.value = value.slice(0, -1);
         output.radix = 2;
-        if (isNaN(value)) { output.radix = -1; }
+        if (isNaN(output.value)) { output.radix = -1; }
     } else if (isNaN(value)) {
         output.radix = -1;
     }
-    if (value === " " || ("" + value).length === 0 || ("" + value).indexOf(".") >= 0) {
+    if (output.value === " " || ("" + output.value).length === 0 || ("" + output.value).indexOf(".") >= 0) {
         output.radix = -1;
     }
     
@@ -237,12 +237,13 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
     });
     grid.on('rowClick', function (event) {
         var args = event.args;
-        if (args.originalEvent.button == 2) {
+        if (args.originalEvent.button === 2) {
             var scrollTop = $(window).scrollTop();
             var scrollLeft = $(window).scrollLeft();
             contextMenu.jqxMenu('open', parseInt(event.args.originalEvent.clientX) + 5 + scrollLeft, parseInt(event.args.originalEvent.clientY) + 5 + scrollTop);
             return false;
         }
+        return true;
     });
     var edit = function (row, key, newRow) {
         newRowID = key;
