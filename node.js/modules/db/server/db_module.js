@@ -1030,6 +1030,11 @@ function WriteFileMetadata(newMetadata, filebase) {
  * @returns {Object} Directories object 
  */
 function GetDirectories(userId) {
+    if (config.baseDir === "") {
+        config.baseDir = process.env["HOME"] + "/databases";
+        console.log("WARNING: ARTDAQ_DATABASE_DATADIR not set. Using $HOME/databases instead!!!");
+    }
+
     // ReSharper disable UseOfImplicitGlobalInFunctionScope
     var db = path_module.join(config.baseDir, "db", userId);
     var tmp = path_module.join(config.baseDir, "tmp", userId);
