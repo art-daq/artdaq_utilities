@@ -260,15 +260,15 @@ function RunStoreQuery(data, collectionName, version, entity, type, configName) 
     
     console.log("RunStoreConfigQuery: configName: " + configName + ", collectionName: " + collectionName + ", version: " + version + ", entity: " + JSON.stringify(entity) + ", dataType: " + type);
     var query = {
-        version: version,
-        collection: collectionName,
-        configurable_entity: entity.name,
+        version: "" + version,
+        collection: "" + collectionName,
+        configurable_entity: "" + entity.name,
         dbprovider: config.dbprovider,
         operation: "store",
-        dataformat: type
+        dataformat: "" + type
     };
     if (configName !== undefined) {
-        query.configuration = configName;
+        query.configuration = "" + configName;
     }
     
     console.log("RunStoreQuery: Query: " + JSON.stringify(query) + ", Data: " + data);
@@ -638,11 +638,11 @@ function SetTable(configPath, tablePath, table, dirs) {
             if (table.children.hasOwnProperty(entry)) {
                 if (topLevelTable) {
                     index = Utils.ContainsName(fileTable, table.children[entry].name, "name");
-                    console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable) + " is " + index);
+                    //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable) + " is " + index);
                     fileTable[index] = table.children[entry];
                 } else {
                     index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
-                    console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
+                    //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
                     fileTable.children[index] = table.children[entry];
                 }
             }
@@ -1152,7 +1152,10 @@ function lock() {
     
     if (fs.existsSync("/tmp/node_db_lockfile")) {
         if (Date.now() - fs.fstatSync("/tmp/node_db_lockfile").ctime.getTime() > 1000) {
+            console.log("Stale Lockfile detected, deleting...");
             return unlock();
+        } else {
+            console.log("Lockfile detected and is not stale, aborting...");
         }
         return false;
     }

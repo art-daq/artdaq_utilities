@@ -739,11 +739,11 @@ function baseConfig() {
         
         // Unselect Everything!
         $("#newConfigName").val($("#oldConfigName :selected").text());
-        var rows = $("#configurationPicker").jqxTreeGrid("getRows");
+        var rows = $("#grid #configurationPicker").jqxTreeGrid("getRows");
         for (var r in rows) {
             if (rows.hasOwnProperty(r)) {
                 if (rows[r].checked) {
-                    $("#configurationPicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    $("#grid #configurationPicker").jqxTreeGrid("uncheckRow", rows[r].uid);
                 }
             }
         }
@@ -751,8 +751,8 @@ function baseConfig() {
         for (var e in metadataObj.entities) {
             if (metadataObj.entities.hasOwnProperty(e)) {
                 var entity = metadataObj.entities[e];
-                $("#configurationPicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
-                $("#configurationPicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
+                $("#grid #configurationPicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#grid #configurationPicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
             }
         }
 
@@ -769,11 +769,11 @@ function baseExportConfig() {
         var metadataObj = metadata.data;
         
         // Unselect Everything!
-        var rows = $("#filePicker").jqxTreeGrid("getRows");
+        var rows = $("#grid #filePicker").jqxTreeGrid("getRows");
         for (var r in rows) {
             if (rows.hasOwnProperty(r)) {
                 if (rows[r].checked) {
-                    $("#filePicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    $("#grid #filePicker").jqxTreeGrid("uncheckRow", rows[r].uid);
                 }
             }
         }
@@ -781,8 +781,8 @@ function baseExportConfig() {
         for (var e in metadataObj.entities) {
             if (metadataObj.entities.hasOwnProperty(e)) {
                 var entity = metadataObj.entities[e];
-                $("#filePicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
-                $("#filePicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
+                $("#grid #filePicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#grid #filePicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
             }
         }
 
@@ -791,7 +791,7 @@ function baseExportConfig() {
 
 function saveNewConfig() {
     console.log("Saving New Configuration");
-    var rows = $("#configurationPicker").jqxTreeGrid("getCheckedRows");
+    var rows = $("#grid #configurationPicker").jqxTreeGrid("getCheckedRows");
     var configObj = {
         entities: []
     };
@@ -816,7 +816,7 @@ function saveNewConfig() {
 
 function exportFiles() {
     console.log("Exporting Files");
-    var rows = $("#filePicker").jqxTreeGrid("getCheckedRows");
+    var rows = $("#grid #filePicker").jqxTreeGrid("getCheckedRows");
     var configObj = {
         entities: []
     };
@@ -999,6 +999,15 @@ function setupEntityVersionPicker(tag) {
                 cellClassName: cellClass
             }
         ];
+
+        tag.html("<button type=\"button\" id=\"all1\">Select All</button><button type=\"button\" style=\"margin-left: 5px;\" id=\"none1\">Select None</button>" +
+            "<div id=\"grid\" class=\"jqxTreeGrid\"></div>" +
+            "<button type=\"button\" id=\"all2\">Select All</button><button type=\"button\" style=\"margin-left: 5px;\" id=\"none2\">Select None</button>");
+        
+        tag.find("#none1").jqxButton({ height: 30, width: 80 });
+        tag.find("#all1").jqxButton({ height: 30, width: 80 });
+        tag.find("#none2").jqxButton({ height: 30, width: 80 });
+        tag.find("#all2").jqxButton({ height: 30, width: 80 });
         
         var dataFields = [
             { name: "id", type: "string", editable: false, display: false },
@@ -1020,7 +1029,7 @@ function setupEntityVersionPicker(tag) {
         // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        tag.addClass("jqxTreeGrid").jqxTreeGrid({
+        tag.find("#grid").jqxTreeGrid({
             width: "100%",
             source: dataAdapter,
             sortable: true,
@@ -1032,9 +1041,53 @@ function setupEntityVersionPicker(tag) {
         });
         for (var n in collectionNames) {
             if (collectionNames.hasOwnProperty(n)) {
-                tag.jqxTreeGrid("lockRow", collectionNames[n]);
+                tag.find("#grid").jqxTreeGrid("lockRow", collectionNames[n]);
             }
         }
+
+        
+        
+        tag.find("#none1").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        tag.find("#all1").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (!rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("checkRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        tag.find("#none2").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        
+        tag.find("#all2").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (!rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("checkRow", rows[r].uid);
+                    }
+                }
+            }
+        });
     });
 }
 
