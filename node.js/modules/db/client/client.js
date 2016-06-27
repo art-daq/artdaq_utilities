@@ -5,6 +5,7 @@ var tableHTML;
 var infoHTML;
 var radixButtonHTML;
 var treeGridHTML;
+var dialogContentHTML;
 var currentNamedConfig = "";
 var currentMetadata;
 var currentTable;
@@ -102,10 +103,6 @@ function getRowEditorValue(row, cellvalue, editor) {
             }
             return "0" + editor.val();
         }
-        if (editor.val().search("000") === 0) {
-            editor.parent().parent().empty();
-            return "";
-        }
     }
     return editor.val();
 };
@@ -188,6 +185,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         {
             width: "100%",
             source: dataAdapter,
+            editable: true,
+            editSettings: { saveOnPageChange: true, saveOnBlur: true, saveOnSelectionChange: true, cancelOnEsc: true, saveOnEnter: true, editSingleCell: true, editOnDoubleClick: true, editOnF2: true },
             sortable: true,
             columnsResize: true,
             columns: displayColumns,
@@ -212,18 +211,6 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                 }
             },
             ready: function () {
-                dialog.find("#save").jqxButton({ height: 30, width: 80 });
-                dialog.find("#cancel").jqxButton({ height: 30, width: 80 });
-                dialog.find("#cancel").mousedown(function () {
-                    dialog.jqxWindow('close');
-                });
-                dialog.find("#save").mousedown(function () {
-                    dialog.jqxWindow('close');
-                    var editRow = parseInt(dialog.attr('data-row'));
-                    var rowData = {
-                    };
-                    grid.jqxTreeGrid('updateRow', editRow, rowData);
-                });
                 dialog.on('close', function () {
                     // enable jqxTreeGrid.
                     grid.jqxTreeGrid({ disabled: false });
@@ -252,41 +239,86 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             return false;
         }
     });
-    var edit = function (row, key) {
+    var edit = function (row, key, newRow) {
         // update the widgets inside jqxWindow.
         dialog.jqxWindow('setTitle', "Edit Row: " + row.name);
-        
+        dialog.jqxWindow('setContent', dialogContentHTML);
+        var jqEditors = [];
         for (var i in dataFields) {
             if (dataFields.hasOwnProperty(i)) {
                 var name = dataFields[i].name;
                 var value = row[name];
-                if (dataFields[i].editable) {
-                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" /></td></tr>");
+                var cellvalue = "" + value;
+                if (dataFields[i].editable || newRow) {
+                    var start = "<tr><td align=\"right\">" + name + ":</td><td align=\"left\">";
+                    var editor = "<input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" />";
+                    
+                    var radix = 10;
+                    if (isNaN(value)) {
+                        radix = -1;
+                    } else if (typeof value === "string" && value.search("0x") === 0) {
+                        cellvalue = cellvalue.slice(2);
+                        radix = 16;
+                        if (("" + cellvalue).search(/[^0-9a-fA-F]/) >= 0) { radix = -1; }
+                    } else if (typeof value === "string" && value.search("0") === 0) {
+                        cellvalue = cellvalue.slice(1);
+                        radix = 8;
+                        if (isNaN(cellvalue)) { radix = -1; }
+                    } else if (typeof value === "string" && value.search("b") === value.length - 1) {
+                        cellvalue = cellvalue.slice(0, -1);
+                        radix = 2;
+                        if (isNaN(cellvalue)) { radix = -1; }
+                    } else if (value === " " || ("" + value).length === 0 || ("" + value).indexOf(".") >= 0) {
+                        radix = -1;
+                    }
+                    
+                    if (radix > 0) {
+                        editor = "<div id=\"" + name + "_Editor\"><input type=\"text\" /><div></div><div></div></div>";
+                        jqEditors.push({
+                            name: name + "_Editor",
+                            value: cellvalue,
+                            radix: radix
+                        });
+                    }
+                    var end = "</td></tr>";
+                    dialog.find("tr:last").before(start + editor + end);
                 } else {
                     dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" readonly=\"true\" disabled=\"disabled\" /></td></tr>");
                 }
             }
         }
-        
+        var content = dialog.find("table").parent().html();
+        dialog.jqxWindow('setContent', content);
+        for (var ed in jqEditors) {
+            if (jqEditors.hasOwnProperty(ed)) {
+                dialog.find("#" + jqEditors[ed].name).jqxFormattedInput({ radix: jqEditors[ed].radix, value: jqEditors[ed].value, width: "100%", height: 25, upperCase: true, dropDown: true, spinButtons: true });
+            }
+        }
+        dialog.find("#save").jqxButton({ height: 30, width: 80 });
+        dialog.find("#cancel").jqxButton({ height: 30, width: 80 });
+        dialog.find("#save").mousedown(function () {
+            dialog.jqxWindow('close');
+            var editRow = parseInt(dialog.attr('data-row'));
+            var rowData = {
+            };
+            grid.jqxTreeGrid('updateRow', editRow, rowData);
+        });
+        dialog.find("#cancel").mousedown(function () {
+            dialog.jqxWindow('close');
+        });
         dialog.jqxWindow('open');
         dialog.attr('data-row', key);
         // disable jqxTreeGrid.
         
         grid.jqxTreeGrid({ disabled: true });
     }
-    grid.on('rowDoubleClick', function (event) {
-        var args = event.args;
-        var key = args.key;
-        var row = args.row;
-        edit(row, key);
-    });
     contextMenu.on('itemclick', function (event) {
         var args = event.args;
         var selection = grid.jqxTreeGrid('getSelection');
         var rowid = selection[0].uid;
         var text = $.trim($(args).text());
         if (text === "Edit Selected Row") {
-            edit(selection[0], rowid);
+            edit(selection[0], rowid, false);
         } else if (text === "Delete Selected Row") {
             grid.jqxTreeGrid('deleteRow', rowid);
         } else {
@@ -1057,6 +1089,8 @@ $(document).ready(function () {
     $.get("/db/TreeGrid.html", function (data) {
         treeGridHTML = data;
     });
+    
+    $.get("/db/Dialog.html", function (data) { dialogContentHTML = data; });
     
     $(".configInfo-tab").on("click", function () {
         resizeTextAreas();

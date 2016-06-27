@@ -29,7 +29,7 @@ try {
 var config = {
     dbprovider: "filesystem",
     configNameFilter: "",
-    baseDir: path_module.join(process.env["HOME"], "databases")
+    baseDir: process.env["ARTDAQ_DATABASE_DATADIR"]
 };
 
 var defaultColumns = [
@@ -1117,14 +1117,14 @@ function VersionExists(entity, collection, version) {
  */
 function lock() {
     
-    if (fs.existsSync("lockfile")) {
-        if (Date.now() - fs.fstatSync("lockfile").ctime.getTime() > 1000) {
+    if (fs.existsSync("/tmp/node_db_lockfile")) {
+        if (Date.now() - fs.fstatSync("/tmp/node_db_lockfile").ctime.getTime() > 1000) {
             return unlock();
         }
         return false;
     }
     
-    fs.writeFileSync("lockfile", "locked");
+    fs.writeFileSync("/tmp/node_db_lockfile", "locked");
     return true;
 }
 
@@ -1133,7 +1133,7 @@ function lock() {
  * @returns {Boolean}  True when complete
  */
 function unlock() {
-    fs.unlinkSync("lockfile");
+    fs.unlinkSync("/tmp/node_db_lockfile");
     return true;
 }
 
