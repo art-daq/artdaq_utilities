@@ -562,6 +562,11 @@ function GetData(configPath, tablePath, dirs) {
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     var jsonBase = ParseFhiclTable({ children: jsonFile.document.converted.guidata, name: filebase }, 0);
     
+    if (path.length === 0) {
+        console.log("Top-level table detected!");
+        return jsonBase;
+    }
+
     while (path.length > 1) {
         var index = Utils.ContainsName(jsonBase.children, path[0], "name");
         //console.log("index is " + index);
@@ -570,7 +575,7 @@ function GetData(configPath, tablePath, dirs) {
     }
     
     var table = Utils.ContainsName(jsonBase.children, path[0], "name");
-    //console.log("Index of table with name " + path[0] + " is " + table);
+    console.log("Index of table with name " + path[0] + " is " + table);
     if (table >= 0) {
         console.log("Returning table with index " + table);
         var obj = jsonBase.children[table];
@@ -603,6 +608,7 @@ function SetTable(configPath, tablePath, table, dirs) {
     if (!fs.existsSync(fileName)) { throw { name: "FileNotFoundException", message: "The requested file was not found" }; }
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     var fileTable = jsonFile.document.converted.guidata;
+    var topLevelTable = false;
     var refs = [];
     var index;
     if (path.length > 0 && path[0] !== "Table Entries") {
@@ -613,6 +619,8 @@ function SetTable(configPath, tablePath, table, dirs) {
         delete fileTable.columns;
         delete fileTable.hasSubtables;
         path.shift();
+    } else {
+        topLevelTable = true;
     }
     
     while (path.length > 0 && path[0] !== "Table Entries") {
@@ -628,9 +636,15 @@ function SetTable(configPath, tablePath, table, dirs) {
     if (path[0] === "Table Entries") {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
-                index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
-                console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
-                fileTable.children[index] = table.children[entry];
+                if (topLevelTable) {
+                    index = Utils.ContainsName(fileTable, table.children[entry].name, "name");
+                    console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable) + " is " + index);
+                    fileTable[index] = table.children[entry];
+                } else {
+                    index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
+                    console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
+                    fileTable.children[index] = table.children[entry];
+                }
             }
         }
     } else {
@@ -710,7 +724,7 @@ function CollapseSequence(oldSequence, data) {
 function UpdateTable(configPath, tablePath, data, dirs) {
     console.log("Updating table " + tablePath + " from configuration " + configPath + " with data " + JSON.stringify(data));
     var oldData = GetData(configPath, tablePath, dirs);
-    
+
     if (oldData.isSequence) {
         oldData.type = "sequence";
         delete oldData.columns;
@@ -1033,6 +1047,20 @@ function GetDirectories(userId) {
     if (config.baseDir === "") {
         config.baseDir = process.env["HOME"] + "/databases";
         console.log("WARNING: ARTDAQ_DATABASE_DATADIR not set. Using $HOME/databases instead!!!");
+    }
+    
+    if (!fs.existsSync(config.baseDir)) {
+        console.log("ERROR: Base Directory doesn't exist!!!");
+        throw { name: "BaseDirectoryMissingException", message: "ERROR: Base Directory doesn't exist!!!" };
+    }
+    if(!fs.existsSync(path_module.join(config.baseDir, "db"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "db"));
+    }
+    if (!fs.existsSync(path_module.join(config.baseDir, "tmp"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "tmp"));
+    }
+    if (!fs.existsSync(path_module.join(config.baseDir, "TRASH"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "TRASH"));
     }
 
     // ReSharper disable UseOfImplicitGlobalInFunctionScope
