@@ -10,7 +10,7 @@ var currentNamedConfig = "";
 var currentMetadata;
 var currentTable;
 var lastTabID = 1;
-var editedValues = [];
+var editedValues = {};
 var exportTarFileName = "export";
 //var userId = generateUUID();
 // For Testing
@@ -53,31 +53,40 @@ function resizeTextAreas() {
     });
 };
 
+function getRadix(value) {
+    var output = {
+        radix: 10,
+        value: value
+    }
+    value = "" + value;
+    if (value.search("0x") === 0) {
+        output.value = value.slice(2);
+        output.radix = 16;
+        if (("" + output.value).search(/[^0-9a-fA-F]/) >= 0) { output.radix = -1; }
+    } else if (value.search("0") === 0) {
+        output.value = value.slice(1);
+        output.radix = 8;
+        if (isNaN(value)) { output.radix = -1; }
+    } else if (value.search("b") === value.length - 1) {
+        output.value = value.slice(0, -1);
+        output.radix = 2;
+        if (isNaN(value)) { output.radix = -1; }
+    } else if (isNaN(value)) {
+        output.radix = -1;
+    }
+    if (value === " " || ("" + value).length === 0 || ("" + value).indexOf(".") >= 0) {
+        output.radix = -1;
+    }
+    
+    return output;
+}
+
 function createRowEditor(row, cellvalue, editor, cellText, width, height) {
     editor.after("<div></div><div></div>");
-    var radix = 10;
-    if (typeof cellText === "string" && cellText.search("0x") === 0) {
-        cellText = cellText.slice(2);
-        cellvalue = cellvalue.slice(2);
-        radix = 16;
-        if (("" + cellText).search(/[^0-9a-fA-F]/) >= 0) { return; }
-    } else if (typeof cellText === "string" && cellText.search("0") === 0) {
-        cellText = cellText.slice(1);
-        cellvalue = cellvalue.slice(1);
-        radix = 8;
-        if (isNaN(cellText)) { return; }
-    } else if (typeof cellText === "string" && cellText.search("b") === cellText.length - 1) {
-        cellText = cellText.slice(0, -1);
-        cellvalue = cellvalue.slice(0, -1);
-        radix = 2;
-        if (isNaN(cellText)) { return; }
-    } else if (isNaN(cellText)) {
-        return;
+    var radixObj = getRadix(cellText);
+    if (radixObj.radix > 0) {
+        editor.parent().jqxFormattedInput({ radix: radixObj.radix, value: radixObj.value, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
     }
-    if (cellText === " " || ("" + cellText).length === 0 || ("" + cellText).indexOf(".") >= 0) {
-        return;
-    }
-    editor.parent().jqxFormattedInput({ radix: radix, value: cellvalue, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
 };
 
 function initRowEditor(row, cellvalue, editor) {
@@ -112,6 +121,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
     var grid = tag.find("#treeGrid");
     var contextMenu = tag.find("#Menu");
     var dialog = tag.find("#dialog");
+    var newRowID = null;
     // prepare the data
     console.log("Data is " + JSON.stringify(data));
     console.log("DisplayColumns is " + JSON.stringify(displayColumns));
@@ -124,7 +134,10 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         },
         id: "name",
         localData: data,
-        comment: "comment"
+        comment: "comment",
+        addRow: function (rowID, rowData, position, parentID, commit) {
+            newRowID = rowID;
+        }
     };
     // ReSharper disable once InconsistentNaming
     var dataAdapter = new $.jqx.dataAdapter(source, {
@@ -139,16 +152,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             }
             for (var i in records) {
                 if (records.hasOwnProperty(i)) {
-                    var edited = false;
-                    for (var j in editedValues) {
-                        if (editedValues.hasOwnProperty(j)) {
-                            if (editedValues[j].grid === grid) {
-                                if (editedValues[j].rowData.id === i) {
-                                    edited = true;
-                                }
-                            }
-                        }
-                    }
+                    var editedValuesEntry = editedValues[currentTable + "/" + records[i].name];
+                    var edited = editedValuesEntry !== undefined && editedValuesEntry;
                     records[i]["edited"] = edited;
                     for (var f in numberFields) {
                         if (numberFields.hasOwnProperty(f)) {
@@ -240,6 +245,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         }
     });
     var edit = function (row, key, newRow) {
+        newRowID = key;
         // update the widgets inside jqxWindow.
         dialog.jqxWindow('setTitle', "Edit Row: " + row.name);
         dialog.jqxWindow('setContent', dialogContentHTML);
@@ -247,43 +253,28 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         for (var i in dataFields) {
             if (dataFields.hasOwnProperty(i)) {
                 var name = dataFields[i].name;
-                var value = row[name];
-                var cellvalue = "" + value;
+                var value = "" + row[name];
+                if (value === "undefined") {
+                    value = "";
+                }
                 if (dataFields[i].editable || newRow) {
                     var start = "<tr><td align=\"right\">" + name + ":</td><td align=\"left\">";
-                    var editor = "<input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" />";
+                    var editor = "<input id=\"" + name + "_Editor\" type=\"text\" value=\"" + value + "\" />";
                     
-                    var radix = 10;
-                    if (isNaN(value)) {
-                        radix = -1;
-                    } else if (typeof value === "string" && value.search("0x") === 0) {
-                        cellvalue = cellvalue.slice(2);
-                        radix = 16;
-                        if (("" + cellvalue).search(/[^0-9a-fA-F]/) >= 0) { radix = -1; }
-                    } else if (typeof value === "string" && value.search("0") === 0) {
-                        cellvalue = cellvalue.slice(1);
-                        radix = 8;
-                        if (isNaN(cellvalue)) { radix = -1; }
-                    } else if (typeof value === "string" && value.search("b") === value.length - 1) {
-                        cellvalue = cellvalue.slice(0, -1);
-                        radix = 2;
-                        if (isNaN(cellvalue)) { radix = -1; }
-                    } else if (value === " " || ("" + value).length === 0 || ("" + value).indexOf(".") >= 0) {
-                        radix = -1;
-                    }
+                    var radixObj = getRadix(value);
                     
-                    if (radix > 0) {
+                    if (radixObj.radix > 0) {
                         editor = "<div id=\"" + name + "_Editor\"><input type=\"text\" /><div></div><div></div></div>";
                         jqEditors.push({
                             name: name + "_Editor",
-                            value: cellvalue,
-                            radix: radix
+                            value: radixObj.value,
+                            radix: radixObj.radix
                         });
                     }
                     var end = "</td></tr>";
                     dialog.find("tr:last").before(start + editor + end);
                 } else {
-                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "\" type=\"text\" value=\"" + value + "\" readonly=\"true\" disabled=\"disabled\" /></td></tr>");
+                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "_Editor\" type=\"text\" value=\"" + value + "\" readonly=\"true\" disabled=\"disabled\" /></td></tr>");
                 }
             }
         }
@@ -298,10 +289,41 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         dialog.find("#cancel").jqxButton({ height: 30, width: 80 });
         dialog.find("#save").mousedown(function () {
             dialog.jqxWindow('close');
-            var editRow = parseInt(dialog.attr('data-row'));
-            var rowData = {
-            };
-            grid.jqxTreeGrid('updateRow', editRow, rowData);
+            var row = {};
+            
+            for (var i in dataFields) {
+                if (dataFields.hasOwnProperty(i)) {
+                    var name = dataFields[i].name + "_Editor";
+                    var value = "" + $("#" + name).val();
+                    if (value === "undefined") {
+                        value = "";
+                    }
+                    row[dataFields[i].name] = value;
+                }
+            }
+            
+            AjaxPost("/db/AddOrUpdate", {
+                configName: currentNamedConfig,
+                table: currentTable,
+                id: row.id,
+                row: row,
+                user: userId
+            }, function (retval) {
+                if (retval.Success) {
+                    var now = new Date;
+                    $("#changes", $(".file-tab.active a").attr("href")).val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + row.name + " Dialog Edit - multiple columns may have been changed!");
+                    $("#masterChanges").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + row.name + " Dialog Edit - multiple columns may have been changed!");
+                    resizeTextAreas();
+                    updateHeader(false, true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+                } else {
+                    updateHeader(true, false, "Sending Update to server failed");
+                }
+            });
+            
+            grid.jqxTreeGrid('updateRow', newRowID, row);
+            grid.jqxTreeGrid("getRow", newRowID)["edited"] = true;
+            editedValues[currentTable + "/" + row.name] = true;
+            $("li.active :visible").parent().addClass("editedValue");
         });
         dialog.find("#cancel").mousedown(function () {
             dialog.jqxWindow('close');
@@ -322,6 +344,11 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         } else if (text === "Delete Selected Row") {
             grid.jqxTreeGrid('deleteRow', rowid);
         } else {
+            grid.jqxTreeGrid('addRow', null, {});
+            grid.jqxTreeGrid('clearSelection');
+            grid.jqxTreeGrid('selectRow', newRowID);
+            selection = grid.jqxTreeGrid('getSelection');
+            edit(selection[0], newRowID, true);
         }
     });
     
@@ -344,7 +371,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             }
         }
         grid.jqxTreeGrid("getRow", rowKey)["edited"] = true;
-        editedValues.push({ grid: grid, rowKey: rowKey, rowData: rowData });
+        editedValues[currentTable + "/" + rowKey] = true;
         $("li.active :visible").parent().addClass("editedValue");
         // cell's value.
         var value = args.value;

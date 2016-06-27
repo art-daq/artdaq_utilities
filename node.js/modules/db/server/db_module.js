@@ -1257,6 +1257,11 @@ db.RW_discardConfig = function (post) {
     return { Success: true };
 };
 
+db.RO_AddOrUpdate = function(post) {
+    console.log("Request to update table row recieved: " + JSON.stringify(post));
+    return { Success: true };
+}
+
 db.RO_Update = function (post) {
     console.log("Request to update table received: " + JSON.stringify(post));
     UpdateTable(post.configName, post.table, { id: post.id, name: post.name, column: post.column, value: post.value }, GetDirectories(post.user));
@@ -1415,6 +1420,7 @@ db.RO_NamedConfigs = function (post) {
     console.log("NamedConfigs complete");
     return configsOutput;
 };
+
 
 // GET calls
 db.GET_EntitiesAndVersions = function () {
