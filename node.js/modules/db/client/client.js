@@ -74,6 +74,10 @@ function getRadix(value) {
     } else if (isNaN(value)) {
         output.radix = -1;
     }
+    if (value === "0") {
+        output.radix = 10;
+        output.value = "0";
+    }
     if (output.value === " " || ("" + output.value).length === 0 || ("" + output.value).indexOf(".") >= 0) {
         output.radix = -1;
     }
