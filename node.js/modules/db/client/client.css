@@ -49,6 +49,12 @@
             text-decoration: none;
         }
 
+        .dialog-table {
+            border-style: none;
+            overflow-y: auto;
+            width: 100%;
+        }
+
 .table-data a {
     background: #E5D5D5;
 }

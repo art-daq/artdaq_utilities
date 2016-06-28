@@ -349,11 +349,25 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         } else if (text === "Delete Selected Row") {
             grid.jqxTreeGrid('deleteRow', rowid);
         } else {
-            grid.jqxTreeGrid('addRow', null, {});
-            grid.jqxTreeGrid('clearSelection');
-            grid.jqxTreeGrid('selectRow', newRowID);
-            selection = grid.jqxTreeGrid('getSelection');
-            edit(selection[0], newRowID, true);
+            var arrayName = false;
+            if (rowid.search(/___/) > 0) {
+                arrayName = true;                
+            }
+            grid.jqxTreeGrid('addRow', null, {}, 'last', rowid);
+            if (arrayName) {
+                var idx = newRowID.search(/___/);
+                var num = newRowID.slice(idx + 3, -1);
+                num = parseInt(num) + 1;
+                newRowID = newRowID.slice(0, idx + 3) + num;
+            }
+            var obj = {};
+            for (var i in dataFields) {
+                if (dataFields.hasOwnProperty(i)) {
+                    obj[dataFields[i].name] = "";
+                }
+            }
+            obj.name = newRowID;
+            edit(obj, newRowID, true);
         }
     });
     
