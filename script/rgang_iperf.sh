@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.13 $$Date: 2016/04/27 00:58:47 $'
+ # rev='$Revision: 1.14 $$Date: 2016/06/30 18:39:08 $'
 
 
 USAGE="\
@@ -17,10 +17,12 @@ options:
 --sndbuf=#[KM]   (current not used)
 -P, --parallel # number of parallel_connection
 --num-tests=#    default=1
--q
+-v               more verbose (i.e. -vvv to see rgang output)
+-q               more quiet
+-r               do tradeoff test
 --bw=#[mg]       megabit or gigabits
 --permutate
---leave-files --keep-files
+--leave-files --keep-files    (i.e. in /tmp)
 --megabits       instead of default gigabits for throughput
 --use-itf=       for testing interface different than the one used for the rgang ssh
 "
@@ -52,6 +54,7 @@ while [ -n "${1-}" ];do
         q*)           eval $op1chr; opt_v=`expr $opt_v - 1`;opt_q=1;;
         x*)           eval $op1chr; test $opt_v -ge 1 && set -xv || set -x;;
         P*|-parallel) eval $reqarg; opt_P=$1;               shift;;
+        r*)           eval $op1chr; trade_off='-r';;
         -help)        do_help=1;;
         -rgang)       eval $reqarg; RGANG=$1;               shift;;
         -time)        eval $reqarg; opt_time=$1;            shift;;
@@ -251,7 +254,7 @@ rcmd1="num_nodes=$num_nodes num_servers=$num_servers"
 rcmd2='poff=`awk "BEGIN{nps=$num_nodes/$num_servers;xx=$RGANG_MACH_ID/nps;print int(xx);exit;}"`
 port=`expr 5001 + $poff`
 markRetrans;taskset -c $cpulist '"\
-iperf -c $myIP --reportexclude=CMSV --format=$format --port=\$port ${opt_P+-P$opt_P} --time=$opt_time $interval"'
+iperf -c $myIP --reportexclude=CMSV ${trade_off-} --format=$format --port=\$port ${opt_P+-P$opt_P} --time=$opt_time $interval"'
 echo deltaRetrans: `deltaRetrans`
 /sbin/ethtool --show-pause $itf
 dmesg | tail -20 | grep $itf | tail -5'
