@@ -141,6 +141,14 @@ if (cluster.isMaster) {
 			//console.log("Received Data Dump from Master!");
 			//console.log(JSON.stringify(msg));
 			workerData = msg;
+		for (var name in module_holder) {
+			if (module_holder.hasOwnProperty(name)) {
+				try {
+					module_holder[name].Update(workerData[name]);
+				} catch (err) {;
+				}
+			}
+		}
 		} else {
 			if (!msg["target"]) {
 				//console.log("Received message from master: Setting workerData[" + msg.name + "].");
@@ -149,14 +157,9 @@ if (cluster.isMaster) {
 				//console.log("Received message from master: Setting workerData[" + msg.name + "][" + msg.target + "].");
 				workerData[msg.name][msg.target] = msg.data;
 			}
-		}
-		for (var name in module_holder) {
-			if (module_holder.hasOwnProperty(name)) {
-				try {
-					module_holder[name].Update(workerData[name]);
-				} catch (err) {;
-				}
-			}
+            try {
+            module_holder[msg.name].Update(workerData[name]);
+            } catch (err) {;}
 		}
 	}
 	
