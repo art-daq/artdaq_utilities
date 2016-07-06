@@ -6,6 +6,7 @@
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <iostream>
 #include <ctime>
@@ -24,6 +25,7 @@ namespace artdaq {
     boost::asio::io_service io_service_;
     tcp::socket socket_;
     bool stopped_;
+    int errorCount_;
   public:
     GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config),
 						 host_(pset.get<std::string>("host","localhost")),
@@ -31,7 +33,8 @@ namespace artdaq {
                                                  namespace_(pset.get<std::string>("namespace","artdaq.")),
                                                  io_service_(),
                                                  socket_(io_service_),
-                                                 stopped_(true)
+                                                 stopped_(true),
+						 errorCount_(0)
     {
       startMetrics();
     }
@@ -49,8 +52,13 @@ namespace artdaq {
         out << namespace_ << name << " "
             << value << " "
             << result << std::endl;
-   
-        boost::asio::write(socket_, data);
+	
+	boost::system::error_code error;
+        boost::asio::write(socket_, data, error);
+	if(error) {
+	  errorCount_++;
+	  reconnect_();
+	}
       }
     }
     virtual void sendMetric_(std::string name, int value, std::string unit ) 
@@ -72,9 +80,7 @@ namespace artdaq {
     virtual void startMetrics_() {
       if(stopped_)
       {
-        tcp::resolver resolver(io_service_);
-        tcp::resolver::query query(host_, std::to_string(port_));
-        boost::asio::connect(socket_, resolver.resolve(query));
+	reconnect_();
         stopped_ = false;
       }
     }
@@ -85,6 +91,18 @@ namespace artdaq {
         socket_.close();
         stopped_ = true;
       }
+    }
+
+    void reconnect_() {
+      if(errorCount_ < 5) {
+	boost::system::error_code error;
+        tcp::resolver resolver(io_service_);
+        tcp::resolver::query query(host_, std::to_string(port_));
+        boost::asio::connect(socket_, resolver.resolve(query), error);
+	if(!error){ errorCount_ = 0; }
+	else { mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_; }
+      }
+      else{ stopped_ = true; }
     }
   };
 

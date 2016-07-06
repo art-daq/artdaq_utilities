@@ -26,6 +26,7 @@ basic_plugin("graphite" "metric"
   ${Boost_THREAD_LIBRARY}
   ${FHICLCPP}
   ${CETLIB}
+   ${MF_MESSAGELOGGER}
   pthread
 )
 
