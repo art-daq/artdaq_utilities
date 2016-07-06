@@ -22,9 +22,15 @@
     <AnalysisIgnoredDirectories>node_modules</AnalysisIgnoredDirectories>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="modules\artdaq-daqmon\client\client.js" />
+    <Compile Include="modules\artdaq-daqmon\client\sankey.js" />
+    <Compile Include="modules\artdaq-daqmon\server\artdaq-daqmon_module.js" />
     <Compile Include="modules\db\server\Utils.js" />
     <Content Include="client.html" />
     <Compile Include="serverbase.js" />
+    <Content Include="modules\artdaq-daqmon\client\client.css" />
+    <Content Include="modules\artdaq-daqmon\client\client.html" />
+    <Content Include="modules\artdaq-daqmon\client\sankeygreenhouse.json" />
     <Content Include="modules\artdaq-runcontrol\client\UDPDump.html" />
     <Content Include="modules\artdaq-runcontrol\client\client.html" />
     <Content Include="modules\artdaq-runcontrol\client\viewer.html" />
@@ -71,6 +77,9 @@
     <Folder Include="modules\artdaq-configuration" />
     <Folder Include="modules\artdaq-configuration\client" />
     <Folder Include="modules\artdaq-configuration\server" />
+    <Folder Include="modules\artdaq-daqmon\" />
+    <Folder Include="modules\artdaq-daqmon\client\" />
+    <Folder Include="modules\artdaq-daqmon\server\" />
     <Folder Include="modules\artdaq-runcontrol" />
     <Folder Include="modules\artdaq-runcontrol\client" />
     <Folder Include="modules\artdaq-runcontrol\server" />
