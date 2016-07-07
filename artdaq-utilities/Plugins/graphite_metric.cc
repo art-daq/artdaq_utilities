@@ -13,6 +13,7 @@
 #include <string>
 #include <algorithm>
 #include <boost/asio.hpp>
+#include <chrono>
 
 using boost::asio::ip::tcp;
 
@@ -26,6 +27,7 @@ namespace artdaq {
     tcp::socket socket_;
     bool stopped_;
     int errorCount_;
+    std::chrono::steady_clock::time_point waitStart_;
   public:
     GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config),
 						 host_(pset.get<std::string>("host","localhost")),
@@ -79,18 +81,18 @@ namespace artdaq {
     }
     virtual void startMetrics_() {
       if(stopped_)
-      {
-	reconnect_();
-        stopped_ = false;
-      }
+	{
+	  reconnect_();
+	  stopped_ = false;
+	}
     }
     virtual void stopMetrics_() {
       if(!stopped_)
-      {
-        socket_.shutdown(boost::asio::socket_base::shutdown_send);
-        socket_.close();
-        stopped_ = true;
-      }
+	{
+	  socket_.shutdown(boost::asio::socket_base::shutdown_send);
+	  socket_.close();
+	  stopped_ = true;
+	}
     }
 
     void reconnect_() {
@@ -101,8 +103,12 @@ namespace artdaq {
         boost::asio::connect(socket_, resolver.resolve(query), error);
 	if(!error){ errorCount_ = 0; }
 	else { mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_; }
+	waitStart_ = std::chrono::steady_clock::now();
       }
-      else{ stopped_ = true; }
+      else if( std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5 )//Seconds
+	{
+	  errorCount_ = 0;
+	}
     }
   };
 
