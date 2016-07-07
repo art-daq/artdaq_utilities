@@ -157,9 +157,9 @@ if (cluster.isMaster) {
 				//console.log("Received message from master: Setting workerData[" + msg.name + "][" + msg.target + "].");
 				workerData[msg.name][msg.target] = msg.data;
 			}
-            try {
-            module_holder[msg.name].Update(workerData[name]);
-            } catch (err) {;}
+			try {
+			module_holder[msg.name].Update(workerData[msg.name]);
+			} catch (err) {;}
 		}
 	}
 	
