@@ -32,7 +32,7 @@ var getversion = function() {
 		{
             version = stdout.trim() + "-Git";
 		    child_process.exec("git diff-index --quiet HEAD --", function(error) {
-                if (error) {
+                if (error && error.code !== 0) {
                     version += "*";
                 }
 		    });
