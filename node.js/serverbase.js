@@ -28,13 +28,7 @@ var getversion = function() {
         console.log("Reading Server Version from File");
         return "" + fs.readFileSync("./version.txt"); }
     else { 
-        console.log("Reading Server Version from Git");
-        child_process.exec("git describe --tags >version.txt");
-        
-        while(!fs.existsSync("./version.txt")) {
-            ; 
-        }
-        return fs.readFileSync("./version.txt");
+        return "From Git"; 
     }
 }
 var version = getversion();
