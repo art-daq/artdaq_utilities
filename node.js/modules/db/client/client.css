@@ -204,3 +204,10 @@ p {
     border-left: 2px solid #e7f29b;
     border-right: 2px solid #e7f29b;
 }
+
+.miniButton {
+    display: inline-block;
+    width: auto;
+    padding: 2px;
+    margin: 2px 2px 2px 2px;
+}

@@ -1014,9 +1014,9 @@ function setupEntityVersionPicker(tag) {
             }
         ];
 
-        tag.html("<button type=\"button\" id=\"all1\">Select All</button><button type=\"button\" style=\"margin-left: 5px;\" id=\"none1\">Select None</button>" +
-            "<div id=\"grid\" class=\"jqxTreeGrid\"></div>" +
-            "<button type=\"button\" id=\"all2\">Select All</button><button type=\"button\" style=\"margin-left: 5px;\" id=\"none2\">Select None</button>");
+        tag.html("<br><button type=\"button\" class=\"miniButton\" id=\"all1\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none1\"> Select None </button><br>" +
+            "<div id=\"grid\" class=\"jqxTreeGrid\"></div><br>" +
+            "<button type=\"button\" class=\"miniButton\" id=\"all2\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none2\"> Select None </button>");
         
         tag.find("#none1").jqxButton({ height: 30 });
         tag.find("#all1").jqxButton({ height: 30 });
