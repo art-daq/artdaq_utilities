@@ -41,5 +41,8 @@
     <div class="mainContent">
         <iframe id="frame" src="/artdaq-runcontrol/client.html"></iframe>
     </div>
+    <div id="rev"></div>
 </body>
+   <script src="./base/jquery.min.js"></script>
+   <script> $.get("/dummy/GET_ServerVersion", function(data) { $("#rev").text("Server Revision: " + data); }); </script>
 </html>

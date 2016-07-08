@@ -70,6 +70,9 @@ add_subdirectory(for_jenkins)
 
 # Web GUI
 FILE(COPY node.js DESTINATION .)
+add_custom_target(GitVersion ALL
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND git describe --tags >${CMAKE_CURRENT_BINARY_DIR}/node.js/version.txt)
 INSTALL(DIRECTORY node.js DESTINATION ${product}/${version})
 
 # ups - table and config files
