@@ -31,8 +31,8 @@ var getversion = function() {
 		child_process.exec("git describe --tags", function(error, stdout, stderr)
 		{
             version = stdout.trim() + "-Git";
-		    child_process.exec("git diff-index --quiet HEAD --", function(error) {
-                if (error && error.code !== 0) {
+		    child_process.exec("git status --porcelain", function(error, stdout) {
+                if (stdout.length > 0) {
                     version += "*";
                 }
 		    });
