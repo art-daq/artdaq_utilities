@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>ARTDAQ Run Control Test</title>
@@ -68,5 +68,7 @@
         <textarea readonly id="commErr" class="error"></textarea>
         <div id="wd1div" class="hidden"></div>
     </div>
+    <div id="rev"></div>
+    <script> $.get("/dummy/GET_ServerVersion", function(data) { $("#rev").text("Server Revision: " + data); }); </script>
 </body>
 </html>

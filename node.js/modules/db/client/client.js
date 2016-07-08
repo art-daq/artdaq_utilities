@@ -1018,10 +1018,10 @@ function setupEntityVersionPicker(tag) {
             "<div id=\"grid\" class=\"jqxTreeGrid\"></div>" +
             "<button type=\"button\" id=\"all2\">Select All</button><button type=\"button\" style=\"margin-left: 5px;\" id=\"none2\">Select None</button>");
         
-        tag.find("#none1").jqxButton({ height: 30, width: 80 });
-        tag.find("#all1").jqxButton({ height: 30, width: 80 });
-        tag.find("#none2").jqxButton({ height: 30, width: 80 });
-        tag.find("#all2").jqxButton({ height: 30, width: 80 });
+        tag.find("#none1").jqxButton({ height: 30 });
+        tag.find("#all1").jqxButton({ height: 30 });
+        tag.find("#none2").jqxButton({ height: 30 });
+        tag.find("#all2").jqxButton({ height: 30 });
         
         var dataFields = [
             { name: "id", type: "string", editable: false, display: false },

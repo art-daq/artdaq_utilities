@@ -1,4 +1,5 @@
-<!DOCTYPE html><html>
+﻿<!DOCTYPE html>
+<html>
 <head>
     <meta charset="utf-8">
     <title>ARTDAQ DAQ Monitor Test</title>
@@ -11,9 +12,11 @@
     <script src="client.js"></script>
 </head>
 <body>
-
-<p id="chart">
-
+    <div>
+        <p id="chart">
+    </div>
+    <div id="rev"></div>
+    <script> $.get("/dummy/GET_ServerVersion", function (data) { $("#rev").text("Server Revision: " + data); }); </script>
 
 </body>
 </html>

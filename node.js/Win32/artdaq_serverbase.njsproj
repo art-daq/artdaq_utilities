@@ -27,6 +27,8 @@
     <Compile Include="modules\artdaq-daqmon\server\artdaq-daqmon_module.js" />
     <Compile Include="modules\db\server\Utils.js" />
     <Content Include="client.html" />
+    <Compile Include="modules\template\client\client.js" />
+    <Compile Include="modules\template\server\template_module.js" />
     <Compile Include="serverbase.js" />
     <Content Include="modules\artdaq-daqmon\client\client.css" />
     <Content Include="modules\artdaq-daqmon\client\client.html" />
@@ -69,6 +71,8 @@
     <Content Include="modules\artdaq-configuration\client\V172X_reader.html" />
     <Compile Include="modules\artdaq-configuration\client\ConfigurationEditor.js" />
     <Compile Include="modules\artdaq-configuration\server\artdaq-configuration_module.js" />
+    <Content Include="modules\template\client\client.html" />
+    <Content Include="modules\template\client\client.css" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="certs" />
@@ -96,6 +100,9 @@
     <Folder Include="modules\procstat" />
     <Folder Include="modules\procstat\client" />
     <Folder Include="modules\procstat\server" />
+    <Folder Include="modules\template\" />
+    <Folder Include="modules\template\client\" />
+    <Folder Include="modules\template\server\" />
     <Folder Include="Win32" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />

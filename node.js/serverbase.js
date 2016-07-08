@@ -23,13 +23,21 @@ var log_file = fs.createWriteStream('/tmp/server.' + process.env["USER"] + '.log
 var log_stdout = process.stdout;
 
 var getversion = function() {
-    console.log("Getting Server Version");
-    if(fs.existsSync("./version.txt")) { 
-        console.log("Reading Server Version from File");
-        return "" + fs.readFileSync("./version.txt"); }
-    else { 
-        return "From Git"; 
-    }
+	console.log("Getting Server Version");
+	if(fs.existsSync("./version.txt")) { 
+		console.log("Reading Server Version from File");
+		return "" + fs.readFileSync("./version.txt"); }
+	else {
+		child_process.exec("git describe --tags", function(error, stdout, stderr)
+		{
+            version = stdout.trim() + "-Git";
+		    child_process.exec("git diff-index --quiet HEAD --", function(error) {
+                if (error) {
+                    version += "*";
+                }
+		    });
+		});
+	}
 }
 var version = getversion();
 
@@ -224,12 +232,12 @@ if (cluster.isMaster) {
 				return "";
 			}
 		});
-        if(functionName.search("GET_ServerVersion") >= 0) {
-            res.setHeader("Content-Type", "text/plain");
-            res.statusCode = 200;
-            res.end(version);
-            return;
-        }
+		if(functionName.search("GET_ServerVersion") >= 0) {
+			res.setHeader("Content-Type", "text/plain");
+			res.statusCode = 200;
+			res.end(version);
+			return;
+		}
 		if (moduleName === ".." || functionName.search("\\.\\.") >= 0) {
 			console.log("Possible break-in attempt!: " + pathname);
 			res.writeHeader(404, { 'Content-Type': 'text/html' });

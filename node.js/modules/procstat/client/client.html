@@ -23,5 +23,7 @@
 
 <body>
     <textarea id="procstat"></textarea>
+    <div id="rev"></div>
+    <script> $.get("/dummy/GET_ServerVersion", function(data) { $("#rev").text("Server Revision: " + data); }); </script>
 </body>
 </html>
