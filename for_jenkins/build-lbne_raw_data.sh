@@ -22,6 +22,20 @@ build_type=${BUILDTYPE}
 target_env=${TARGET_ENV}
 
 case ${qual_set} in
+s39:e10)
+       basequal=e10
+       squal=s39
+       artver=v2_02_02
+       nutoolsver=v2_03_00
+       ;;
+ 
+s39:e9)
+       basequal=e9
+       squal=s39
+       artver=v2_02_02
+       nutoolsver=v2_03_00
+       ;;
+ 
 s38:e10)
        basequal=e10
        squal=s38
