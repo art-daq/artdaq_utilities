@@ -578,6 +578,7 @@ function getUrlParameter(sParam) {
 };
 
 function loadConfigMetadata() {
+    console.log("Loading configuration metadata");
     AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig, user: userId }, function (metadata) {
         if (!metadata.Success) {
             updateHeader(true, false, "Error loading configuration metadata from database");

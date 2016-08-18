@@ -296,10 +296,68 @@ function RunLoadQuery(query, noparse) {
         throw { name: "DBOperationFailedException", message: output.second };
     }
     
-    if (noparse !== undefined && noparse !== null && noparse) {
-        return output.second;
-    }
     return JSON.parse(output.second);
+};
+
+function LoadFile(fileInfo, dbDirectory) {
+    var output = {
+        data: {},
+        filePath: "",
+        filebase: ""
+    }
+    
+    console.log("File info: " + JSON.stringify(fileInfo));
+    output.filebase = fileInfo.name + "_" + fileInfo.query.collection;
+    output.filePath = path_module.join(dbDirectory, output.filebase + ".gui.json");
+    if (!fs.existsSync(output.filePath)) {
+        console.log("Loading file from database");
+        output.data = RunLoadQuery(fileInfo.query);
+        console.log("Writing file " + output.filePath);
+        fs.writeFileSync(output.filePath, output.data);
+    } else {
+        output.data = JSON.parse("" + fs.readFileSync(output.filePath));
+    }
+    console.log("Done Loading file");
+    return output;
+}
+
+/**
+ * Reads a file out of the database and returns information on where to find it
+ * @param {Object} fileInfo - Input search criteria
+ * @param {string} fileInfo.name - Configurable Entity Name
+ * @param {string} fileInfo.collection - Collection Name
+ * @param {string} fileInfo.version - Configuration Version
+ * @param {string} dataFormat - Data format (fhicl, json, gui)
+ * @param {string} dbdirectory - Database storage directory
+ * @returns {Object} Information abouit the output: fileName, filePath, and size
+ * @throws DBOperationFailedException: More information in ex.message
+ */
+function FetchFile(fileInfo, dataFormat, dbdirectory) {
+    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
+    if (dataFormat === "fhicl") {
+        fileName += ".fcl";
+    } else if (dataFormat === "gui") {
+        fileName += ".gui.json";
+    } else {
+        fileName += ".json";
+    }
+    var filePath = path_module.join(dbdirectory, fileName);
+    
+    var query = {
+        filter: {
+            "configurable_entity.name": fileInfo.name,
+            version: fileInfo.version
+        },
+        collection: fileInfo.collection,
+        dbprovider: config.dbprovider,
+        operation: "load",
+        dataformat: dataFormat
+    };
+    var fhiclData = RunLoadQuery(query, true);
+    fs.writeFileSync(filePath, fhiclData);
+    
+    var stat = fs.statSync(filePath);
+    return { fileName: fileName, filePath: filePath, size: stat.size }
 };
 
 
@@ -521,14 +579,9 @@ function LoadConfigFiles(configName, dbDirectory, query) {
             for (var file in configFiles) {
                 if (configFiles.hasOwnProperty(file)) {
                     console.log("File info: " + JSON.stringify(configFiles[file]));
-                    var filebase = configFiles[file].name + "_" + configFiles[file].query.collection;
+                    var filebase = LoadFile(configFiles[file], dbDirectory).filebase;
                     console.log("Adding " + filebase + " to output list");
                     retval.files.push(filebase);
-                    console.log("Loading file from database");
-                    var data = RunLoadQuery(configFiles[file].query);
-                    var filePath = path_module.join(dbDirectory, filebase + ".gui.json");
-                    console.log("Writing file " + filePath);
-                    fs.writeFileSync(filePath, JSON.stringify(data));
                 }
             }
             retval.Success = true;
@@ -815,11 +868,11 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
     for (f in files) {
         if (files.hasOwnProperty(f)) {
             var collectionName = files[f].collection;
-            var query = {};
+            var thisFileInfo = {};
             for (var fi in fileInfo) {
                 if (fileInfo.hasOwnProperty(fi)) {
                     if (files[f].name === fileInfo[fi].name + "_" + fileInfo[fi].query.collection) {
-                        query = fileInfo[fi].query;
+                        thisFileInfo = fileInfo[fi];
                         collectionName = fileInfo[fi].query.collection;
                         fileInfo.splice(fi, 1);
                     }
@@ -831,8 +884,8 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             console.log("Getting metadata from original and changed files");
             var original = path_module.join(dirs.db, files[f].name);
             var modified = path_module.join(dirs.tmp, files[f].name);
-            originalMetadata = ReadFileMetadata(original, dirs, query);
-            var newMetadata = ReadFileMetadata(modified, dirs, query);
+            originalMetadata = ReadFileMetadata(original, dirs, thisFileInfo);
+            var newMetadata = ReadFileMetadata(modified, dirs, thisFileInfo);
             console.log("originalMetadata: " + JSON.stringify(originalMetadata));
             console.log("newMetadata: " + JSON.stringify(newMetadata));
             
@@ -864,7 +917,7 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
     console.log("Running addconfig for unmodified files: " + JSON.stringify(fileInfo));
     for (f in fileInfo) {
         if (fileInfo.hasOwnProperty(f)) {
-            var unmodifiedVersion = GetVersion(fileInfo[f].query.filter["configurable_entity.name"], fileInfo[f].query.collection, oldConfig);
+            var unmodifiedVersion = GetVersion(fileInfo[f], dirs.db);
             RunAddConfigQuery(newConfig, unmodifiedVersion, fileInfo[f].query.collection, { name: fileInfo[f].query.filter["configurable_entity.name"] });
         }
     }
@@ -910,7 +963,7 @@ function CreateNewConfiguration(configName, configData) {
  * @returns {Object} Configuration metadata object
  * @throws DBOperationFailedException: More information in ex.message
  */
-function ReadConfigurationMetadata(configPath) {
+function ReadConfigurationMetadata(configPath, dbDirectory) {
     console.log("Reading metadata for configuration " + configPath);
     
     var data = RunBuildFilterQuery(configPath).search;
@@ -920,7 +973,8 @@ function ReadConfigurationMetadata(configPath) {
     };
     for (var i in data) {
         if (data.hasOwnProperty(i)) {
-            var version = GetVersion(data[i].query.filter["configurable_entity.name"], data[i].query.collection, configPath);
+            console.log("Loading metadata: File " + i + " of " + data.length);
+            var version = GetVersion(data[i], dbDirectory);
             metadata.entities.push({ name: data[i].query.filter["configurable_entity.name"], file: data[i].name + "_" + data[i].query.collection, version: version, collection: data[i].query.collection });
         }
     }
@@ -931,37 +985,16 @@ function ReadConfigurationMetadata(configPath) {
 
 /**
  * Gets the version of a given entity/collection in configName
- * @param {string} entityName - Name of the configurable entity
+ * @param {string} query - BuildFilter query 
  * @param {string} collection - Name of the collection
  * @param {string} configName - Name of the configuration
  * @returns {string} Version identifier
  * @throws DBOperationFailedException: More information in ex.message
  */
-function GetVersion(entityName, collection, configName) {
-    var filts = RunBuildFilterQuery(configName).search;
-    for (var f in filts) {
-        if (filts.hasOwnProperty(f)) {
-            if (filts[f].query.filter["configurable_entity.name"] === entityName && filts[f].query.collection === collection) {
-                var ver = RunLoadQuery(filts[f].query).version;
+function GetVersion(query, dbDirectory) {
+                var ver = LoadFile(query, dbDirectory).data.version;
                 console.log("GetVersion Returning " + ver);
                 return ver;
-            }
-        }
-    }
-    throw { name: "DBOperationFailedException", message: "Failed to find the entity/collection (" + entityName + "/" + collection + ") in the database" }
-    //// This doesn't work yet...
-    //var query = {
-    //    collection: collection,
-    //    dbprovider: config.dbprovider,
-    //    dataformat: "gui",
-    //    operation: "findversions",
-    //    filter: {
-    //        "configurable_entity.name": entityName,
-    //        "configuration": configName
-    //    }
-    //}
-    //var vers = RunGetVersionsQuery(query).search;
-    //return vers[0].name;
 };
 
 /**
@@ -977,20 +1010,7 @@ function GetVersion(entityName, collection, configName) {
 function ReadFileMetadata(filebase, dirs, query) {
     console.log("Reading metadata from " + filebase);
     
-    var fileName = path_module.join(dirs.db, filebase + ".gui.json");
-    if (fs.existsSync(filebase + ".gui.json")) {
-        fileName = filebase + ".gui.json";
-    } else if (fs.existsSync(path_module.join(dirs.tmp, filebase + ".gui.json"))) {
-        fileName = path_module.join(dirs.tmp, filebase + ".gui.json");
-    }
-    
-    var jsonFile;
-    if (!fs.exists(fileName)) {
-        jsonFile = RunLoadQuery(query);
-    } else {
-        console.log("Reading " + fileName);
-        jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-    }
+    var jsonFile = LoadFile(query, dirs.db).data;
     
     if (jsonFile.changelog === undefined) {
         jsonFile.changelog = "";
@@ -1080,45 +1100,6 @@ function GetDirectories(userId) {
     }
     
     return { db: db, tmp: tmp, trash: trash };
-};
-
-/**
- * Reads a file out of the database and returns information on where to find it
- * @param {Object} fileInfo - Input search criteria
- * @param {string} fileInfo.name - Configurable Entity Name
- * @param {string} fileInfo.collection - Collection Name
- * @param {string} fileInfo.version - Configuration Version
- * @param {string} dataFormat - Data format (fhicl, json, gui)
- * @param {string} dbdirectory - Database storage directory
- * @returns {Object} Information abouit the output: fileName, filePath, and size
- * @throws DBOperationFailedException: More information in ex.message
- */
-function FetchFile(fileInfo, dataFormat, dbdirectory) {
-    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
-    if (dataFormat === "fhicl") {
-        fileName += ".fcl";
-    } else if (dataFormat === "gui") {
-        fileName += ".gui.json";
-    } else {
-        fileName += ".json";
-    }
-    var filePath = path_module.join(dbdirectory, fileName);
-    
-    var query = {
-        filter: {
-            "configurable_entity.name": fileInfo.name,
-            version: fileInfo.version
-        },
-        collection: fileInfo.collection,
-        dbprovider: config.dbprovider,
-        operation: "load",
-        dataformat: dataFormat
-    };
-    var fhiclData = RunLoadQuery(query, true);
-    fs.writeFileSync(filePath, fhiclData);
-    
-    var stat = fs.statSync(filePath);
-    return { fileName: fileName, filePath: filePath, size: stat.size }
 };
 
 /**
@@ -1304,7 +1285,7 @@ db.RO_LoadConfigMetadata = function (post) {
     console.log("Request to load configuration metadata received: " + JSON.stringify(post));
     var ret = { Success: false, data: {} };
     try {
-        ret.data = ReadConfigurationMetadata(post.configName, GetDirectories(post.user));
+        ret.data = ReadConfigurationMetadata(post.configName, GetDirectories(post.user).db);
         ret.Success = true;
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);

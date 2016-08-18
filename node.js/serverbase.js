@@ -139,7 +139,7 @@ if (cluster.isMaster) {
 	
 	// Start workers for each CPU on the host
 	for (var i = 0; i < numCPUs; i++) {
-		//for (var i = 0; i < 1; i++) {
+	//for (var i = 0; i < 1; i++) {
 		var worker = cluster.fork();
 		worker.on('message', messageHandler);
 	}
