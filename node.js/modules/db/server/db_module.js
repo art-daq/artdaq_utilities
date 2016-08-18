@@ -619,7 +619,7 @@ function GetData(configPath, tablePath, dirs) {
         console.log("Top-level table detected!");
         return jsonBase;
     }
-
+    
     while (path.length > 1) {
         var index = Utils.ContainsName(jsonBase.children, path[0], "name");
         //console.log("index is " + index);
@@ -777,7 +777,7 @@ function CollapseSequence(oldSequence, data) {
 function UpdateTable(configPath, tablePath, data, dirs) {
     console.log("Updating table " + tablePath + " from configuration " + configPath + " with data " + JSON.stringify(data));
     var oldData = GetData(configPath, tablePath, dirs);
-
+    
     if (oldData.isSequence) {
         oldData.type = "sequence";
         delete oldData.columns;
@@ -902,7 +902,7 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             
             console.log("Writing new metadata to file");
             if (WriteFileMetadata(newMetadata, modified)) {
-
+                
                 console.log("Running store query");
                 var data = "" + fs.readFileSync(modified + ".gui.json");
                 console.log("Writing " + data + " to database");
@@ -992,9 +992,9 @@ function ReadConfigurationMetadata(configPath, dbDirectory) {
  * @throws DBOperationFailedException: More information in ex.message
  */
 function GetVersion(query, dbDirectory) {
-                var ver = LoadFile(query, dbDirectory).data.version;
-                console.log("GetVersion Returning " + ver);
-                return ver;
+    var ver = LoadFile(query, dbDirectory).data.version;
+    console.log("GetVersion Returning " + ver);
+    return ver;
 };
 
 /**
@@ -1022,7 +1022,7 @@ function ReadFileMetadata(filebase, dirs, query) {
         configurations: jsonFile.configurations,
         version: jsonFile.version,
         changelog: jsonFile.changelog,
-        collection: query.collection
+        collection: query.query.collection
     };
     
     console.log("ReadFileMetadata returning: " + JSON.stringify(metadata));
@@ -1054,7 +1054,7 @@ function WriteFileMetadata(newMetadata, filebase) {
     console.log("Writing data to file");
     //console.log("fileName: " + fileName + ", metadata: " + JSON.stringify(jsonFile));
     fs.writeFileSync(fileName, JSON.stringify(jsonFile));
-
+    
     return true;
 };
 
@@ -1073,7 +1073,7 @@ function GetDirectories(userId) {
         console.log("ERROR: Base Directory doesn't exist!!!");
         throw { name: "BaseDirectoryMissingException", message: "ERROR: Base Directory doesn't exist!!!" };
     }
-    if(!fs.existsSync(path_module.join(config.baseDir, "db"))) {
+    if (!fs.existsSync(path_module.join(config.baseDir, "db"))) {
         fs.mkdirSync(path_module.join(config.baseDir, "db"));
     }
     if (!fs.existsSync(path_module.join(config.baseDir, "tmp"))) {
@@ -1082,7 +1082,7 @@ function GetDirectories(userId) {
     if (!fs.existsSync(path_module.join(config.baseDir, "TRASH"))) {
         fs.mkdirSync(path_module.join(config.baseDir, "TRASH"));
     }
-
+    
     // ReSharper disable UseOfImplicitGlobalInFunctionScope
     var db = path_module.join(config.baseDir, "db", userId);
     var tmp = path_module.join(config.baseDir, "tmp", userId);
@@ -1245,7 +1245,7 @@ db.RW_saveConfig = function (post, workerData) {
 db.RO_LoadNamedConfig = function (post) {
     console.log("Request for configuration with name \"" + post.configName + "\" and search query \"" + post.query + "\" received.");
     if (post.query.length === 0 || post.configName === "No Configurations Found") {
-        return {files: []};
+        return { files: [] };
     }
     return LoadConfigFiles(post.configName, GetDirectories(post.user).db, JSON.parse(post.query));
 };
@@ -1269,7 +1269,7 @@ db.RW_discardConfig = function (post) {
     return { Success: true };
 };
 
-db.RO_AddOrUpdate = function(post) {
+db.RO_AddOrUpdate = function (post) {
     console.log("Request to update table row recieved: " + JSON.stringify(post));
     return { Success: true };
 }
@@ -1306,7 +1306,7 @@ db.RO_LoadFileMetadata = function (post) {
         for (var s in search) {
             if (search.hasOwnProperty(s)) {
                 if (search[s].name + "_" + search[s].query.collection === post.fileName) {
-                    query = search[s].query;
+                    query = search[s];
                 }
             }
         }
