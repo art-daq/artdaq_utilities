@@ -97,9 +97,7 @@ fi
 major_art_version=$( sed -r -n 's/^art\s+(v[0-9]_[0-9]{2}).*/\1/p' $packagedepsfile )
 full_art_version=$( sed -r -n 's/^art\s+(v[0-9]_[0-9]{2}_[0-9]+).*/\1/p' $packagedepsfile )
 
-if [[ "$major_art_version" == "v2_02" ]]; then
-    build_framework_branch="master"
-elif [[ "$major_art_version" == "v2_01" ]]; then
+if [[ "$major_art_version" =~ v2_0[1-9] ]]; then
     build_framework_branch="master"
 elif [[ "$major_art_version" == "v2_00" ]]; then
     build_framework_branch="for_art_v2_00"
