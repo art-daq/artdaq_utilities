@@ -351,7 +351,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         } else {
             var arrayName = false;
             if (rowid.search(/___/) > 0) {
-                arrayName = true;                
+                arrayName = true;
             }
             grid.jqxTreeGrid('addRow', null, {}, 'last', rowid);
             if (arrayName) {
@@ -508,7 +508,11 @@ function registerTabFunctions() {
     $(".tabs .table-data a").off();
     $(".tabs .tab-links a").off().on("click", function (e) {
         var currentAttrValue = $(this).attr("href");
-        
+        var tab = $(this).parent();
+        var div = tab.parent();
+        div.scrollLeft(0);
+        var left = Math.floor(tab.position().left - 20);
+            div.scrollLeft(left);
         // Show/Hide Tabs
         $(".tabs " + currentAttrValue).show().siblings().hide();
         
@@ -602,6 +606,12 @@ function loadConfigMetadata() {
                 text: "Version",
                 dataField: "version",
                 editable: false
+            }, 
+            {
+                text: 'Edit', cellsAlign: 'center', align: "center", columnType: 'none', editable: false, sortable: false, dataField: null, cellsRenderer: function (row, column, value) {
+                    // render custom column.
+                    return "<button data-row='" + row + "' class='editButtons' onclick=''>Edit</button>";
+                }
             }
         ];
         var dataFields = [
@@ -622,14 +632,40 @@ function loadConfigMetadata() {
         // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        $("#configurationEntities").addClass("jqxTreeGrid").jqxTreeGrid(
+        var grid = $("#configurationEntities");
+        grid.addClass("jqxTreeGrid").jqxTreeGrid(
             {
                 width: "100%",
                 source: dataAdapter,
                 editable: false,
                 sortable: true,
                 columnsResize: true,
-                columns: displayColumns
+                columns: displayColumns,
+                rendering: function () {
+                    // destroys all buttons.
+                    if ($(".editButtons").length > 0) {
+                        $(".editButtons").jqxButton('destroy');
+                    }
+                }, 
+                rendered: function () {
+                    if ($(".editButtons").length > 0) {
+                        $(".editButtons").jqxButton();
+                        
+                        var editClick = function (event) {
+                            var target = $(event.target);
+                            // get clicked row.
+                            var rowKey = event.target.getAttribute('data-row');
+                            var file = grid.jqxTreeGrid("getRow", rowKey)["file"];
+                            var fileNameTab = $(".file-tab[file-name=\"" + file + "\"] a");
+                            fileNameTab.trigger("click");
+                        }
+                        $(".editButtons").on('click', function (event) {
+                            editClick(event);
+                            return false;
+                        });
+
+                    }
+                }
             });
     });
 };
@@ -712,7 +748,7 @@ function loadConfig() {
                 
                 lastTabID++;
                 var parentTab = lastTabID;
-                $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"file-tab\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
+                $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" file-name=\"" + name + "\" tabNum=\""+lastTabID+"\" class=\"file-tab\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
                 $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
                 $("#tab" + lastTabID).html(tableHTML);
                 lastTabID++;
@@ -1014,7 +1050,7 @@ function setupEntityVersionPicker(tag) {
                 cellClassName: cellClass
             }
         ];
-
+        
         tag.html("<br><button type=\"button\" class=\"miniButton\" id=\"all1\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none1\"> Select None </button><br>" +
             "<div id=\"grid\" class=\"jqxTreeGrid\"></div><br>" +
             "<button type=\"button\" class=\"miniButton\" id=\"all2\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none2\"> Select None </button>");
@@ -1059,7 +1095,7 @@ function setupEntityVersionPicker(tag) {
                 tag.find("#grid").jqxTreeGrid("lockRow", collectionNames[n]);
             }
         }
-
+        
         
         
         tag.find("#none1").mousedown(function () {
