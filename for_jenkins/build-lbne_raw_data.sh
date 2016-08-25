@@ -22,6 +22,62 @@ build_type=${BUILDTYPE}
 target_env=${TARGET_ENV}
 
 case ${qual_set} in
+s41:e10)
+       basequal=e10
+       squal=s41
+       artver=v2_03_00
+       nutoolsver=v2_03_01
+       ;;
+ 
+s41:e9)
+       basequal=e9
+       squal=s41
+       artver=v2_03_00
+       nutoolsver=v2_03_01
+       ;;
+ 
+s39:e10)
+       basequal=e10
+       squal=s39
+       artver=v2_02_02
+       nutoolsver=v2_03_00
+       ;;
+ 
+s39:e9)
+       basequal=e9
+       squal=s39
+       artver=v2_02_02
+       nutoolsver=v2_03_00
+       ;;
+ 
+s38:e10)
+       basequal=e10
+       squal=s38
+       artver=v2_02_01
+       nutoolsver=v2_02_00
+       ;;
+ 
+s38:e9)
+       basequal=e9
+       squal=s38
+       artver=v2_02_01
+       nutoolsver=v2_02_00
+       ;;
+ 
+s36:e10)
+       basequal=e10
+       squal=s36
+       artver=v2_00_03
+       nutoolsver=v2_00_01
+       ;;
+ 
+s36:e9)
+       basequal=e9
+       squal=s36
+       artver=v2_00_03
+       nutoolsver=v2_00_01
+       ;;
+ 
 s33:e10)
        basequal=e10
        squal=s33

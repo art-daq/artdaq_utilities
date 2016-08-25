@@ -29,7 +29,7 @@ try {
 var config = {
     dbprovider: "filesystem",
     configNameFilter: "",
-    baseDir: path_module.join(process.env["HOME"], "databases")
+    baseDir: process.env["ARTDAQ_DATABASE_DATADIR"]
 };
 
 var defaultColumns = [
@@ -260,15 +260,15 @@ function RunStoreQuery(data, collectionName, version, entity, type, configName) 
     
     console.log("RunStoreConfigQuery: configName: " + configName + ", collectionName: " + collectionName + ", version: " + version + ", entity: " + JSON.stringify(entity) + ", dataType: " + type);
     var query = {
-        version: version,
-        collection: collectionName,
-        configurable_entity: entity.name,
+        version: "" + version,
+        collection: "" + collectionName,
+        configurable_entity: "" + entity.name,
         dbprovider: config.dbprovider,
         operation: "store",
-        dataformat: type
+        dataformat: "" + type
     };
     if (configName !== undefined) {
-        query.configuration = configName;
+        query.configuration = "" + configName;
     }
     
     console.log("RunStoreQuery: Query: " + JSON.stringify(query) + ", Data: " + data);
@@ -296,10 +296,68 @@ function RunLoadQuery(query, noparse) {
         throw { name: "DBOperationFailedException", message: output.second };
     }
     
-    if (noparse !== undefined && noparse !== null && noparse) {
-        return output.second;
-    }
     return JSON.parse(output.second);
+};
+
+function LoadFile(fileInfo, dbDirectory) {
+    var output = {
+        data: {},
+        filePath: "",
+        filebase: ""
+    }
+    
+    console.log("File info: " + JSON.stringify(fileInfo));
+    output.filebase = fileInfo.name + "_" + fileInfo.query.collection;
+    output.filePath = path_module.join(dbDirectory, output.filebase + ".gui.json");
+    if (!fs.existsSync(output.filePath)) {
+        console.log("Loading file from database");
+        output.data = RunLoadQuery(fileInfo.query);
+        console.log("Writing file " + output.filePath);
+        fs.writeFileSync(output.filePath, output.data);
+    } else {
+        output.data = JSON.parse("" + fs.readFileSync(output.filePath));
+    }
+    console.log("Done Loading file");
+    return output;
+}
+
+/**
+ * Reads a file out of the database and returns information on where to find it
+ * @param {Object} fileInfo - Input search criteria
+ * @param {string} fileInfo.name - Configurable Entity Name
+ * @param {string} fileInfo.collection - Collection Name
+ * @param {string} fileInfo.version - Configuration Version
+ * @param {string} dataFormat - Data format (fhicl, json, gui)
+ * @param {string} dbdirectory - Database storage directory
+ * @returns {Object} Information abouit the output: fileName, filePath, and size
+ * @throws DBOperationFailedException: More information in ex.message
+ */
+function FetchFile(fileInfo, dataFormat, dbdirectory) {
+    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
+    if (dataFormat === "fhicl") {
+        fileName += ".fcl";
+    } else if (dataFormat === "gui") {
+        fileName += ".gui.json";
+    } else {
+        fileName += ".json";
+    }
+    var filePath = path_module.join(dbdirectory, fileName);
+    
+    var query = {
+        filter: {
+            "configurable_entity.name": fileInfo.name,
+            version: fileInfo.version
+        },
+        collection: fileInfo.collection,
+        dbprovider: config.dbprovider,
+        operation: "load",
+        dataformat: dataFormat
+    };
+    var fhiclData = RunLoadQuery(query, true);
+    fs.writeFileSync(filePath, fhiclData);
+    
+    var stat = fs.statSync(filePath);
+    return { fileName: fileName, filePath: filePath, size: stat.size }
 };
 
 
@@ -521,14 +579,9 @@ function LoadConfigFiles(configName, dbDirectory, query) {
             for (var file in configFiles) {
                 if (configFiles.hasOwnProperty(file)) {
                     console.log("File info: " + JSON.stringify(configFiles[file]));
-                    var filebase = configFiles[file].name + "_" + configFiles[file].query.collection;
+                    var filebase = LoadFile(configFiles[file], dbDirectory).filebase;
                     console.log("Adding " + filebase + " to output list");
                     retval.files.push(filebase);
-                    console.log("Loading file from database");
-                    var data = RunLoadQuery(configFiles[file].query);
-                    var filePath = path_module.join(dbDirectory, filebase + ".gui.json");
-                    console.log("Writing file " + filePath);
-                    fs.writeFileSync(filePath, JSON.stringify(data));
                 }
             }
             retval.Success = true;
@@ -562,6 +615,11 @@ function GetData(configPath, tablePath, dirs) {
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     var jsonBase = ParseFhiclTable({ children: jsonFile.document.converted.guidata, name: filebase }, 0);
     
+    if (path.length === 0) {
+        console.log("Top-level table detected!");
+        return jsonBase;
+    }
+    
     while (path.length > 1) {
         var index = Utils.ContainsName(jsonBase.children, path[0], "name");
         //console.log("index is " + index);
@@ -570,7 +628,7 @@ function GetData(configPath, tablePath, dirs) {
     }
     
     var table = Utils.ContainsName(jsonBase.children, path[0], "name");
-    //console.log("Index of table with name " + path[0] + " is " + table);
+    console.log("Index of table with name " + path[0] + " is " + table);
     if (table >= 0) {
         console.log("Returning table with index " + table);
         var obj = jsonBase.children[table];
@@ -603,6 +661,7 @@ function SetTable(configPath, tablePath, table, dirs) {
     if (!fs.existsSync(fileName)) { throw { name: "FileNotFoundException", message: "The requested file was not found" }; }
     var jsonFile = JSON.parse("" + fs.readFileSync(fileName));
     var fileTable = jsonFile.document.converted.guidata;
+    var topLevelTable = false;
     var refs = [];
     var index;
     if (path.length > 0 && path[0] !== "Table Entries") {
@@ -613,6 +672,8 @@ function SetTable(configPath, tablePath, table, dirs) {
         delete fileTable.columns;
         delete fileTable.hasSubtables;
         path.shift();
+    } else {
+        topLevelTable = true;
     }
     
     while (path.length > 0 && path[0] !== "Table Entries") {
@@ -628,9 +689,15 @@ function SetTable(configPath, tablePath, table, dirs) {
     if (path[0] === "Table Entries") {
         for (var entry in table.children) {
             if (table.children.hasOwnProperty(entry)) {
-                index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
-                console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
-                fileTable.children[index] = table.children[entry];
+                if (topLevelTable) {
+                    index = Utils.ContainsName(fileTable, table.children[entry].name, "name");
+                    //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable) + " is " + index);
+                    fileTable[index] = table.children[entry];
+                } else {
+                    index = Utils.ContainsName(fileTable.children, table.children[entry].name, "name");
+                    //console.log("Index of property " + table.children[entry].name + " in " + JSON.stringify(fileTable.children) + " is " + index);
+                    fileTable.children[index] = table.children[entry];
+                }
             }
         }
     } else {
@@ -801,11 +868,11 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
     for (f in files) {
         if (files.hasOwnProperty(f)) {
             var collectionName = files[f].collection;
-            var query = {};
+            var thisFileInfo = {};
             for (var fi in fileInfo) {
                 if (fileInfo.hasOwnProperty(fi)) {
                     if (files[f].name === fileInfo[fi].name + "_" + fileInfo[fi].query.collection) {
-                        query = fileInfo[fi].query;
+                        thisFileInfo = fileInfo[fi];
                         collectionName = fileInfo[fi].query.collection;
                         fileInfo.splice(fi, 1);
                     }
@@ -817,8 +884,8 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             console.log("Getting metadata from original and changed files");
             var original = path_module.join(dirs.db, files[f].name);
             var modified = path_module.join(dirs.tmp, files[f].name);
-            originalMetadata = ReadFileMetadata(original, dirs, query);
-            var newMetadata = ReadFileMetadata(modified, dirs, query);
+            originalMetadata = ReadFileMetadata(original, dirs, thisFileInfo);
+            var newMetadata = ReadFileMetadata(modified, dirs, thisFileInfo);
             console.log("originalMetadata: " + JSON.stringify(originalMetadata));
             console.log("newMetadata: " + JSON.stringify(newMetadata));
             
@@ -835,7 +902,7 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
             
             console.log("Writing new metadata to file");
             if (WriteFileMetadata(newMetadata, modified)) {
-
+                
                 console.log("Running store query");
                 var data = "" + fs.readFileSync(modified + ".gui.json");
                 console.log("Writing " + data + " to database");
@@ -850,7 +917,7 @@ function SaveConfigurationChanges(oldConfig, newConfig, files, dirs) {
     console.log("Running addconfig for unmodified files: " + JSON.stringify(fileInfo));
     for (f in fileInfo) {
         if (fileInfo.hasOwnProperty(f)) {
-            var unmodifiedVersion = GetVersion(fileInfo[f].query.filter["configurable_entity.name"], fileInfo[f].query.collection, oldConfig);
+            var unmodifiedVersion = GetVersion(fileInfo[f], dirs.db);
             RunAddConfigQuery(newConfig, unmodifiedVersion, fileInfo[f].query.collection, { name: fileInfo[f].query.filter["configurable_entity.name"] });
         }
     }
@@ -896,7 +963,7 @@ function CreateNewConfiguration(configName, configData) {
  * @returns {Object} Configuration metadata object
  * @throws DBOperationFailedException: More information in ex.message
  */
-function ReadConfigurationMetadata(configPath) {
+function ReadConfigurationMetadata(configPath, dbDirectory) {
     console.log("Reading metadata for configuration " + configPath);
     
     var data = RunBuildFilterQuery(configPath).search;
@@ -906,7 +973,8 @@ function ReadConfigurationMetadata(configPath) {
     };
     for (var i in data) {
         if (data.hasOwnProperty(i)) {
-            var version = GetVersion(data[i].query.filter["configurable_entity.name"], data[i].query.collection, configPath);
+            console.log("Loading metadata: File " + i + " of " + data.length);
+            var version = GetVersion(data[i], dbDirectory);
             metadata.entities.push({ name: data[i].query.filter["configurable_entity.name"], file: data[i].name + "_" + data[i].query.collection, version: version, collection: data[i].query.collection });
         }
     }
@@ -917,37 +985,16 @@ function ReadConfigurationMetadata(configPath) {
 
 /**
  * Gets the version of a given entity/collection in configName
- * @param {string} entityName - Name of the configurable entity
+ * @param {string} query - BuildFilter query 
  * @param {string} collection - Name of the collection
  * @param {string} configName - Name of the configuration
  * @returns {string} Version identifier
  * @throws DBOperationFailedException: More information in ex.message
  */
-function GetVersion(entityName, collection, configName) {
-    var filts = RunBuildFilterQuery(configName).search;
-    for (var f in filts) {
-        if (filts.hasOwnProperty(f)) {
-            if (filts[f].query.filter["configurable_entity.name"] === entityName && filts[f].query.collection === collection) {
-                var ver = RunLoadQuery(filts[f].query).version;
-                console.log("GetVersion Returning " + ver);
-                return ver;
-            }
-        }
-    }
-    throw { name: "DBOperationFailedException", message: "Failed to find the entity/collection (" + entityName + "/" + collection + ") in the database" }
-    //// This doesn't work yet...
-    //var query = {
-    //    collection: collection,
-    //    dbprovider: config.dbprovider,
-    //    dataformat: "gui",
-    //    operation: "findversions",
-    //    filter: {
-    //        "configurable_entity.name": entityName,
-    //        "configuration": configName
-    //    }
-    //}
-    //var vers = RunGetVersionsQuery(query).search;
-    //return vers[0].name;
+function GetVersion(query, dbDirectory) {
+    var ver = LoadFile(query, dbDirectory).data.version;
+    console.log("GetVersion Returning " + ver);
+    return ver;
 };
 
 /**
@@ -963,20 +1010,7 @@ function GetVersion(entityName, collection, configName) {
 function ReadFileMetadata(filebase, dirs, query) {
     console.log("Reading metadata from " + filebase);
     
-    var fileName = path_module.join(dirs.db, filebase + ".gui.json");
-    if (fs.existsSync(filebase + ".gui.json")) {
-        fileName = filebase + ".gui.json";
-    } else if (fs.existsSync(path_module.join(dirs.tmp, filebase + ".gui.json"))) {
-        fileName = path_module.join(dirs.tmp, filebase + ".gui.json");
-    }
-    
-    var jsonFile;
-    if (!fs.exists(fileName)) {
-        jsonFile = RunLoadQuery(query);
-    } else {
-        console.log("Reading " + fileName);
-        jsonFile = JSON.parse("" + fs.readFileSync(fileName));
-    }
+    var jsonFile = LoadFile(query, dirs.db).data;
     
     if (jsonFile.changelog === undefined) {
         jsonFile.changelog = "";
@@ -988,7 +1022,7 @@ function ReadFileMetadata(filebase, dirs, query) {
         configurations: jsonFile.configurations,
         version: jsonFile.version,
         changelog: jsonFile.changelog,
-        collection: query.collection
+        collection: query.query.collection
     };
     
     console.log("ReadFileMetadata returning: " + JSON.stringify(metadata));
@@ -1020,7 +1054,7 @@ function WriteFileMetadata(newMetadata, filebase) {
     console.log("Writing data to file");
     //console.log("fileName: " + fileName + ", metadata: " + JSON.stringify(jsonFile));
     fs.writeFileSync(fileName, JSON.stringify(jsonFile));
-
+    
     return true;
 };
 
@@ -1030,6 +1064,25 @@ function WriteFileMetadata(newMetadata, filebase) {
  * @returns {Object} Directories object 
  */
 function GetDirectories(userId) {
+    if (config.baseDir === "") {
+        config.baseDir = process.env["HOME"] + "/databases";
+        console.log("WARNING: ARTDAQ_DATABASE_DATADIR not set. Using $HOME/databases instead!!!");
+    }
+    
+    if (!fs.existsSync(config.baseDir)) {
+        console.log("ERROR: Base Directory doesn't exist!!!");
+        throw { name: "BaseDirectoryMissingException", message: "ERROR: Base Directory doesn't exist!!!" };
+    }
+    if (!fs.existsSync(path_module.join(config.baseDir, "db"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "db"));
+    }
+    if (!fs.existsSync(path_module.join(config.baseDir, "tmp"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "tmp"));
+    }
+    if (!fs.existsSync(path_module.join(config.baseDir, "TRASH"))) {
+        fs.mkdirSync(path_module.join(config.baseDir, "TRASH"));
+    }
+    
     // ReSharper disable UseOfImplicitGlobalInFunctionScope
     var db = path_module.join(config.baseDir, "db", userId);
     var tmp = path_module.join(config.baseDir, "tmp", userId);
@@ -1047,45 +1100,6 @@ function GetDirectories(userId) {
     }
     
     return { db: db, tmp: tmp, trash: trash };
-};
-
-/**
- * Reads a file out of the database and returns information on where to find it
- * @param {Object} fileInfo - Input search criteria
- * @param {string} fileInfo.name - Configurable Entity Name
- * @param {string} fileInfo.collection - Collection Name
- * @param {string} fileInfo.version - Configuration Version
- * @param {string} dataFormat - Data format (fhicl, json, gui)
- * @param {string} dbdirectory - Database storage directory
- * @returns {Object} Information abouit the output: fileName, filePath, and size
- * @throws DBOperationFailedException: More information in ex.message
- */
-function FetchFile(fileInfo, dataFormat, dbdirectory) {
-    var fileName = fileInfo.name + "_" + fileInfo.collection + "_" + fileInfo.version;
-    if (dataFormat === "fhicl") {
-        fileName += ".fcl";
-    } else if (dataFormat === "gui") {
-        fileName += ".gui.json";
-    } else {
-        fileName += ".json";
-    }
-    var filePath = path_module.join(dbdirectory, fileName);
-    
-    var query = {
-        filter: {
-            "configurable_entity.name": fileInfo.name,
-            version: fileInfo.version
-        },
-        collection: fileInfo.collection,
-        dbprovider: config.dbprovider,
-        operation: "load",
-        dataformat: dataFormat
-    };
-    var fhiclData = RunLoadQuery(query, true);
-    fs.writeFileSync(filePath, fhiclData);
-    
-    var stat = fs.statSync(filePath);
-    return { fileName: fileName, filePath: filePath, size: stat.size }
 };
 
 /**
@@ -1117,14 +1131,17 @@ function VersionExists(entity, collection, version) {
  */
 function lock() {
     
-    if (fs.existsSync("lockfile")) {
-        if (Date.now() - fs.fstatSync("lockfile").ctime.getTime() > 1000) {
+    if (fs.existsSync("/tmp/node_db_lockfile")) {
+        if (Date.now() - fs.fstatSync("/tmp/node_db_lockfile").ctime.getTime() > 1000) {
+            console.log("Stale Lockfile detected, deleting...");
             return unlock();
+        } else {
+            console.log("Lockfile detected and is not stale, aborting...");
         }
         return false;
     }
     
-    fs.writeFileSync("lockfile", "locked");
+    fs.writeFileSync("/tmp/node_db_lockfile", "locked");
     return true;
 }
 
@@ -1133,7 +1150,7 @@ function lock() {
  * @returns {Boolean}  True when complete
  */
 function unlock() {
-    fs.unlinkSync("lockfile");
+    fs.unlinkSync("/tmp/node_db_lockfile");
     return true;
 }
 
@@ -1228,7 +1245,7 @@ db.RW_saveConfig = function (post, workerData) {
 db.RO_LoadNamedConfig = function (post) {
     console.log("Request for configuration with name \"" + post.configName + "\" and search query \"" + post.query + "\" received.");
     if (post.query.length === 0 || post.configName === "No Configurations Found") {
-        return {files: []};
+        return { files: [] };
     }
     return LoadConfigFiles(post.configName, GetDirectories(post.user).db, JSON.parse(post.query));
 };
@@ -1252,6 +1269,11 @@ db.RW_discardConfig = function (post) {
     return { Success: true };
 };
 
+db.RO_AddOrUpdate = function (post) {
+    console.log("Request to update table row recieved: " + JSON.stringify(post));
+    return { Success: true };
+}
+
 db.RO_Update = function (post) {
     console.log("Request to update table received: " + JSON.stringify(post));
     UpdateTable(post.configName, post.table, { id: post.id, name: post.name, column: post.column, value: post.value }, GetDirectories(post.user));
@@ -1263,7 +1285,7 @@ db.RO_LoadConfigMetadata = function (post) {
     console.log("Request to load configuration metadata received: " + JSON.stringify(post));
     var ret = { Success: false, data: {} };
     try {
-        ret.data = ReadConfigurationMetadata(post.configName, GetDirectories(post.user));
+        ret.data = ReadConfigurationMetadata(post.configName, GetDirectories(post.user).db);
         ret.Success = true;
     } catch (e) {
         console.log("Exception caught: " + e.name + ": " + e.message);
@@ -1284,7 +1306,7 @@ db.RO_LoadFileMetadata = function (post) {
         for (var s in search) {
             if (search.hasOwnProperty(s)) {
                 if (search[s].name + "_" + search[s].query.collection === post.fileName) {
-                    query = search[s].query;
+                    query = search[s];
                 }
             }
         }
@@ -1410,6 +1432,7 @@ db.RO_NamedConfigs = function (post) {
     console.log("NamedConfigs complete");
     return configsOutput;
 };
+
 
 // GET calls
 db.GET_EntitiesAndVersions = function () {

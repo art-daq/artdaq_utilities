@@ -4,11 +4,13 @@ var defaultShadow = "";
 var tableHTML;
 var infoHTML;
 var radixButtonHTML;
+var treeGridHTML;
+var dialogContentHTML;
 var currentNamedConfig = "";
 var currentMetadata;
 var currentTable;
 var lastTabID = 1;
-var editedValues = [];
+var editedValues = {};
 var exportTarFileName = "export";
 //var userId = generateUUID();
 // For Testing
@@ -51,31 +53,44 @@ function resizeTextAreas() {
     });
 };
 
+function getRadix(value) {
+    var output = {
+        radix: 10,
+        value: value
+    }
+    value = "" + value;
+    if (value.search("0x") === 0) {
+        output.value = value.slice(2);
+        output.radix = 16;
+        if (("" + output.value).search(/[^0-9a-fA-F]/) >= 0) { output.radix = -1; }
+    } else if (value.search("0") === 0) {
+        output.value = value.slice(1);
+        output.radix = 8;
+        if (isNaN(output.value)) { output.radix = -1; }
+    } else if (value.search("b") === value.length - 1) {
+        output.value = value.slice(0, -1);
+        output.radix = 2;
+        if (isNaN(output.value)) { output.radix = -1; }
+    } else if (isNaN(value)) {
+        output.radix = -1;
+    }
+    if (value === "0") {
+        output.radix = 10;
+        output.value = "0";
+    }
+    if (output.value === " " || ("" + output.value).length === 0 || ("" + output.value).indexOf(".") >= 0) {
+        output.radix = -1;
+    }
+    
+    return output;
+}
+
 function createRowEditor(row, cellvalue, editor, cellText, width, height) {
     editor.after("<div></div><div></div>");
-    var radix = 10;
-    if (typeof cellText === "string" && cellText.search("0x") === 0) {
-        cellText = cellText.slice(2);
-        cellvalue = cellvalue.slice(2);
-        radix = 16;
-        if (("" + cellText).search(/[^0-9a-fA-F]/) >= 0) { return; }
-    } else if (typeof cellText === "string" && cellText.search("0") === 0) {
-        cellText = cellText.slice(1);
-        cellvalue = cellvalue.slice(1);
-        radix = 8;
-        if (isNaN(cellText)) { return; }
-    } else if (typeof cellText === "string" && cellText.search("b") === cellText.length - 1) {
-        cellText = cellText.slice(0, -1);
-        cellvalue = cellvalue.slice(0, -1);
-        radix = 2;
-        if (isNaN(cellText)) { return; }
-    } else if (isNaN(cellText)) {
-        return;
+    var radixObj = getRadix(cellText);
+    if (radixObj.radix > 0) {
+        editor.parent().jqxFormattedInput({ radix: radixObj.radix, value: radixObj.value, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
     }
-    if (cellText === " " || ("" + cellText).length === 0 || ("" + cellText).indexOf(".") >= 0) {
-        return;
-    }
-    editor.parent().jqxFormattedInput({ radix: radix, value: cellvalue, width: width, height: height, upperCase: true, dropDown: true, spinButtons: true });
 };
 
 function initRowEditor(row, cellvalue, editor) {
@@ -101,15 +116,16 @@ function getRowEditorValue(row, cellvalue, editor) {
             }
             return "0" + editor.val();
         }
-        if (editor.val().search("000") === 0) {
-            editor.parent().parent().empty();
-            return "";
-        }
     }
     return editor.val();
 };
 
 function makeTreeGrid(tag, displayColumns, dataFields, data) {
+    tag.html(treeGridHTML);
+    var grid = tag.find("#treeGrid");
+    var contextMenu = tag.find("#Menu");
+    var dialog = tag.find("#dialog");
+    var newRowID = null;
     // prepare the data
     console.log("Data is " + JSON.stringify(data));
     console.log("DisplayColumns is " + JSON.stringify(displayColumns));
@@ -122,7 +138,10 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         },
         id: "name",
         localData: data,
-        comment: "comment"
+        comment: "comment",
+        addRow: function (rowID, rowData, position, parentID, commit) {
+            newRowID = rowID;
+        }
     };
     // ReSharper disable once InconsistentNaming
     var dataAdapter = new $.jqx.dataAdapter(source, {
@@ -137,16 +156,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
             }
             for (var i in records) {
                 if (records.hasOwnProperty(i)) {
-                    var edited = false;
-                    for (var j in editedValues) {
-                        if (editedValues.hasOwnProperty(j)) {
-                            if (editedValues[j].tag === tag) {
-                                if (editedValues[j].rowData.id === i) {
-                                    edited = true;
-                                }
-                            }
-                        }
-                    }
+                    var editedValuesEntry = editedValues[currentTable + "/" + records[i].name];
+                    var edited = editedValuesEntry !== undefined && editedValuesEntry;
                     records[i]["edited"] = edited;
                     for (var f in numberFields) {
                         if (numberFields.hasOwnProperty(f)) {
@@ -179,7 +190,7 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
         }
     });
     // create Tree Grid
-    tag.addClass("jqxTreeGrid").jqxTreeGrid(
+    grid.addClass("jqxTreeGrid").jqxTreeGrid(
         {
             width: "100%",
             source: dataAdapter,
@@ -203,14 +214,165 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                         }
                     }
                 };
-                var rows = tag.jqxTreeGrid("getRows");
+                var rows = grid.jqxTreeGrid("getRows");
                 for (var ttrow = 0; ttrow < rows.length; ttrow++) {
                     setupRow(rows[ttrow]);
                 }
+            },
+            ready: function () {
+                dialog.on('close', function () {
+                    // enable jqxTreeGrid.
+                    grid.jqxTreeGrid({ disabled: false });
+                });
+                dialog.jqxWindow({
+                    resizable: true,
+                    width: 270,
+                    position: { left: grid.offset().left + 75, top: grid.offset().top + 35 },
+                    autoOpen: false
+                });
+                dialog.css('visibility', 'visible');
             }
         });
+    
+    // create context menu
+    contextMenu.jqxMenu({ width: 200, height: 87, autoOpenPopup: false, mode: 'popup' });
+    grid.on('contextmenu', function () {
+        return false;
+    });
+    grid.on('rowClick', function (event) {
+        var args = event.args;
+        if (args.originalEvent.button === 2) {
+            var scrollTop = $(window).scrollTop();
+            var scrollLeft = $(window).scrollLeft();
+            contextMenu.jqxMenu('open', parseInt(event.args.originalEvent.clientX) + 5 + scrollLeft, parseInt(event.args.originalEvent.clientY) + 5 + scrollTop);
+            return false;
+        }
+        return true;
+    });
+    var edit = function (row, key, newRow) {
+        newRowID = key;
+        // update the widgets inside jqxWindow.
+        dialog.jqxWindow('setTitle', "Edit Row: " + row.name);
+        dialog.jqxWindow('setContent', dialogContentHTML);
+        var jqEditors = [];
+        for (var i in dataFields) {
+            if (dataFields.hasOwnProperty(i)) {
+                var name = dataFields[i].name;
+                var value = "" + row[name];
+                if (value === "undefined") {
+                    value = "";
+                }
+                if (dataFields[i].editable || newRow) {
+                    var start = "<tr><td align=\"right\">" + name + ":</td><td align=\"left\">";
+                    var editor = "<input id=\"" + name + "_Editor\" type=\"text\" value=\"" + value + "\" />";
+                    
+                    var radixObj = getRadix(value);
+                    
+                    if (radixObj.radix > 0) {
+                        editor = "<div id=\"" + name + "_Editor\"><input type=\"text\" /><div></div><div></div></div>";
+                        jqEditors.push({
+                            name: name + "_Editor",
+                            value: radixObj.value,
+                            radix: radixObj.radix
+                        });
+                    }
+                    var end = "</td></tr>";
+                    dialog.find("tr:last").before(start + editor + end);
+                } else {
+                    dialog.find("tr:last").before("<tr><td align=\"right\">" + name + ":</td><td align=\"left\"><input id=\"" + name + "_Editor\" type=\"text\" value=\"" + value + "\" readonly=\"true\" disabled=\"disabled\" /></td></tr>");
+                }
+            }
+        }
+        var content = dialog.find("table").parent().html();
+        dialog.jqxWindow('setContent', content);
+        for (var ed in jqEditors) {
+            if (jqEditors.hasOwnProperty(ed)) {
+                dialog.find("#" + jqEditors[ed].name).jqxFormattedInput({ radix: jqEditors[ed].radix, value: jqEditors[ed].value, width: "100%", height: 25, upperCase: true, dropDown: true, spinButtons: true });
+            }
+        }
+        dialog.find("#save").jqxButton({ height: 30, width: 80 });
+        dialog.find("#cancel").jqxButton({ height: 30, width: 80 });
+        dialog.find("#save").mousedown(function () {
+            dialog.jqxWindow('close');
+            var row = {};
+            
+            for (var i in dataFields) {
+                if (dataFields.hasOwnProperty(i)) {
+                    var name = dataFields[i].name + "_Editor";
+                    var value = "" + $("#" + name).val();
+                    if (value === "undefined") {
+                        value = "";
+                    }
+                    row[dataFields[i].name] = value;
+                }
+            }
+            
+            AjaxPost("/db/AddOrUpdate", {
+                configName: currentNamedConfig,
+                table: currentTable,
+                id: row.id,
+                row: row,
+                user: userId
+            }, function (retval) {
+                if (retval.Success) {
+                    var now = new Date;
+                    $("#changes", $(".file-tab.active a").attr("href")).val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + row.name + " Dialog Edit - multiple columns may have been changed!");
+                    $("#masterChanges").val(now.toISOString() + ": Edit - Table: " + currentTable + ", Name: " + row.name + " Dialog Edit - multiple columns may have been changed!");
+                    resizeTextAreas();
+                    updateHeader(false, true, "There are pending unsaved changes. Please save or discard before closing the editor!");
+                } else {
+                    updateHeader(true, false, "Sending Update to server failed");
+                }
+            });
+            
+            grid.jqxTreeGrid('updateRow', newRowID, row);
+            grid.jqxTreeGrid("getRow", newRowID)["edited"] = true;
+            editedValues[currentTable + "/" + row.name] = true;
+            $("li.active :visible").parent().addClass("editedValue");
+        });
+        dialog.find("#cancel").mousedown(function () {
+            dialog.jqxWindow('close');
+        });
+        dialog.jqxWindow('open');
+        dialog.attr('data-row', key);
+        // disable jqxTreeGrid.
+        
+        grid.jqxTreeGrid({ disabled: true });
+    }
+    contextMenu.on('itemclick', function (event) {
+        var args = event.args;
+        var selection = grid.jqxTreeGrid('getSelection');
+        var rowid = selection[0].uid;
+        var text = $.trim($(args).text());
+        if (text === "Edit Selected Row") {
+            edit(selection[0], rowid, false);
+        } else if (text === "Delete Selected Row") {
+            grid.jqxTreeGrid('deleteRow', rowid);
+        } else {
+            var arrayName = false;
+            if (rowid.search(/___/) > 0) {
+                arrayName = true;
+            }
+            grid.jqxTreeGrid('addRow', null, {}, 'last', rowid);
+            if (arrayName) {
+                var idx = newRowID.search(/___/);
+                var num = newRowID.slice(idx + 3, -1);
+                num = parseInt(num) + 1;
+                newRowID = newRowID.slice(0, idx + 3) + num;
+            }
+            var obj = {};
+            for (var i in dataFields) {
+                if (dataFields.hasOwnProperty(i)) {
+                    obj[dataFields[i].name] = "";
+                }
+            }
+            obj.name = newRowID;
+            edit(obj, newRowID, true);
+        }
+    });
+    
     // Cell End Edit
-    tag.on("cellEndEdit", function (event) {
+    grid.on("cellEndEdit", function (event) {
         var args = event.args;
         // row key
         var rowKey = args.key;
@@ -227,8 +389,8 @@ function makeTreeGrid(tag, displayColumns, dataFields, data) {
                 }
             }
         }
-        tag.jqxTreeGrid("getRow", rowKey)["edited"] = true;
-        editedValues.push({ tag: tag, rowKey: rowKey, rowData: rowData });
+        grid.jqxTreeGrid("getRow", rowKey)["edited"] = true;
+        editedValues[currentTable + "/" + rowKey] = true;
         $("li.active :visible").parent().addClass("editedValue");
         // cell's value.
         var value = args.value;
@@ -319,9 +481,9 @@ function getConfigList() {
         $("#tab" + i).remove();
         $("#tablink" + i).remove();
     }
-
+    
     $("#reloadConfigsButton").text("Reload Configurations");
-
+    
     AjaxPost("/db/NamedConfigs", { configFilter: $("#configurationFilter").val(), user: userId }, function (data) {
         if (!data.Success) {
             updateHeader(true, false, "Error retrieving Configuration list. Please contact an expert!");
@@ -346,7 +508,11 @@ function registerTabFunctions() {
     $(".tabs .table-data a").off();
     $(".tabs .tab-links a").off().on("click", function (e) {
         var currentAttrValue = $(this).attr("href");
-        
+        var tab = $(this).parent();
+        var div = tab.parent();
+        div.scrollLeft(0);
+        var left = Math.floor(tab.position().left - 20);
+            div.scrollLeft(left);
         // Show/Hide Tabs
         $(".tabs " + currentAttrValue).show().siblings().hide();
         
@@ -416,6 +582,7 @@ function getUrlParameter(sParam) {
 };
 
 function loadConfigMetadata() {
+    console.log("Loading configuration metadata");
     AjaxPost("/db/LoadConfigMetadata", { configName: currentNamedConfig, user: userId }, function (metadata) {
         if (!metadata.Success) {
             updateHeader(true, false, "Error loading configuration metadata from database");
@@ -439,6 +606,12 @@ function loadConfigMetadata() {
                 text: "Version",
                 dataField: "version",
                 editable: false
+            }, 
+            {
+                text: 'Edit', cellsAlign: 'center', align: "center", columnType: 'none', editable: false, sortable: false, dataField: null, cellsRenderer: function (row, column, value) {
+                    // render custom column.
+                    return "<button data-row='" + row + "' class='editButtons' onclick=''>Edit</button>";
+                }
             }
         ];
         var dataFields = [
@@ -459,14 +632,40 @@ function loadConfigMetadata() {
         // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        $("#configurationEntities").addClass("jqxTreeGrid").jqxTreeGrid(
+        var grid = $("#configurationEntities");
+        grid.addClass("jqxTreeGrid").jqxTreeGrid(
             {
                 width: "100%",
                 source: dataAdapter,
                 editable: false,
                 sortable: true,
                 columnsResize: true,
-                columns: displayColumns
+                columns: displayColumns,
+                rendering: function () {
+                    // destroys all buttons.
+                    if ($(".editButtons").length > 0) {
+                        $(".editButtons").jqxButton('destroy');
+                    }
+                }, 
+                rendered: function () {
+                    if ($(".editButtons").length > 0) {
+                        $(".editButtons").jqxButton();
+                        
+                        var editClick = function (event) {
+                            var target = $(event.target);
+                            // get clicked row.
+                            var rowKey = event.target.getAttribute('data-row');
+                            var file = grid.jqxTreeGrid("getRow", rowKey)["file"];
+                            var fileNameTab = $(".file-tab[file-name=\"" + file + "\"] a");
+                            fileNameTab.trigger("click");
+                        }
+                        $(".editButtons").on('click', function (event) {
+                            editClick(event);
+                            return false;
+                        });
+
+                    }
+                }
             });
     });
 };
@@ -549,7 +748,7 @@ function loadConfig() {
                 
                 lastTabID++;
                 var parentTab = lastTabID;
-                $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" class=\"file-tab\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
+                $("#tabLinks").append("<li id=\"tablink" + lastTabID + "\" file-name=\"" + name + "\" tabNum=\""+lastTabID+"\" class=\"file-tab\"><a href=\"#tab" + lastTabID + "\">" + name + "</a></li>");
                 $("#tabContents").append("<div id=tab" + lastTabID + " class=\"tab\"></div>");
                 $("#tab" + lastTabID).html(tableHTML);
                 lastTabID++;
@@ -591,11 +790,11 @@ function baseConfig() {
         
         // Unselect Everything!
         $("#newConfigName").val($("#oldConfigName :selected").text());
-        var rows = $("#configurationPicker").jqxTreeGrid("getRows");
+        var rows = $("#grid #configurationPicker").jqxTreeGrid("getRows");
         for (var r in rows) {
             if (rows.hasOwnProperty(r)) {
                 if (rows[r].checked) {
-                    $("#configurationPicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    $("#grid #configurationPicker").jqxTreeGrid("uncheckRow", rows[r].uid);
                 }
             }
         }
@@ -603,8 +802,8 @@ function baseConfig() {
         for (var e in metadataObj.entities) {
             if (metadataObj.entities.hasOwnProperty(e)) {
                 var entity = metadataObj.entities[e];
-                $("#configurationPicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
-                $("#configurationPicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
+                $("#grid #configurationPicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#grid #configurationPicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
             }
         }
 
@@ -621,11 +820,11 @@ function baseExportConfig() {
         var metadataObj = metadata.data;
         
         // Unselect Everything!
-        var rows = $("#filePicker").jqxTreeGrid("getRows");
+        var rows = $("#grid #filePicker").jqxTreeGrid("getRows");
         for (var r in rows) {
             if (rows.hasOwnProperty(r)) {
                 if (rows[r].checked) {
-                    $("#filePicker").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    $("#grid #filePicker").jqxTreeGrid("uncheckRow", rows[r].uid);
                 }
             }
         }
@@ -633,8 +832,8 @@ function baseExportConfig() {
         for (var e in metadataObj.entities) {
             if (metadataObj.entities.hasOwnProperty(e)) {
                 var entity = metadataObj.entities[e];
-                $("#filePicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
-                $("#filePicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
+                $("#grid #filePicker").jqxTreeGrid("updateRow", entity.collection + entity.name, { name: entity.name, version: entity.version });
+                $("#grid #filePicker").jqxTreeGrid("checkRow", entity.collection + entity.name);
             }
         }
 
@@ -643,7 +842,7 @@ function baseExportConfig() {
 
 function saveNewConfig() {
     console.log("Saving New Configuration");
-    var rows = $("#configurationPicker").jqxTreeGrid("getCheckedRows");
+    var rows = $("#grid #configurationPicker").jqxTreeGrid("getCheckedRows");
     var configObj = {
         entities: []
     };
@@ -668,7 +867,7 @@ function saveNewConfig() {
 
 function exportFiles() {
     console.log("Exporting Files");
-    var rows = $("#filePicker").jqxTreeGrid("getCheckedRows");
+    var rows = $("#grid #filePicker").jqxTreeGrid("getCheckedRows");
     var configObj = {
         entities: []
     };
@@ -852,6 +1051,15 @@ function setupEntityVersionPicker(tag) {
             }
         ];
         
+        tag.html("<br><button type=\"button\" class=\"miniButton\" id=\"all1\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none1\"> Select None </button><br>" +
+            "<div id=\"grid\" class=\"jqxTreeGrid\"></div><br>" +
+            "<button type=\"button\" class=\"miniButton\" id=\"all2\"> Select All </button><button type=\"button\" class=\"miniButton\" id=\"none2\"> Select None </button>");
+        
+        tag.find("#none1").jqxButton({ height: 30 });
+        tag.find("#all1").jqxButton({ height: 30 });
+        tag.find("#none2").jqxButton({ height: 30 });
+        tag.find("#all2").jqxButton({ height: 30 });
+        
         var dataFields = [
             { name: "id", type: "string", editable: false, display: false },
             { name: "name", type: "string", editable: false, display: true },
@@ -872,7 +1080,7 @@ function setupEntityVersionPicker(tag) {
         // ReSharper disable once InconsistentNaming
         var dataAdapter = new $.jqx.dataAdapter(source);
         // create Tree Grid
-        tag.addClass("jqxTreeGrid").jqxTreeGrid({
+        tag.find("#grid").jqxTreeGrid({
             width: "100%",
             source: dataAdapter,
             sortable: true,
@@ -884,9 +1092,53 @@ function setupEntityVersionPicker(tag) {
         });
         for (var n in collectionNames) {
             if (collectionNames.hasOwnProperty(n)) {
-                tag.jqxTreeGrid("lockRow", collectionNames[n]);
+                tag.find("#grid").jqxTreeGrid("lockRow", collectionNames[n]);
             }
         }
+        
+        
+        
+        tag.find("#none1").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        tag.find("#all1").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (!rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("checkRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        tag.find("#none2").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("uncheckRow", rows[r].uid);
+                    }
+                }
+            }
+        });
+        
+        tag.find("#all2").mousedown(function () {
+            var rows = tag.find("#grid").jqxTreeGrid("getRows");
+            for (var r in rows) {
+                if (rows.hasOwnProperty(r)) {
+                    if (!rows[r].checked) {
+                        tag.find("#grid").jqxTreeGrid("checkRow", rows[r].uid);
+                    }
+                }
+            }
+        });
     });
 }
 
@@ -969,6 +1221,12 @@ $(document).ready(function () {
     $.get("/db/FileInfo.html", function (data) {
         infoHTML = data;
     });
+    
+    $.get("/db/TreeGrid.html", function (data) {
+        treeGridHTML = data;
+    });
+    
+    $.get("/db/Dialog.html", function (data) { dialogContentHTML = data; });
     
     $(".configInfo-tab").on("click", function () {
         resizeTextAreas();

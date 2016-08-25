@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Template ARTDAQ serverbase.js Module</title>
+    <script src="/base/jquery.min.js"></script>
+    <script src="client.js"></script>
+    <style>
+        @import url(client.css);
+    </style>
+</head>
+
+<body>
+
+    <div id="rev"></div>
+    <script> $.get("/dummy/GET_ServerVersion", function(data) { $("#rev").text("Server Revision: " + data); }); </script>
+</body>
+</html>

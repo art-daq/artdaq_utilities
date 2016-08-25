@@ -16,15 +16,23 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <PropertyGroup>
-   <!-- Specifies the directories which are ignored. Any paths which contain these directory names
+    <!-- Specifies the directories which are ignored. Any paths which contain these directory names
       will be ignored. The directory name must completely match and no wild cards are allowed
    -->
-   <AnalysisIgnoredDirectories>node_modules</AnalysisIgnoredDirectories>
-</PropertyGroup>
+    <AnalysisIgnoredDirectories>node_modules</AnalysisIgnoredDirectories>
+  </PropertyGroup>
   <ItemGroup>
+    <Compile Include="modules\artdaq-daqmon\client\client.js" />
+    <Compile Include="modules\artdaq-daqmon\client\sankey.js" />
+    <Compile Include="modules\artdaq-daqmon\server\artdaq-daqmon_module.js" />
     <Compile Include="modules\db\server\Utils.js" />
     <Content Include="client.html" />
+    <Compile Include="modules\template\client\client.js" />
+    <Compile Include="modules\template\server\template_module.js" />
     <Compile Include="serverbase.js" />
+    <Content Include="modules\artdaq-daqmon\client\client.css" />
+    <Content Include="modules\artdaq-daqmon\client\client.html" />
+    <Content Include="modules\artdaq-daqmon\client\sankeygreenhouse.json" />
     <Content Include="modules\artdaq-runcontrol\client\UDPDump.html" />
     <Content Include="modules\artdaq-runcontrol\client\client.html" />
     <Content Include="modules\artdaq-runcontrol\client\viewer.html" />
@@ -37,6 +45,8 @@
     <Compile Include="modules\artdaq-runcontrol\server\dispatcher-receiver_module.js" />
     <Compile Include="modules\artdaq-runcontrol\server\udpdump_module.js" />
     <Content Include="modules\db\client\FileInfo.html" />
+    <Content Include="modules\db\client\Dialog.html" />
+    <Content Include="modules\db\client\TreeGrid.html" />
     <Content Include="modules\db\client\Tables.html" />
     <Content Include="modules\procstat\client\client.html" />
     <Compile Include="modules\procstat\server\procstat_module.js" />
@@ -61,6 +71,8 @@
     <Content Include="modules\artdaq-configuration\client\V172X_reader.html" />
     <Compile Include="modules\artdaq-configuration\client\ConfigurationEditor.js" />
     <Compile Include="modules\artdaq-configuration\server\artdaq-configuration_module.js" />
+    <Content Include="modules\template\client\client.html" />
+    <Content Include="modules\template\client\client.css" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="certs" />
@@ -69,6 +81,9 @@
     <Folder Include="modules\artdaq-configuration" />
     <Folder Include="modules\artdaq-configuration\client" />
     <Folder Include="modules\artdaq-configuration\server" />
+    <Folder Include="modules\artdaq-daqmon\" />
+    <Folder Include="modules\artdaq-daqmon\client\" />
+    <Folder Include="modules\artdaq-daqmon\server\" />
     <Folder Include="modules\artdaq-runcontrol" />
     <Folder Include="modules\artdaq-runcontrol\client" />
     <Folder Include="modules\artdaq-runcontrol\server" />
@@ -85,6 +100,9 @@
     <Folder Include="modules\procstat" />
     <Folder Include="modules\procstat\client" />
     <Folder Include="modules\procstat\server" />
+    <Folder Include="modules\template\" />
+    <Folder Include="modules\template\client\" />
+    <Folder Include="modules\template\server\" />
     <Folder Include="Win32" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />

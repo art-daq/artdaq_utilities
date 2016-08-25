@@ -26,9 +26,10 @@ basic_plugin("graphite" "metric"
   ${Boost_THREAD_LIBRARY}
   ${FHICLCPP}
   ${CETLIB}
+   ${MF_MESSAGELOGGER}
   pthread
 )
 
 install_headers()
 install_source()
-install_fhicl(LIST fcl/file_metric.fcl fcl/graphite_metric.fcl fcl/msgFacility_metric.fcl)
+install_fhicl(SUBDIRS fcl)
