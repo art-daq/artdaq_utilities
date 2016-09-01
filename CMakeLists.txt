@@ -68,26 +68,6 @@ add_subdirectory(artdaq-utilities)
 # Useful tools and scripts for building ARTDAQ on Jenkins
 add_subdirectory(for_jenkins)
 
-# Web GUI
-FILE(COPY node.js DESTINATION .)
-execute_process(COMMAND git describe --tags
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-				RESULT_VARIABLE GIT_DESCRIBE_RESULT 
-                OUTPUT_VARIABLE GIT_DESCRIBE_VERSION 
-                ERROR_QUIET
-				OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("${GIT_DESCRIBE_RESULT}: ${GIT_DESCRIBE_VERSION} || $ENV{CETPKG_VERSION}")
-if(${GIT_DESCRIBE_RESULT} EQUAL 0)
-set(VERSION_TXT_VERSION ${GIT_DESCRIBE_VERSION})
-else(${GIT_DESCRIBE_RESULT})
-set(VERSION_TXT_VERSION $ENV{CETPKG_VERSION})
-endif()
-add_custom_command(OUTPUT node.js/version.txt
-                   COMMAND echo ${VERSION_TXT_VERSION} >${CMAKE_CURRENT_BINARY_DIR}/node.js/version.txt)
-add_custom_target(GitVersion ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/node.js/version.txt)
-INSTALL(DIRECTORY node.js DESTINATION ${product}/${version})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/node.js/version.txt DESTINATION ${product}/${version}/node.js)
-
 # ups - table and config files
 add_subdirectory(ups)
 
