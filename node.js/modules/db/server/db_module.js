@@ -313,7 +313,7 @@ function LoadFile(fileInfo, dbDirectory) {
         console.log("Loading file from database");
         output.data = RunLoadQuery(fileInfo.query);
         console.log("Writing file " + output.filePath);
-        fs.writeFileSync(output.filePath, output.data);
+        fs.writeFileSync(output.filePath, JSON.stringify(output.data));
     } else {
         output.data = JSON.parse("" + fs.readFileSync(output.filePath));
     }
@@ -354,7 +354,7 @@ function FetchFile(fileInfo, dataFormat, dbdirectory) {
         dataformat: dataFormat
     };
     var fhiclData = RunLoadQuery(query, true);
-    fs.writeFileSync(filePath, fhiclData);
+    fs.writeFileSync(filePath, JSON.stringify(fhiclData));
     
     var stat = fs.statSync(filePath);
     return { fileName: fileName, filePath: filePath, size: stat.size }
