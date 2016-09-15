@@ -1,20 +1,31 @@
-find_ups_product(swig v3_0_0)
-find_ups_product(nodejs v4_5_0)
 
-if( SWIG_FOUND )
-INCLUDE(${SWIG_USE_FILE}) 
-endif(SWIG_FOUND)
+set(CAN_BUILD true)
+if(NOT EXISTS "$ENV{SWIG_DIR}")
+  set(CAN_BUILD false)
+endif(NOT EXISTS "$ENV{SWIG_DIR}")
+if(NOT EXISTS "$ENV{NODEJS_DIR}")
+  set(CAN_BUILD false)
+endif(NOT EXISTS  "$ENV{NODEJS_DIR}")
+
+if(CAN_BUILD)
+  find_ups_product(swig v3)
+  include(FindSWIG)
+  INCLUDE(${SWIG_USE_FILE}) 
+  find_ups_product(nodejs v4_5_0)
+endif(CAN_BUILD)
 
 SET(NODEJS_ADDON_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(create_node_package_json NODEJS_ADDON_NAME)
+if(CAN_BUILD)
         configure_file (${NODEJS_ADDON_DIR}/package.json.in ${CMAKE_CURRENT_BINARY_DIR}/package.json @ONLY)
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/package.json
             DESTINATION ${flavorqual_dir}/lib/node_modules/${NODEJS_ADDON_NAME} )
+endif(CAN_BUILD)
 endfunction()
 
 function(create_nodejs_addon NODEJS_ADDON_NAME NODEJS_ADDON_INCLUDES NODEJS_ADDON_LIBS)
-    if(SWIG_FOUND AND NODEJS_FOUND)
+    if(CAN_BUILD)
         set (NODE_INCLUDE_DIRS $ENV{NODEJS_INC})
 
         execute_process(COMMAND node -e "var arr = process.versions.v8.split('.');arr.push('EXTRA');console.log(arr.join(';'));" OUTPUT_VARIABLE V8_STRING)
@@ -56,7 +67,7 @@ function(create_nodejs_addon NODEJS_ADDON_NAME NODEJS_ADDON_INCLUDES NODEJS_ADDO
         # COMMAND /usr/bin/nm ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
         # COMMAND echo "**** END" )
 
-    else(SWIG_FOUND AND NODEJS_FOUND)
-        message("Compatible versions of Swig or Node.js not found. Compatible versions of Swig or Node.js not found")
-    endif(SWIG_FOUND AND NODEJS_FOUND)
+    else(CAN_BUILD)
+        message("Compatible versions of Swig or Node.js not found. NOT building ${NODEJS_ADDON_NAME}")
+    endif(CAN_BUILD)
 endfunction()
