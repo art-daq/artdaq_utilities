@@ -145,7 +145,7 @@ cd ${blddir} || exit 1
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq_demo-${artdaq_ver} ${squal}-${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal} ${build_type}
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
