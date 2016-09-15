@@ -71,5 +71,9 @@ add_subdirectory(for_jenkins)
 # ups - table and config files
 add_subdirectory(ups)
 
+# CMake module files used by artdaq-utilities packages
+FILE(COPY Modules DESTINATION .)
+INSTALL(DIRECTORY Modules DESTINATION ${product}/${version})
+
 # packaging utility
 include(UseCPack)
