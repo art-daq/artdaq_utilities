@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+artdaq_ver=${ARTDAQ_VERSION}
 
 case ${qual_set} in
     s11:e6)
@@ -90,7 +91,7 @@ esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
-echo "building the artdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
+echo "building the artdaq_demo distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
 OS=`uname`
 if [ "${OS}" = "Linux" ]
@@ -125,15 +126,15 @@ cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
 # source code tarballs MUST be pulled first
-./pullProducts ${blddir} source artdaq-${version} || \
+./pullProducts ${blddir} source artdaq_demo-${version} || \
       { cat 1>&2 <<EOF
-ERROR: pull of artdaq-${version} failed
+ERROR: pull of artdaq_demo-${version} failed
 EOF
         exit 1
       }
-./pullProducts ${blddir} source art-${artver} || \
+./pullProducts ${blddir} source artdaq-${artdaq_ver} || \
     { cat 1>&2 <<EOF
-WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
+WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
 EOF
 }
 
@@ -143,24 +144,34 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal} ${build_type}
-# remove any artdaq entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/artdaq/${version}.version ]; then
-  echo "Removing ${blddir}/artdaq/${version}.version"
-  rm -rf ${blddir}/artdaq/${version}.version
+./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal} ${build_type}
+# remove any artdaq_demo entities that were pulled so it will always be rebuilt
+if [ -d ${blddir}/artdaq_demo ]; then
+  echo "Removing ${blddir}/artdaq_demo"
+  rm -rf ${blddir}/artdaq_demo
 fi
-if [ -d ${blddir}/artdaq/${version} ]; then
-  echo "Removing ${blddir}/artdaq/${version}"
-  rm -rf ${blddir}/artdaq/${version}
+if [ -d ${blddir}/artdaq_ganglia_plugin ]; then
+  echo "Removing ${blddir}/artdaq_ganglia_plugin"
+  rm -rf ${blddir}/artdaq_ganglia_plugin
 fi
-if [ `ls -1 ${blddir}/artdaq*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/artdaq*${dotver}*.tar.bz2
+if [ -d ${blddir}/artdaq_epics_plugin ]; then
+  echo "Removing ${blddir}/artdaq_epics_plugin"
+  rm -rf ${blddir}/artdaq_epics_plugin
+fi
+if [ -d ${blddir}/artdaq_mfextensions ]; then
+  echo "Removing ${blddir}/artdaq_mfextensions"
+  rm -rf ${blddir}/artdaq_mfextensions
+fi
+if [ -d ${blddir}/artdaq_database ]; then
+  echo "Removing ${blddir}/artdaq_database"
+  rm -rf ${blddir}/artdaq_database
 fi
 
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
