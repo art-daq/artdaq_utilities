@@ -315,15 +315,16 @@ sed -r "$sedstring" $buildfile > $edited_buildfile
 function get_art_from_nutools() {
 
     local nv=$1
+    local nv_formatted=$(echo $nv | sed -r 's/_/./g;s/v//' )
 
-    wget --quiet http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/nu-${nv}.html
+    wget --quiet http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/buildcfg/nu-buildcfg-${nv_formatted}
 
-    if [[ ! -e nu-${nv}.html ]]; then
-	echo "Problem grabbing http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/nu-${nv}.html"
+    if [[ ! -e nu-buildcfg-${nv_formatted} ]]; then
+	echo "Problem grabbing http://scisoft.fnal.gov/scisoft/bundles/nu/${nv}/nu-buildcfg-${nv_formatted}.html"
     fi
 
-    nutools_art_listing=$( sed -r -n 's/.*\s+art\s+.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-${nv}.html )
-    rm -f nu-${nv}.html
+    nutools_art_listing=$( sed -r -n 's/.*\s+art\s+(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/p' nu-buildcfg-${nv_formatted} )
+    rm -f nu-buildcfg-${nv_formatted}
     echo $nutools_art_listing
 }
 
