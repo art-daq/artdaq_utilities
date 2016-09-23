@@ -25,23 +25,33 @@ case ${qual_set} in
     s21:e9)
 	basequal=e9
 	squal=s21
+	artver=v1_17_03
 	;;
     s34:e10)
 	basequal=e10
 	squal=s34
+	artver=v1_17_08
 	;;
     s35:e10)
 	basequal=e10
 	squal=s35
+	artver=v2_01_02
 	;;
 	s41:e10)
 	basequal=e10
 	squal=s41
+	artver=v2_03_00
     ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
 	exit 1
+esac
+
+case ${demo_version} in
+   v2_08_03)
+    artdaq_ver=v1_13_02
+    ;;
 esac
 
 case ${build_type} in
@@ -96,6 +106,8 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq_demo-${demo_version} ${squal}-${basequal} ${build_type}
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${demo_version}
 source ./setups
