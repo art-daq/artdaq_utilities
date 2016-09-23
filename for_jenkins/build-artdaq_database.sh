@@ -133,17 +133,34 @@ else
   build_flag="-d"
 fi
 set +x
+
+
+prodblddir=${blddir}/build-artdaq_database-${squal}${basequal}-${build_type}
+mkdir -p  ${prodblddir}  || exit 1
+cd ${prodblddir}
+
 source ${srcdir}/artdaq-database/ups/setup_for_development ${build_flag} ${basequal} ${squal}
 
 ups active
-buildtool -cp 2>&1 |tee build_artdaq-database.log || \
+
+CETPKG_J=$(nproc)
+buildtool -p -j$CETPKG_J 2>&1 |tee ${blddir}/build_artdaq-database.log || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
 
+CETPKG_J=1
+buildtool -t -j$CETPKG_J 2>&1 |tee ${blddir}/test_artdaq-database.log || \
+ { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+   mv ${prodblddir}/{test,Testing}  $WORKSPACE/copyBack/
+   exit 1 
+ }
+
+
 echo
 echo "move files"
 echo
+mv ${prodblddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
