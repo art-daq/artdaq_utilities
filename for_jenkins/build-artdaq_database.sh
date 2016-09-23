@@ -89,6 +89,7 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
+./pullProducts ${blddir} source artdaq_demo-${version}
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -96,6 +97,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} artdaq_demo-${demo_version} ${squal}-${basequal} ${build_type}
+./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version}
 
 # Remove any artdaq_database that came with the bundle
 if [ -d ${blddir}/artdaq_database ]; then
