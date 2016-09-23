@@ -99,7 +99,7 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
-./pullProducts ${blddir} source artdaq_demo-${demo_version}
+#./pullProducts ${blddir} source artdaq_demo-${demo_version}
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -109,7 +109,7 @@ cd ${blddir} || exit 1
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq_demo-${demo_version} ${squal}-${basequal} ${build_type}
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${demo_version}
+#./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${demo_version}
 set +x
 source ./setups
 set -x
@@ -132,11 +132,11 @@ if [[ "${build_type}" == "prof" ]]; then
 else
   build_flag="-d"
 fi
-set -x
+set +x
 source ${srcdir}/artdaq-database/ups/setup_for_development ${build_flag} ${basequal} ${squal}
 
 ups active
-buildtool -cpt >build_artdaq-database.log 2>&1 || \
+buildtool -cp 2>&1 |tee build_artdaq-database.log || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
