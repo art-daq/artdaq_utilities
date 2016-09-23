@@ -71,7 +71,7 @@ case ${qual_set} in
 	;;
 	s41:e10)
 	basequal=e10
-	squal=s35
+	squal=s41
 	artver=v2_03_00
     ;;
     *)
