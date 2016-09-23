@@ -108,7 +108,7 @@ fi
 echo
 echo "begin build"
 echo
-git clone http://cdcvs.fnal.gov/projects/artdaq-database ${srcdir}/artdaq-database
+git clone http://cdcvs.fnal.gov/projects/artdaq-utilities-database ${srcdir}/artdaq-database
 cd ${srcdir}/artdaq-database
 git checkout master
 cd ${blddir}
