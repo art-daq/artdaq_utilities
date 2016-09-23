@@ -110,7 +110,9 @@ cd ${blddir} || exit 1
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq_demo-${demo_version} ${squal}-${basequal} ${build_type}
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${demo_version}
+set +x
 source ./setups
+set -x
 
 # Remove any artdaq_database that came with the bundle
 if [ -d ${blddir}/artdaq_database ]; then
@@ -130,7 +132,10 @@ if [[ "${build_type}" == "prof" ]]; then
 else
   build_flag="-d"
 fi
+set -x
 source ${srcdir}/artdaq-database/ups/setup_for_development ${build_flag} ${basequal} ${squal}
+
+ups active
 buildtool -cpt >build_artdaq-database.log 2>&1 || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
