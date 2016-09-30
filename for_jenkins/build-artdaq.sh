@@ -165,6 +165,11 @@ echo
    exit 1 
  }
 
+echo "Fix Manifests"
+cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+
 echo
 echo "move files"
 echo
