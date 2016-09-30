@@ -19,45 +19,13 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
-artdaq_ver=${ARTDAQ_VERSION}
+demo_version=${ARTDAQ_DEMO_VERSION}
 
 case ${qual_set} in
-    s11:e6)
-	basequal=e6
-	squal=s11
-	artver=v1_14_02
-	nutoolsver=v1_11_01
-	;;
-    s15:e6)
-	basequal=e6
-	squal=s15
-	artver=v1_15_02
-	nutoolsver=v1_14_02
-	;;
-    s31:e9)
-	basequal=e9
-	squal=s31
-	artver=v1_18_05
-	;;
     s21:e9)
 	basequal=e9
 	squal=s21
 	artver=v1_17_03
-	;;
-    s21:e7)
-	basequal=e7
-	squal=s21
-	artver=v1_17_03
-	;;
-    s15:e7)
-	basequal=e7
-	squal=s15
-	artver=v1_15_02
-	;;
-    s11:e7)
-	basequal=e7
-	squal=s11
-	artver=v1_14_02
 	;;
     s34:e10)
 	basequal=e10
@@ -71,13 +39,19 @@ case ${qual_set} in
 	;;
 	s41:e10)
 	basequal=e10
-	squal=s35
+	squal=s41
 	artver=v2_03_00
     ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
 	exit 1
+esac
+
+case ${demo_version} in
+   v2_08_03)
+    artdaq_ver=v1_13_02
+    ;;
 esac
 
 case ${build_type} in
@@ -125,18 +99,7 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
-# source code tarballs MUST be pulled first
-./pullProducts ${blddir} source artdaq_demo-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of artdaq_demo-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source artdaq-${artdaq_ver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
-EOF
-}
+#./pullProducts ${blddir} source artdaq_demo-${demo_version}
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -145,24 +108,13 @@ cd ${blddir} || exit 1
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal} ${build_type}
-# remove any artdaq_demo entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/artdaq_demo ]; then
-  echo "Removing ${blddir}/artdaq_demo"
-  rm -rf ${blddir}/artdaq_demo
-fi
-if [ -d ${blddir}/artdaq_ganglia_plugin ]; then
-  echo "Removing ${blddir}/artdaq_ganglia_plugin"
-  rm -rf ${blddir}/artdaq_ganglia_plugin
-fi
-if [ -d ${blddir}/artdaq_epics_plugin ]; then
-  echo "Removing ${blddir}/artdaq_epics_plugin"
-  rm -rf ${blddir}/artdaq_epics_plugin
-fi
-if [ -d ${blddir}/artdaq_mfextensions ]; then
-  echo "Removing ${blddir}/artdaq_mfextensions"
-  rm -rf ${blddir}/artdaq_mfextensions
-fi
+./pullProducts ${blddir} ${flvr} artdaq_demo-${demo_version} ${squal}-${basequal} ${build_type}
+#./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${demo_version}
+set +x
+source ./setups
+set -x
+
+# Remove any artdaq_database that came with the bundle
 if [ -d ${blddir}/artdaq_database ]; then
   echo "Removing ${blddir}/artdaq_database"
   rm -rf ${blddir}/artdaq_database
@@ -171,20 +123,44 @@ fi
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
+git clone http://cdcvs.fnal.gov/projects/artdaq-utilities-database ${srcdir}/artdaq-database
+cd ${srcdir}/artdaq-database
+git checkout master
+cd ${blddir}
+if [[ "${build_type}" == "prof" ]]; then
+  build_flag="-p"
+else
+  build_flag="-d"
+fi
+set +x
+
+
+prodblddir=${blddir}/build-artdaq_database-${squal}${basequal}-${build_type}
+mkdir -p  ${prodblddir}  || exit 1
+cd ${prodblddir}
+
+source ${srcdir}/artdaq-database/ups/setup_for_development ${build_flag} ${basequal} ${squal}
+
+ups active
+
+CETPKG_J=$(nproc)
+buildtool -p -j$CETPKG_J 2>&1 |tee ${blddir}/build_artdaq-database.log || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
 
-echo "Fix Manifests"
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+CETPKG_J=1
+buildtool -t -j$CETPKG_J 2>&1 |tee ${blddir}/test_artdaq-database.log || \
+ { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+   mv ${prodblddir}/{test,Testing}  $WORKSPACE/copyBack/
+   exit 1 
+ }
+
 
 echo
 echo "move files"
 echo
+mv ${prodblddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
