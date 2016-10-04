@@ -167,6 +167,10 @@ if [ -d ${blddir}/artdaq_database ]; then
   echo "Removing ${blddir}/artdaq_database"
   rm -rf ${blddir}/artdaq_database
 fi
+if [ -d ${blddir}/artdaq_node_server ]; then
+  echo "Removing ${blddir}/artdaq_node_server"
+  rm -rf ${blddir}/artdaq_node_server
+fi
 
 echo
 echo "begin build"
