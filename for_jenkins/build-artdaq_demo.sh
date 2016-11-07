@@ -71,7 +71,7 @@ case ${qual_set} in
 	;;
 	s41:e10)
 	basequal=e10
-	squal=s35
+	squal=s41
 	artver=v2_03_00
     ;;
     *)
@@ -167,6 +167,10 @@ if [ -d ${blddir}/artdaq_database ]; then
   echo "Removing ${blddir}/artdaq_database"
   rm -rf ${blddir}/artdaq_database
 fi
+if [ -d ${blddir}/artdaq_node_server ]; then
+  echo "Removing ${blddir}/artdaq_node_server"
+  rm -rf ${blddir}/artdaq_node_server
+fi
 
 echo
 echo "begin build"
@@ -175,6 +179,12 @@ echo
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
+
+echo "Fix Manifests"
+cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
