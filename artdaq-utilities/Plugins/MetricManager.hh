@@ -40,31 +40,31 @@ public:
   void sendMetric(std::string const& name, T value, std::string const& unit, int level, bool accumulate = true, std::string metricPrefix = "", bool useNameOverride = false)
   {
     if(initialized_ && running_)
-    {
-      std::string nameTemp = name;
-      if(!useNameOverride) {
-      if(metricPrefix.size() > 0) {
-	nameTemp = prefix_ + "." + metricPrefix + "." + name;
-      }
-      else {
-nameTemp = prefix_ + "." + name;
-      }
-      }
+	  {
+		std::string nameTemp = name;
+		if(!useNameOverride) {
+		  if(metricPrefix.size() > 0) {
+			nameTemp = prefix_ + "." + metricPrefix + "." + name;
+		  }
+		  else {
+			nameTemp = prefix_ + "." + name;
+		  }
+		}
 
-      for(auto & metric : metric_plugins_)
-      {
-        if(metric->getRunLevel() >= level) {
-          try{
-            metric->sendMetric(nameTemp, value, unit, accumulate);
-          }
-          catch (...) {
-			mf::LogError("MetricManager") << 
-	      "Error in MetricManager::sendMetric: error sending value to metric plugin with name "
-			<< metric->getLibName();
-          }
-        }
-      }
-    }
+		for(auto & metric : metric_plugins_)
+		  {
+			if(metric->getRunLevel() >= level) {
+			  try{
+				metric->sendMetric(nameTemp, value, unit, accumulate);
+			  }
+			  catch (...) {
+				mf::LogError("MetricManager") << 
+				  "Error in MetricManager::sendMetric: error sending value to metric plugin with name "
+											  << metric->getLibName();
+			  }
+			}
+		  }
+	  }
     else if(initialized_) {
       mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
     }
