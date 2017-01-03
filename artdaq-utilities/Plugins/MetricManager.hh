@@ -14,7 +14,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <sstream>
-#include <queue>
+#include <list>
 #include <thread>
 
 namespace artdaq
@@ -82,7 +82,7 @@ private:
 	  MetricData(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride)
 		  : name_(name), unsignedValue_(value), type_(UnsignedMetric), unit_(unit), level_(level), accumulate_(accumulate), metricPrefix_(metricPrefix), useNameOverride_(useNameOverride) {}
   };
-  std::queue<MetricData> metric_queue_;
+  std::list<MetricData> metric_queue_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */

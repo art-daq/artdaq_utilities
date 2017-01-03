@@ -29,15 +29,15 @@ namespace artdaq {
 		//
 		///////////////////////////////////////////////////////////////////////////
 	public:
-		virtual std::string getLibName() { return "ERROR"; }
+		virtual std::string getLibName() const { return "ERROR"; }
 	protected:
 		// These methods dispatch the metric to the metric storage (file, Graphite, Ganglia, etc.)
 		// Metric plugins should override them
-		virtual void sendMetric_(std::string name, std::string value, std::string unit) = 0;
-		virtual void sendMetric_(std::string name, int value, std::string unit) = 0;
-		virtual void sendMetric_(std::string name, double value, std::string unit) = 0;
-		virtual void sendMetric_(std::string name, float value, std::string unit) = 0;
-		virtual void sendMetric_(std::string name, long unsigned int value, std::string unit) = 0;
+		virtual void sendMetric_(const std::string& name, const std::string&       value, const std::string& unit) = 0;
+		virtual void sendMetric_(const std::string& name, const int&               value, const std::string& unit) = 0;
+		virtual void sendMetric_(const std::string& name, const double&            value, const std::string& unit) = 0;
+		virtual void sendMetric_(const std::string& name, const float&             value, const std::string& unit) = 0;
+		virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit) = 0;
 
 		//Run Control -> Clean-up and start-up methods for metric plugins
 		virtual void startMetrics_() = 0;
@@ -50,7 +50,7 @@ namespace artdaq {
 		/////////////////////////////////////////////////////////////////////////////////
 	public:
 		// Methods for aggregating metrics. These methods should be called from ARTDAQ and derived code.
-		virtual void sendMetric(std::string name, std::string value, std::string unit, bool accumulate = true)
+		virtual void sendMetric(const std::string& name, const std::string& value, const std::string& unit, bool accumulate = true)
 		{
 			if (accumulate) {
 				// There's no sensible way to accumulate string values, just pass them through...
@@ -60,7 +60,7 @@ namespace artdaq {
 				sendMetric_(name, value, unit);
 			}
 		}
-		virtual void sendMetric(std::string name, int value, std::string unit, bool accumulate = true)
+		virtual void sendMetric(const std::string& name, const int& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -87,7 +87,7 @@ namespace artdaq {
 				intAccumulator_[name].clear();
 			}
 		}
-		virtual void sendMetric(std::string name, double value, std::string unit, bool accumulate = true)
+		virtual void sendMetric(const std::string& name, const double& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -114,7 +114,7 @@ namespace artdaq {
 				doubleAccumulator_[name].clear();
 			}
 		}
-		virtual void sendMetric(std::string name, float value, std::string unit, bool accumulate = true)
+		virtual void sendMetric(const std::string& name, const float& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -141,7 +141,7 @@ namespace artdaq {
 				floatAccumulator_[name].clear();
 			}
 		}
-		virtual void sendMetric(std::string name, long unsigned int value, std::string unit, bool accumulate = true)
+		virtual void sendMetric(const std::string& name, const  long unsigned int& value, const  std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a

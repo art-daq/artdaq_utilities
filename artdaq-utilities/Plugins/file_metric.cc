@@ -55,27 +55,27 @@ namespace artdaq {
       stopMetrics();
       closeFile_();
     }
-    virtual std::string getLibName() { return "file"; }
-    virtual void sendMetric_(std::string name, std::string value, std::string unit ) 
+    virtual std::string getLibName() const { return "file"; }
+    virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit )
     {
       if(!stopped_ && !inhibit_) {
         const std::time_t result = std::time(NULL);
         outputStream_ << std::ctime(&result) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
       }
     }
-    virtual void sendMetric_(std::string name, int value, std::string unit ) 
+    virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit )
     { 
       sendMetric(name, std::to_string(value), unit);
     }
-    virtual void sendMetric_(std::string name, double value, std::string unit ) 
+    virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit )
     { 
       sendMetric(name, std::to_string(value), unit);
     }
-    virtual void sendMetric_(std::string name, float value, std::string unit ) 
+    virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit )
     {
       sendMetric(name, std::to_string(value), unit);
     }
-    virtual void sendMetric_(std::string name, unsigned long int value, std::string unit ) 
+    virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit )
     { 
       sendMetric(name, std::to_string(value), unit);
     }
