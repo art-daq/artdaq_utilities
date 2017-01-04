@@ -12,6 +12,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include <sstream>
+#include <chrono>
 
 artdaq::MetricManager::
 MetricManager() : metric_plugins_(0), initialized_(false), running_(false) { }
@@ -64,15 +65,16 @@ void artdaq::MetricManager::do_start()
 					metric->getLibName();
 			}
 		}
-		running_ = true; 
+		running_ = true;
 		startMetricLoop_();
 	}
 }
 
 void artdaq::MetricManager::do_stop()
 {
-		running_ = false;
-		if(metric_sending_thread_.joinable()) metric_sending_thread_.join();
+	running_ = false;
+	metric_cv_.notify_all();
+	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
 }
 
 void artdaq::MetricManager::do_pause() { /*do_stop();*/ }
@@ -114,6 +116,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, std::string con
 	}
 	else if (running_ && initialized_) {
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
@@ -122,6 +125,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, int const& valu
 	}
 	else if (running_ && initialized_) {
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, double const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
@@ -130,6 +134,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, double const& v
 	}
 	else if (running_ && initialized_) {
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, float const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
@@ -138,14 +143,16 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, float const& va
 	}
 	else if (running_ && initialized_) {
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
 	if (initialized_ && !running_) {
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
-	else if(running_ && initialized_) {
+	else if (running_ && initialized_) {
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		metric_cv_.notify_all();
 	}
 }
 
@@ -159,7 +166,10 @@ void artdaq::MetricManager::startMetricLoop_()
 void  artdaq::MetricManager::sendMetricLoop_()
 {
 	while (running_) {
-		if (metric_queue_.size() > 0) {
+		std::unique_lock<std::mutex> lk(metric_mutex_);
+		metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
+
+		while (metric_queue_.size() > 0) {
 			std::string nameTemp = metric_queue_.front().name_;
 			if (!metric_queue_.front().useNameOverride_) {
 				if (metric_queue_.front().metricPrefix_.size() > 0) {
@@ -200,9 +210,6 @@ void  artdaq::MetricManager::sendMetricLoop_()
 				}
 			}
 			metric_queue_.pop_front();
-		}
-		else {
-			usleep(10000);
 		}
 	}
 

@@ -16,6 +16,7 @@
 #include <sstream>
 #include <list>
 #include <thread>
+#include <condition_variable>
 
 namespace artdaq
 {
@@ -52,6 +53,9 @@ private:
 
   std::vector<std::unique_ptr<artdaq::MetricPlugin>> metric_plugins_;
   std::thread metric_sending_thread_;
+  std::mutex metric_mutex_;
+  std::condition_variable metric_cv_;
+
   bool initialized_;
   bool running_;
   std::string prefix_;
