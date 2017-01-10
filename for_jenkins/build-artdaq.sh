@@ -21,48 +21,12 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
-    s11:e6)
-	basequal=e6
-	squal=s11
-	artver=v1_14_02
-	nutoolsver=v1_11_01
-	;;
-    s15:e6)
-	basequal=e6
-	squal=s15
-	artver=v1_15_02
-	nutoolsver=v1_14_02
-	;;
-    s31:e9)
-	basequal=e9
-	squal=s31
-	artver=v1_18_05
-	;;
-    s21:e9)
-	basequal=e9
-	squal=s21
-	artver=v1_17_03
-	;;
-    s21:e7)
-	basequal=e7
-	squal=s21
-	artver=v1_17_03
-	;;
-    s15:e7)
-	basequal=e7
-	squal=s15
-	artver=v1_15_02
-	;;
-    s11:e7)
-	basequal=e7
-	squal=s11
-	artver=v1_14_02
-	;;
-    s34:e10)
-	basequal=e10
-	squal=s34
-	artver=v1_17_08
-	;;
+s43:e10)
+       basequal=e10
+       squal=s43
+       artver=v2_05_00
+       nutoolsver=v2_06_02
+       ;;
     s35:e10)
 	basequal=e10
 	squal=s35

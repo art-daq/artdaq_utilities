@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq_utilities  v1_00_10
-defaultqual    e10:s35
+parent artdaq_utilities  v1_01_00
+defaultqual    e10:s41
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -19,10 +19,10 @@ fcldir      product_dir fcl
 #
 product		version		optional
 TRACE		v3_06_07
+messagefacility v1_17_02        s44
 messagefacility v1_18_00        s43
 messagefacility v1_17_01        s41
-messagefacility v1_16_28        s35
-cetbuildtools	v5_04_03	-	only_for_build
+cetbuildtools	v5_06_03	-	only_for_build
 end_product_list
 
 # e6 - with gcc 4.9.1 and -std=c++1y
@@ -31,12 +31,12 @@ end_product_list
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
 qualifier	TRACE   	messagefacility	notes
+e10:s44:debug   e10:debug       e10:debug       -std=c++14
+e10:s44:prof    e10:prof        e10:prof 	-std=c++14
 e10:s43:debug   e10:debug       e10:debug       -std=c++14
 e10:s43:prof    e10:prof        e10:prof 	-std=c++14
 e10:s41:debug   e10:debug       e10:debug       -std=c++14
 e10:s41:prof    e10:prof        e10:prof 	-std=c++14
-e10:s35:debug   e10:debug      	e10:debug       -std=c++14
-e10:s35:prof    e10:prof       	e10:prof        -std=c++14
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:

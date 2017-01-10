@@ -50,9 +50,9 @@ public:
 		startMetrics();
 	}
 	~MsgFacilityMetric() { stopMetrics(); }
-	virtual std::string getLibName() { return "msgFacility"; }
+	virtual std::string getLibName() const { return "msgFacility"; }
 
-	virtual void sendMetric_(std::string name, std::string value, std::string unit)
+	virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit)
 	{
 	  if(!inhibit_) 
 		{
@@ -73,19 +73,19 @@ public:
 		}
 	  }
 	}
-	virtual void sendMetric_(std::string name, int value, std::string unit)
+	virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit)
 	{
 		sendMetric(name, std::to_string(value), unit);
 	}
-	virtual void sendMetric_(std::string name, double value, std::string unit)
+	virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit)
 	{
 		sendMetric(name, std::to_string(value), unit);
 	}
-	virtual void sendMetric_(std::string name, float value, std::string unit)
+	virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit)
 	{
 		sendMetric(name, std::to_string(value), unit);
 	}
-	virtual void sendMetric_(std::string name, unsigned long int value, std::string unit)
+	virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit)
 	{
 		sendMetric(name, std::to_string(value), unit);
 	}
