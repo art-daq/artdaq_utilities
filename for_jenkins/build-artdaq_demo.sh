@@ -22,11 +22,6 @@ build_type=${BUILDTYPE}
 artdaq_ver=${ARTDAQ_VERSION}
 
 case ${qual_set} in
-    s35:e10)
-	basequal=e10
-	squal=s35
-	artver=v2_01_02
-	;;
 	s41:e10)
 	basequal=e10
 	squal=s41
@@ -36,6 +31,11 @@ case ${qual_set} in
     basequal=e10
     squal=s43
     artver=v2_05_00
+    ;;
+    s44:e10)
+    basequal=e10
+    squal=s44
+    artver=v2_04_01
     ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
