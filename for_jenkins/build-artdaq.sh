@@ -124,6 +124,7 @@ fi
 echo
 echo "begin build"
 echo
+export CTEST_OUTPUT_ON_FAILURE=1
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
@@ -140,5 +141,4 @@ echo
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
-
 exit 0
