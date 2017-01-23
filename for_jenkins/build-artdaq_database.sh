@@ -120,7 +120,7 @@ echo "begin build"
 echo
 git clone http://cdcvs.fnal.gov/projects/artdaq-utilities-database ${srcdir}/artdaq-database
 cd ${srcdir}/artdaq-database
-git checkout master
+git checkout develop
 cd ${blddir}
 if [[ "${build_type}" == "prof" ]]; then
   build_flag="-p"
