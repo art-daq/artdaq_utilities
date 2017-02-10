@@ -22,25 +22,20 @@ build_type=${BUILDTYPE}
 demo_version=${ARTDAQ_DEMO_VERSION}
 
 case ${qual_set} in
-    s21:e9)
-	basequal=e9
-	squal=s21
-	artver=v1_17_03
-	;;
-    s34:e10)
-	basequal=e10
-	squal=s34
-	artver=v1_17_08
-	;;
-    s35:e10)
-	basequal=e10
-	squal=s35
-	artver=v2_01_02
-	;;
 	s41:e10)
 	basequal=e10
 	squal=s41
 	artver=v2_03_00
+    ;;
+	s43:e10)
+	basequal=e10
+	squal=s43
+	artver=v2_05_00
+    ;;
+	s44:e10)
+	basequal=e10
+	squal=s44
+	artver=v2_04_01
     ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
@@ -49,8 +44,8 @@ case ${qual_set} in
 esac
 
 case ${demo_version} in
-   v2_08_03)
-    artdaq_ver=v1_13_02
+   v2_09_00)
+    artdaq_ver=v2_00_00
     ;;
 esac
 
@@ -125,7 +120,7 @@ echo "begin build"
 echo
 git clone http://cdcvs.fnal.gov/projects/artdaq-utilities-database ${srcdir}/artdaq-database
 cd ${srcdir}/artdaq-database
-git checkout master
+git checkout develop
 cd ${blddir}
 if [[ "${build_type}" == "prof" ]]; then
   build_flag="-p"

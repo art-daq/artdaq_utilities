@@ -21,17 +21,17 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+s44:e10)
+basequal=e10
+squal=s44
+artver=v2_04_01
+;;
 s43:e10)
        basequal=e10
        squal=s43
        artver=v2_05_00
        nutoolsver=v2_06_02
        ;;
-    s35:e10)
-	basequal=e10
-	squal=s35
-	artver=v2_01_02
-	;;
 	s41:e10)
 	basequal=e10
 	squal=s41
@@ -124,6 +124,7 @@ fi
 echo
 echo "begin build"
 echo
+export CTEST_OUTPUT_ON_FAILURE=1
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
@@ -140,5 +141,4 @@ echo
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
-
 exit 0

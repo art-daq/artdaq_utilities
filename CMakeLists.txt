@@ -51,7 +51,7 @@ find_ups_product( cetpkgsupport v1_08_03 )
 find_ups_product( fhiclcpp v3_04_00 )
 find_ups_product( messagefacility v1_14_01 )
 
-find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
+#find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
