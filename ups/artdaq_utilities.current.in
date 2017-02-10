@@ -1,0 +1,11 @@
+FILE = chain
+PRODUCT = @product@
+CHAIN = current
+
+FLAVOR = @UPSFLAVOR@
+VERSION = @version@
+QUALIFIERS = @FQUAL@
+  DECLARER = CET
+  DECLARED = @datime@
+  MODIFIER = CET
+  MODIFIED = @datime@
