@@ -115,6 +115,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, std::string con
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
 	else if (running_ && initialized_) {
+		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
 		metric_cv_.notify_all();
 	}
@@ -124,6 +125,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, int const& valu
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
 	else if (running_ && initialized_) {
+		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
 		metric_cv_.notify_all();
 	}
@@ -133,6 +135,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, double const& v
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
 	else if (running_ && initialized_) {
+		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
 		metric_cv_.notify_all();
 	}
@@ -142,6 +145,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, float const& va
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
 	else if (running_ && initialized_) {
+		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
 		metric_cv_.notify_all();
 	}
@@ -151,6 +155,7 @@ void  artdaq::MetricManager::sendMetric(std::string const& name, long unsigned i
 		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
 	}
 	else if (running_ && initialized_) {
+		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
 		metric_cv_.notify_all();
 	}
@@ -166,39 +171,50 @@ void artdaq::MetricManager::startMetricLoop_()
 void  artdaq::MetricManager::sendMetricLoop_()
 {
 	while (running_) {
-		std::unique_lock<std::mutex> lk(metric_mutex_);
-		metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
+		while (metric_queue_.size() == 0 && running_) {
+			std::unique_lock<std::mutex> lk(metric_mutex_);
+			metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
+		}
 
 		while (metric_queue_.size() > 0) {
-			std::string nameTemp = metric_queue_.front().name_;
-			if (!metric_queue_.front().useNameOverride_) {
-				if (metric_queue_.front().metricPrefix_.size() > 0) {
-					nameTemp = prefix_ + "." + metric_queue_.front().metricPrefix_ + "." + metric_queue_.front().name_;
+			MetricData data_;
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				data_ = metric_queue_.front();
+				metric_queue_.pop_front();
+			}
+			if (data_.type_ == MetricData::InvalidMetric) continue;
+			std::string nameTemp = data_.name_;
+			if (!data_.useNameOverride_) {
+				if (data_.metricPrefix_.size() > 0) {
+					nameTemp = prefix_ + "." + data_.metricPrefix_ + "." + data_.name_;
 				}
 				else {
-					nameTemp = prefix_ + "." + metric_queue_.front().name_;
+					nameTemp = prefix_ + "." + data_.name_;
 				}
 			}
 
 			for (auto & metric : metric_plugins_)
 			{
-				if (metric->getRunLevel() >= metric_queue_.front().level_) {
+				if (metric->getRunLevel() >= data_.level_) {
 					try {
-						switch (metric_queue_.front().type_) {
+						switch (data_.type_) {
 						case MetricData::StringMetric:
-							metric->sendMetric(nameTemp, metric_queue_.front().stringValue_, metric_queue_.front().unit_, metric_queue_.front().accumulate_);
+							metric->sendMetric(nameTemp, data_.stringValue_, data_.unit_, data_.accumulate_);
 							break;
 						case MetricData::IntMetric:
-							metric->sendMetric(nameTemp, metric_queue_.front().intValue_, metric_queue_.front().unit_, metric_queue_.front().accumulate_);
+							metric->sendMetric(nameTemp, data_.intValue_, data_.unit_, data_.accumulate_);
 							break;
 						case MetricData::DoubleMetric:
-							metric->sendMetric(nameTemp, metric_queue_.front().doubleValue_, metric_queue_.front().unit_, metric_queue_.front().accumulate_);
+							metric->sendMetric(nameTemp, data_.doubleValue_, data_.unit_, data_.accumulate_);
 							break;
 						case MetricData::FloatMetric:
-							metric->sendMetric(nameTemp, metric_queue_.front().floatValue_, metric_queue_.front().unit_, metric_queue_.front().accumulate_);
+							metric->sendMetric(nameTemp, data_.floatValue_, data_.unit_, data_.accumulate_);
 							break;
 						case MetricData::UnsignedMetric:
-							metric->sendMetric(nameTemp, metric_queue_.front().unsignedValue_, metric_queue_.front().unit_, metric_queue_.front().accumulate_);
+							metric->sendMetric(nameTemp, data_.unsignedValue_, data_.unit_, data_.accumulate_);
+							break;
+						case MetricData::InvalidMetric:
 							break;
 						}
 					}
@@ -209,7 +225,6 @@ void  artdaq::MetricManager::sendMetricLoop_()
 					}
 				}
 			}
-			metric_queue_.pop_front();
 		}
 	}
 
