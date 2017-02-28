@@ -5,16 +5,20 @@ cet_make(
   ${CETLIB}
   ${MF_MESSAGELOGGER}
   ${MF_UTILITIES}
+  ${CETLIB_EXCEPT}
+  pthread
   )
 
 basic_plugin("file" "metric"
   ${FHICLCPP}
   ${CETLIB}
+  ${CETLIB_EXCEPT}
 )
 
 basic_plugin("msgFacility" "metric"
    ${FHICLCPP}
    ${CETLIB}
+  ${CETLIB_EXCEPT}
    ${MF_MESSAGELOGGER}
    ${MF_UTILITIES}
 )
@@ -24,6 +28,7 @@ basic_plugin("graphite" "metric"
   ${Boost_THREAD_LIBRARY}
   ${FHICLCPP}
   ${CETLIB}
+  ${CETLIB_EXCEPT}
    ${MF_MESSAGELOGGER}
   pthread
 )
