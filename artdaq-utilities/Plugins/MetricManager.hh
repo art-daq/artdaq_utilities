@@ -67,7 +67,7 @@ private:
 	  double doubleValue_;
 	  float floatValue_;
 	  long unsigned int unsignedValue_;
-	  enum MetricType {StringMetric, IntMetric, DoubleMetric, FloatMetric, UnsignedMetric};
+	  enum MetricType {InvalidMetric, StringMetric, IntMetric, DoubleMetric, FloatMetric, UnsignedMetric};
 	  MetricType type_;
 	  std::string unit_;
 	  int level_;
@@ -85,8 +85,11 @@ private:
 		  : name_(name), floatValue_(value), type_(FloatMetric), unit_(unit), level_(level), accumulate_(accumulate), metricPrefix_(metricPrefix), useNameOverride_(useNameOverride) {}
 	  MetricData(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride)
 		  : name_(name), unsignedValue_(value), type_(UnsignedMetric), unit_(unit), level_(level), accumulate_(accumulate), metricPrefix_(metricPrefix), useNameOverride_(useNameOverride) {}
+	  MetricData() : name_(""), type_(InvalidMetric) {}
+	  MetricData(MetricData& other) = default;
   };
   std::list<MetricData> metric_queue_;
+  std::mutex metric_queue_mutex_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */
