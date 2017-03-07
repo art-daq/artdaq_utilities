@@ -111,52 +111,57 @@ void artdaq::MetricManager::shutdown()
 }
 
 void  artdaq::MetricManager::sendMetric(std::string const& name, std::string const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
-	if (initialized_ && !running_) {
-		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
-	}
-	else if (running_ && initialized_) {
-		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+	if (!initialized_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager has not yet been initialized!";
+	else if (!running_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+	else {
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		}
 		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
-	if (initialized_ && !running_) {
-		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
-	}
-	else if (running_ && initialized_) {
-		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+	if (!initialized_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager has not yet been initialized!";
+	else if (!running_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+	else {
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		}
 		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, double const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
-	if (initialized_ && !running_) {
-		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
-	}
-	else if (running_ && initialized_) {
-		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+	if (!initialized_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager has not yet been initialized!";
+	else if (!running_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+	else {
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		}
 		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, float const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
-	if (initialized_ && !running_) {
-		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
-	}
-	else if (running_ && initialized_) {
-		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+	if (!initialized_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager has not yet been initialized!";
+	else if (!running_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+	else {
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		}
 		metric_cv_.notify_all();
 	}
 }
 void  artdaq::MetricManager::sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate, std::string metricPrefix, bool useNameOverride) {
-	if (initialized_ && !running_) {
-		mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
-	}
-	else if (running_ && initialized_) {
-		std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-		metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+	if (!initialized_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager has not yet been initialized!";
+	else if (!running_) mf::LogWarning("MetricManager") << "Attempted to send metric when MetricManager stopped!";
+	else {
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			metric_queue_.emplace_back(name, value, unit, level, accumulate, metricPrefix, useNameOverride);
+		}
 		metric_cv_.notify_all();
 	}
 }
@@ -176,13 +181,15 @@ void  artdaq::MetricManager::sendMetricLoop_()
 			metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
 		}
 
-		while (metric_queue_.size() > 0) {
-			MetricData data_;
-			{
-				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				data_ = metric_queue_.front();
-				metric_queue_.pop_front();
-			}
+		auto temp_list = std::list<MetricData>();
+		{
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+			temp_list.swap(metric_queue_);
+		}
+
+		while (temp_list.size() > 0) {
+			MetricData data_ = temp_list.front();
+			temp_list.pop_front();
 			if (data_.type_ == MetricData::InvalidMetric) continue;
 			std::string nameTemp = data_.name_;
 			if (!data_.useNameOverride_) {

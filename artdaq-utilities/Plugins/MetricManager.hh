@@ -17,6 +17,7 @@
 #include <list>
 #include <thread>
 #include <condition_variable>
+#include <atomic>
 
 namespace artdaq
 {
