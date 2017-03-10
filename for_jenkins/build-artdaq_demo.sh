@@ -37,6 +37,16 @@ case ${qual_set} in
     squal=s44
     artver=v2_04_01
     ;;
+    s46:e10)
+        basequal=e10
+        squal=s46
+        artver=v2_06_01
+        ;;
+    s46:e14)
+        basequal=e14
+        squal=s46
+        artver=v2_06_01
+        ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
