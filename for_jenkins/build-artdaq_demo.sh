@@ -128,29 +128,37 @@ cd ${blddir} || exit 1
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
   rm -rf ${blddir}/artdaq_demo
+  if [ `ls -l ${blddir}/artdaq_demo*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_demo*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_ganglia_plugin ]; then
   echo "Removing ${blddir}/artdaq_ganglia_plugin"
   rm -rf ${blddir}/artdaq_ganglia_plugin
+  if [ `ls -l ${blddir}/artdaq_ganglia_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_ganglia_plugin*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_epics_plugin ]; then
   echo "Removing ${blddir}/artdaq_epics_plugin"
   rm -rf ${blddir}/artdaq_epics_plugin
+  if [ `ls -l ${blddir}/artdaq_epics_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_epics_plugin*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_mfextensions ]; then
   echo "Removing ${blddir}/artdaq_mfextensions"
   rm -rf ${blddir}/artdaq_mfextensions
+  if [ `ls -l ${blddir}/artdaq_mfextensions*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_mfextensions*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_database ]; then
   echo "Removing ${blddir}/artdaq_database"
   rm -rf ${blddir}/artdaq_database
+  if [ `ls -l ${blddir}/artdaq_database*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_database*.tar.bz2; fi
+fi
+if [ -d ${blddir}/artdaq_daqinterface ]; then
+  echo "Removing ${blddir}/artdaq_daqinterface"
+  rm -rf ${blddir}/artdaq_daqinterface
+  if [ `ls -l ${blddir}/artdaq_daqinterface*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_daqinterface*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_node_server ]; then
   echo "Removing ${blddir}/artdaq_node_server"
   rm -rf ${blddir}/artdaq_node_server
-fi
-if [ `ls -1 ${blddir}/artdaq*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/artdaq*.tar.bz2
+  if [ `ls -l ${blddir}/artdaq_node_server*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_node_server*.tar.bz2; fi
 fi
 
 echo
