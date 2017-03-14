@@ -110,6 +110,11 @@ EOF
 WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
 EOF
 }
+./pullProducts ${blddir} source art-${artver} || \
+    { cat 1>&2 <<EOF
+WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
+EOF
+}
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -144,6 +149,9 @@ if [ -d ${blddir}/artdaq_node_server ]; then
   echo "Removing ${blddir}/artdaq_node_server"
   rm -rf ${blddir}/artdaq_node_server
 fi
+if [ `ls -1 ${blddir}/artdaq*.tar.bz2 | wc -l` -gt 0 ]; then
+  rm -fv ${blddir}/artdaq*.tar.bz2
+fi
 
 echo
 echo "begin build"
@@ -154,8 +162,8 @@ echo
  }
 
 echo "Fix Manifests"
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
 mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
