@@ -24,6 +24,7 @@ IF (NOT CETBUILDTOOLS_VERSION)
 ENDIF()
 
 set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
+              ${CMAKE_CURRENT_LIST_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 
 include(CetCMakeEnv)
@@ -67,6 +68,9 @@ add_subdirectory(artdaq-utilities)
 
 # Useful tools and scripts for building ARTDAQ on Jenkins
 add_subdirectory(for_jenkins)
+
+# doc - Documentation
+add_subdirectory(doc)
 
 # ups - table and config files
 add_subdirectory(ups)
