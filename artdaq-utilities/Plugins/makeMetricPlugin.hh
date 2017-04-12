@@ -8,12 +8,12 @@
 #include <memory>
 #include <string>
 
-namespace artdaq {
+namespace artdaq
+{
+	class MetricPlugin;
 
-  class MetricPlugin;
-
-  std::unique_ptr<MetricPlugin>
-    makeMetricPlugin(std::string const & generator_plugin_spec,
-                          fhicl::ParameterSet const & ps);
+	std::unique_ptr<MetricPlugin>
+	makeMetricPlugin(std::string const& generator_plugin_spec,
+	                 fhicl::ParameterSet const& ps);
 }
 #endif /* artdaq_Plugins_makeMetricPlugin_hh */

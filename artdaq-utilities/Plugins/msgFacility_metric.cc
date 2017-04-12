@@ -12,89 +12,94 @@
 #include <string>
 #include <algorithm>
 
-namespace artdaq {
-class MsgFacilityMetric : public MetricPlugin
+namespace artdaq
 {
-private:
-	std::string facility_;
-	int outputLevel_;
-public:
-	MsgFacilityMetric(fhicl::ParameterSet config)
-		: MetricPlugin(config)
-		, facility_(config.get<std::string>("output_message_application_name", "ARTDAQ Metric"))
-        , outputLevel_(0)
+	class MsgFacilityMetric : public MetricPlugin
 	{
-	  try{
-		outputLevel_ = config.get<int>("output_message_severity", 0);
-		  }
-      catch(cet::exception)
+	private:
+		std::string facility_;
+		int outputLevel_;
+	public:
+		MsgFacilityMetric(fhicl::ParameterSet config)
+			: MetricPlugin(config)
+			, facility_(config.get<std::string>("output_message_application_name", "ARTDAQ Metric"))
+			, outputLevel_(0)
 		{
-		  std::string levelString = config.get<std::string>("output_message_severity", "Info");
-			if (levelString == "Info" || levelString == "info" || levelString == "LogInfo")
+			try
 			{
-				outputLevel_ = 0;
+				outputLevel_ = config.get<int>("output_message_severity", 0);
 			}
-			else if (levelString == "Debug" || levelString == "debug" || levelString == "LogDebug")
+			catch (cet::exception)
 			{
-				outputLevel_ = 1;
+				std::string levelString = config.get<std::string>("output_message_severity", "Info");
+				if (levelString == "Info" || levelString == "info" || levelString == "LogInfo")
+				{
+					outputLevel_ = 0;
+				}
+				else if (levelString == "Debug" || levelString == "debug" || levelString == "LogDebug")
+				{
+					outputLevel_ = 1;
+				}
+				else if (levelString == "Warning" || levelString == "warning" || levelString == "LogWarning" || levelString == "Warn" || levelString == "warn")
+				{
+					outputLevel_ = 2;
+				}
+				else if (levelString == "Error" || levelString == "error" || levelString == "LogError")
+				{
+					outputLevel_ = 3;
+				}
 			}
-			else if (levelString == "Warning" || levelString == "warning" || levelString == "LogWarning" || levelString == "Warn" || levelString == "warn")
-			{
-				outputLevel_ = 2;
-			}
-			else if (levelString == "Error" || levelString == "error" || levelString == "LogError")
-			{
-				outputLevel_ = 3;
-			}
+			startMetrics();
 		}
-		startMetrics();
-	}
-	~MsgFacilityMetric() { stopMetrics(); }
-	virtual std::string getLibName() const { return "msgFacility"; }
 
-	virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit)
-	{
-	  if(!inhibit_) 
+		~MsgFacilityMetric() { stopMetrics(); }
+		virtual std::string getLibName() const { return "msgFacility"; }
+
+		virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit)
 		{
-		switch (outputLevel_)
-		{
-        case 0:
-		  mf::LogInfo(facility_) << name << ": " << value << " " << unit << "." << std::endl;
-		  break;
-		case 1:
-			mf::LogDebug(facility_)<< name << ": " << value << " " << unit << "." << std::endl;
-			break;
-		case 2:
-			mf::LogWarning(facility_)<< name << ": " << value << " " << unit << "." << std::endl;
-			break;
-		case 3:
-			mf::LogError(facility_)<< name << ": " << value << " " << unit << "." << std::endl;
-			break;
+			if (!inhibit_)
+			{
+				switch (outputLevel_)
+				{
+				case 0:
+					mf::LogInfo(facility_) << name << ": " << value << " " << unit << "." << std::endl;
+					break;
+				case 1:
+					mf::LogDebug(facility_) << name << ": " << value << " " << unit << "." << std::endl;
+					break;
+				case 2:
+					mf::LogWarning(facility_) << name << ": " << value << " " << unit << "." << std::endl;
+					break;
+				case 3:
+					mf::LogError(facility_) << name << ": " << value << " " << unit << "." << std::endl;
+					break;
+				}
+			}
 		}
-	  }
-	}
-	virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit)
-	{
-		sendMetric(name, std::to_string(value), unit);
-	}
-	virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit)
-	{
-		sendMetric(name, std::to_string(value), unit);
-	}
-	virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit)
-	{
-		sendMetric(name, std::to_string(value), unit);
-	}
-	virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit)
-	{
-		sendMetric(name, std::to_string(value), unit);
-	}
-	virtual void startMetrics_()
-	{}
-	virtual void stopMetrics_()
-	{}
-};
+
+		virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit)
+		{
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit)
+		{
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit)
+		{
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit)
+		{
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		virtual void startMetrics_() {}
+		virtual void stopMetrics_() {}
+	};
 } //End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::MsgFacilityMetric)
-

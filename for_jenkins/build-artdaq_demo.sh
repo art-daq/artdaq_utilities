@@ -37,6 +37,16 @@ case ${qual_set} in
     squal=s44
     artver=v2_04_01
     ;;
+    s46:e10)
+        basequal=e10
+        squal=s46
+        artver=v2_06_01
+        ;;
+    s46:e14)
+        basequal=e14
+        squal=s46
+        artver=v2_06_01
+        ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
@@ -100,6 +110,11 @@ EOF
 WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
 EOF
 }
+./pullProducts ${blddir} source art-${artver} || \
+    { cat 1>&2 <<EOF
+WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
+EOF
+}
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -113,26 +128,37 @@ cd ${blddir} || exit 1
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
   rm -rf ${blddir}/artdaq_demo
+  if [ `ls -l ${blddir}/artdaq_demo*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_demo*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_ganglia_plugin ]; then
   echo "Removing ${blddir}/artdaq_ganglia_plugin"
   rm -rf ${blddir}/artdaq_ganglia_plugin
+  if [ `ls -l ${blddir}/artdaq_ganglia_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_ganglia_plugin*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_epics_plugin ]; then
   echo "Removing ${blddir}/artdaq_epics_plugin"
   rm -rf ${blddir}/artdaq_epics_plugin
+  if [ `ls -l ${blddir}/artdaq_epics_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_epics_plugin*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_mfextensions ]; then
   echo "Removing ${blddir}/artdaq_mfextensions"
   rm -rf ${blddir}/artdaq_mfextensions
+  if [ `ls -l ${blddir}/artdaq_mfextensions*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_mfextensions*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_database ]; then
   echo "Removing ${blddir}/artdaq_database"
   rm -rf ${blddir}/artdaq_database
+  if [ `ls -l ${blddir}/artdaq_database*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_database*.tar.bz2; fi
+fi
+if [ -d ${blddir}/artdaq_daqinterface ]; then
+  echo "Removing ${blddir}/artdaq_daqinterface"
+  rm -rf ${blddir}/artdaq_daqinterface
+  if [ `ls -l ${blddir}/artdaq_daqinterface*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_daqinterface*.tar.bz2; fi
 fi
 if [ -d ${blddir}/artdaq_node_server ]; then
   echo "Removing ${blddir}/artdaq_node_server"
   rm -rf ${blddir}/artdaq_node_server
+  if [ `ls -l ${blddir}/artdaq_node_server*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_node_server*.tar.bz2; fi
 fi
 
 echo
@@ -144,8 +170,8 @@ echo
  }
 
 echo "Fix Manifests"
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
 mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
