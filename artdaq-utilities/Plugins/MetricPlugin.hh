@@ -9,7 +9,6 @@
 #define __METRIC_INTERFACE__
 
 #include <string>
-#include <cstdint>
 #include <chrono>
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
@@ -19,7 +18,7 @@ namespace artdaq
 	class MetricPlugin
 	{
 	public:
-		MetricPlugin(fhicl::ParameterSet const& ps) : pset(ps)
+		explicit MetricPlugin(fhicl::ParameterSet const& ps) : pset(ps)
 		                                            , inhibit_(false)
 		{
 			runLevel_ = pset.get<int>("level", 0);
@@ -60,7 +59,7 @@ namespace artdaq
 		/////////////////////////////////////////////////////////////////////////////////
 	public:
 		// Methods for aggregating metrics. These methods should be called from ARTDAQ and derived code.
-		virtual void sendMetric(const std::string& name, const std::string& value, const std::string& unit, bool accumulate = true)
+		void sendMetric(const std::string& name, const std::string& value, const std::string& unit, bool accumulate = true)
 		{
 			if (accumulate)
 			{
@@ -73,7 +72,7 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric(const std::string& name, const int& value, const std::string& unit, bool accumulate = true)
+		void sendMetric(const std::string& name, const int& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -93,7 +92,7 @@ namespace artdaq
 				double sendValue = 0;
 				for (auto val : intAccumulator_[name])
 				{
-					sendValue += val / (double)intAccumulator_[name].size();
+					sendValue += val / static_cast<double>(intAccumulator_[name].size());
 				}
 
 				sendMetric_(name, sendValue, unit);
@@ -102,7 +101,7 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric(const std::string& name, const double& value, const std::string& unit, bool accumulate = true)
+		void sendMetric(const std::string& name, const double& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -131,7 +130,7 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric(const std::string& name, const float& value, const std::string& unit, bool accumulate = true)
+		void sendMetric(const std::string& name, const float& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
@@ -160,12 +159,12 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric(const std::string& name, const long unsigned int& value, const std::string& unit, bool accumulate = true)
+		void sendMetric(const std::string& name, const long unsigned int& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
 			// added to the map, even if accumulate is false. This helps ensure that a
 			// zero is sent at stop time.
-			uint32_t uvalue = static_cast<uint32_t>(value);
+			auto uvalue = static_cast<uint32_t>(value);
 			uintAccumulator_[name].push_back(uvalue);
 
 			if (!accumulate)
@@ -181,7 +180,7 @@ namespace artdaq
 				double sendValue = 0;
 				for (auto val : uintAccumulator_[name])
 				{
-					sendValue += val / (double)uintAccumulator_[name].size();
+					sendValue += val / static_cast<double>(uintAccumulator_[name].size());
 				}
 
 				sendMetric_(name, sendValue, unit);
@@ -192,41 +191,41 @@ namespace artdaq
 
 
 		//Run Control
-		virtual void startMetrics() { startMetrics_(); }
+		void startMetrics() { startMetrics_(); }
 
-		virtual void stopMetrics()
+		void stopMetrics()
 		{
 			inhibit_ = true;
 			for (auto dv : doubleAccumulator_)
 			{
 				static_cast<std::vector<double>>(dv.second).clear();
 				// 22-Jul-2015, KAB - added cast to get correct call and false to get immediate zero
-				sendMetric(dv.first, (double)0.0, "", false);
+				sendMetric(dv.first, static_cast<double>(0.0), "", false);
 			}
 			for (auto iv : intAccumulator_)
 			{
 				static_cast<std::vector<int>>(iv.second).clear();
 				// 22-Jul-2015, KAB - added cast to get correct call and false to get immediate zero
-				sendMetric(iv.first, (int)0, "", false);
+				sendMetric(iv.first, static_cast<int>(0), "", false);
 			}
 			for (auto fv : floatAccumulator_)
 			{
 				static_cast<std::vector<float>>(fv.second).clear();
 				// 22-Jul-2015, KAB - added cast to get correct call and false to get immediate zero
-				sendMetric(fv.first, (float)0.0, "", false);
+				sendMetric(fv.first, static_cast<float>(0.0), "", false);
 			}
 			for (auto uv : uintAccumulator_)
 			{
 				static_cast<std::vector<uint32_t>>(uv.second).clear();
 				// 22-Jul-2015, KAB - added cast to get correct call and false to get immediate zero
-				sendMetric(uv.first, (long unsigned int)0, "", false);
+				sendMetric(uv.first, static_cast<long unsigned int>(0), "", false);
 			}
 			stopMetrics_();
 			inhibit_ = false;
 		}
 
 		void setRunLevel(int level) { runLevel_ = level; }
-		int getRunLevel() { return runLevel_; }
+		int getRunLevel() const { return runLevel_; }
 
 	protected:
 		int runLevel_;

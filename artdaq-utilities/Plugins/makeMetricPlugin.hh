@@ -8,10 +8,19 @@
 #include <memory>
 #include <string>
 
+/**
+ * \brief The artdaq namespace
+ */
 namespace artdaq
 {
 	class MetricPlugin;
 
+	/**
+	 * \brief Load a given MetricPlugin and return a pointer to it
+	 * \param generator_plugin_spec Name of the MetricPlugin
+	 * \param ps ParameterSet with which to configure the MetricPlugin
+	 * \return std::unique_ptr to the new MetricPlugin instance
+	 */
 	std::unique_ptr<MetricPlugin>
 	makeMetricPlugin(std::string const& generator_plugin_spec,
 	                 fhicl::ParameterSet const& ps);

@@ -8,8 +8,7 @@
 
 namespace artdaq
 {
-	typedef std::unique_ptr<artdaq::MetricPlugin>
-	(makeFunc_t)(fhicl::ParameterSet const& ps);
+	typedef std::unique_ptr<artdaq::MetricPlugin> makeFunc_t(fhicl::ParameterSet const& ps);
 }
 
 #define DEFINE_ARTDAQ_METRIC(klass)                                \
