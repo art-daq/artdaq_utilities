@@ -8,6 +8,11 @@
 
 namespace artdaq
 {
+	/**
+	 * \brief Make a MetricPlugin instance, loading the plugin if necessary
+	 * \param ps ParameterSet used to configure the MetricPlugin instance
+	 * \return A std::unique_ptr<artdaq::MetricPlugin> to the new instance
+	 */
 	typedef std::unique_ptr<artdaq::MetricPlugin> makeFunc_t(fhicl::ParameterSet const& ps);
 }
 

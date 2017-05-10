@@ -19,6 +19,16 @@ using boost::asio::ip::tcp;
 
 namespace artdaq
 {
+	/**
+	 * \brief Send a metric to Graphite
+	 * 
+	 * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
+	 * artdaq/
+	 *   BoardReader/
+	 *     Fragment_Rate
+	 *     
+	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
+	 */
 	class GraphiteMetric : public MetricPlugin
 	{
 	private:
@@ -31,7 +41,16 @@ namespace artdaq
 		int errorCount_;
 		std::chrono::steady_clock::time_point waitStart_;
 	public:
-		GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config)
+		/**
+		 * \brief GraphiteMetric Constructor
+		 * \param config ParameterSet used to configure GraphiteMetric
+		 * 
+		 * GraphiteMetric accepts the following Parameters:
+		 * "host" (Default: "localhost"): Destination host
+		 * "port" (Default: 2003): Destination port
+		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
+		 */
+		explicit GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config)
 		                                           , host_(pset.get<std::string>("host", "localhost"))
 		                                           , port_(pset.get<int>("port", 2003))
 		                                           , namespace_(pset.get<std::string>("namespace", "artdaq."))
@@ -43,17 +62,29 @@ namespace artdaq
 			startMetrics();
 		}
 
-		~GraphiteMetric() { stopMetrics(); }
-		virtual std::string getLibName() const { return "graphite"; }
+		/**
+		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
+		 */
+		virtual ~GraphiteMetric() { stopMetrics(); }
 
-		virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit)
+		/**
+		 * \brief Get the library name for the Graphite metric
+		 * \return The library name for the Graphite metric, "graphite"
+		 */
+		std::string getLibName() const override { return "graphite"; }
+
+		/**
+		 * \brief Send a metric to Graphite
+		 * \param name Name of the metric. Will have the namespace prepended
+		 * \param value Value of the metric
+		 */
+		void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
 		{
 			if (!stopped_)
 			{
-				std::string unitWarn = unit;
-				const std::time_t result = std::time(0);
+				const auto result = std::time(0);
 				boost::asio::streambuf data;
-				std::string nameTemp(name);
+				auto nameTemp(name);
 				std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
 				std::ostream out(&data);
 				out << namespace_ << nameTemp << " "
@@ -70,27 +101,54 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit)
+		/**
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
+		*/
+		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit)
+		/**
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
+		*/
+		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit)
+		/**
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
+		*/
+		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit)
+		/**
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
+		*/
+		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void startMetrics_()
+		/**
+		 * \brief Perform startup actions. For Graphite, this means reconnecting the socket.
+		 */
+		void startMetrics_() override
 		{
 			if (stopped_)
 			{
@@ -99,7 +157,10 @@ namespace artdaq
 			}
 		}
 
-		virtual void stopMetrics_()
+		/**
+		 * \brief Perform shutdown actions. This shuts down the socket and closes it.
+		 */
+		void stopMetrics_() override
 		{
 			if (!stopped_)
 			{
@@ -109,6 +170,10 @@ namespace artdaq
 			}
 		}
 
+	private:
+		/**
+		 * \brief Reconnect to Graphite
+		 */
 		void reconnect_()
 		{
 			if (errorCount_ < 5)

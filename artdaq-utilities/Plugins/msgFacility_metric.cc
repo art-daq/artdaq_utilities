@@ -14,15 +14,28 @@
 
 namespace artdaq
 {
+	/**
+	 * \brief A MetricPlugin class which sends metric data to MessageFacility
+	 */
 	class MsgFacilityMetric : public MetricPlugin
 	{
 	private:
 		std::string facility_;
 		int outputLevel_;
 	public:
-		MsgFacilityMetric(fhicl::ParameterSet config)
+		/**
+		 * \brief MsgFacilityMetric Constructor
+		 * \param config ParameterSet used to configure MsgFacilityMetric
+		 * 
+		 * MsgFacilityMetric accepts the following Parameters:
+		 * "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
+		 * "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
+		 * the string name of the severity.
+		 * 0: Info, 1: Debug, 2: Warning, 3: Error
+		 */
+		explicit MsgFacilityMetric(fhicl::ParameterSet config)
 			: MetricPlugin(config)
-			, facility_(config.get<std::string>("output_message_application_name", "ARTDAQ Metric"))
+			, facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
 			, outputLevel_(0)
 		{
 			try
@@ -52,10 +65,23 @@ namespace artdaq
 			startMetrics();
 		}
 
-		~MsgFacilityMetric() { stopMetrics(); }
-		virtual std::string getLibName() const { return "msgFacility"; }
+		/**
+		 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
+		 */
+		virtual ~MsgFacilityMetric() { stopMetrics(); }
+		/**
+		 * \brief Return the library name of the MetricPlugin
+		 * \return The library name of MsgFacilityMetric: "msgFacility"
+		 */
+		std::string getLibName() const override { return "msgFacility"; }
 
-		virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit)
+		/**
+		 * \brief Send a metric to MessageFacilty. Format is: "name: value unit."
+		 * \param name Name of the metric
+		 * \param value Value of the metric
+		 * \param unit Units for the metric
+		 */
+		void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override
 		{
 			if (!inhibit_)
 			{
@@ -77,28 +103,58 @@ namespace artdaq
 			}
 		}
 
-		virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit)
+		/**
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
+		*/
+		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit)
+		/**
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
+		*/
+		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit)
+		/**
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
+		*/
+		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit)
+		/**
+		 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		 * \param name Name of the metric
+		 * \param value Value of the metric
+		 * \param unit Units of the metric
+		 */
+		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
 		{
 			sendMetric(name, std::to_string(value), unit);
 		}
 
-		virtual void startMetrics_() {}
-		virtual void stopMetrics_() {}
+		/**
+		 * \brief Perform startup actions. No-Op.
+		 */
+		void startMetrics_() override {}
+		/**
+		 * \brief Perform shutdown actions. No-Op.
+		 */
+		void stopMetrics_() override {}
 	};
 } //End namespace artdaq
 

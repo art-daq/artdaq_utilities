@@ -15,9 +15,24 @@
 
 namespace artdaq
 {
+	/**
+	 * \brief The MetricPlugin class defines the interface that MetricManager uses to send metric data
+	 * to the various metric plugins.
+	 */
 	class MetricPlugin
 	{
 	public:
+		/**
+		 * \brief MetricPlugin Constructor
+		 * \param ps The ParameterSet used to configure this MetricPlugin instance
+		 * 
+		 * MetricPlugin accepts the following parameters:
+		 * "metricPluginType": The name of the plugin to load
+		 * "level" (Default: 0): The verbosity level of the metric plugin. Higher number = fewer metrics sent to the metric storage
+		 * "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
+		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
+		 *  metric. String metrics cannot be accumulated.
+		 */
 		explicit MetricPlugin(fhicl::ParameterSet const& ps) : pset(ps)
 		                                            , inhibit_(false)
 		{
@@ -25,6 +40,9 @@ namespace artdaq
 			accumulationTime_ = pset.get<double>("reporting_interval", 15.0);
 		}
 
+		/**
+		 * \brief Default virtual Desctructor
+		 */
 		virtual ~MetricPlugin() = default;
 
 		///////////////////////////////////////////////////////////////////////////
@@ -32,24 +50,74 @@ namespace artdaq
 		// Interface Functions: These should be reimplemented in plugin classes!
 		//
 		///////////////////////////////////////////////////////////////////////////
-	public:
+
+		/**
+		 * \brief Return the name of the current MetricPlugin instance
+		 */
 		virtual std::string getLibName() const { return "ERROR"; }
 	protected:
-		// These methods dispatch the metric to the metric storage (file, Graphite, Ganglia, etc.)
-		// Metric plugins should override them
+		/**
+		 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+		 * \param name Name of the metric
+		 * \param value Value of the metric
+		 * \param unit Units for the metric
+		 * 
+		 * Note this is a pure virtual function, it should be overridden by implementation plugins
+		 */
 		virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) = 0;
 
+		/**
+		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units for the metric
+		*
+		* Note this is a pure virtual function, it should be overridden by implementation plugins
+		*/
 		virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit) = 0;
 
+		/**
+		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units for the metric
+		*
+		* Note this is a pure virtual function, it should be overridden by implementation plugins
+		*/
 		virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit) = 0;
 
+		/**
+		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units for the metric
+		*
+		* Note this is a pure virtual function, it should be overridden by implementation plugins
+		*/
 		virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit) = 0;
 
+		/**
+		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units for the metric
+		*
+		* Note this is a pure virtual function, it should be overridden by implementation plugins
+		*/
 		virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit) = 0;
 
-		//Run Control -> Clean-up and start-up methods for metric plugins
+		/**
+		 * \brief Perform any start-up actions necessary for the metric plugin
+		 * 
+		 * This is a pure virtual function, it should be overridden by implementation plugins
+		 */
 		virtual void startMetrics_() = 0;
 
+		/**
+		* \brief Perform any shutdown actions necessary for the metric plugin
+		*
+		* This is a pure virtual function, it should be overridden by implementation plugins
+		*/
 		virtual void stopMetrics_() = 0;
 
 		/////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +126,13 @@ namespace artdaq
 		//
 		/////////////////////////////////////////////////////////////////////////////////
 	public:
-		// Methods for aggregating metrics. These methods should be called from ARTDAQ and derived code.
+		/**
+		* \brief Send a metric value to the MetricPlugin
+		* \param name The name of the metric
+		* \param value The current value of the metric
+		* \param unit The units of the metric
+		* \param accumulate Whether to average the metric over reporting_interval, or send it immediately. Defaults to true.
+		*/
 		void sendMetric(const std::string& name, const std::string& value, const std::string& unit, bool accumulate = true)
 		{
 			if (accumulate)
@@ -72,6 +146,13 @@ namespace artdaq
 			}
 		}
 
+		/**
+		* \brief Send a metric value to the MetricPlugin
+		* \param name The name of the metric
+		* \param value The current value of the metric
+		* \param unit The units of the metric
+		* \param accumulate Whether to average the metric over reporting_interval, or send it immediately. Defaults to true.
+		*/
 		void sendMetric(const std::string& name, const int& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
@@ -101,6 +182,13 @@ namespace artdaq
 			}
 		}
 
+		/**
+		* \brief Send a metric value to the MetricPlugin
+		* \param name The name of the metric
+		* \param value The current value of the metric
+		* \param unit The units of the metric
+		* \param accumulate Whether to average the metric over reporting_interval, or send it immediately. Defaults to true.
+		*/
 		void sendMetric(const std::string& name, const double& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
@@ -130,6 +218,13 @@ namespace artdaq
 			}
 		}
 
+		/**
+		* \brief Send a metric value to the MetricPlugin
+		* \param name The name of the metric
+		* \param value The current value of the metric
+		* \param unit The units of the metric
+		* \param accumulate Whether to average the metric over reporting_interval, or send it immediately. Defaults to true.
+		*/
 		void sendMetric(const std::string& name, const float& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
@@ -159,6 +254,13 @@ namespace artdaq
 			}
 		}
 
+		/**
+		 * \brief Send a metric value to the MetricPlugin
+		 * \param name The name of the metric
+		 * \param value The current value of the metric 
+		 * \param unit The units of the metric
+		 * \param accumulate Whether to average the metric over reporting_interval, or send it immediately. Defaults to true.
+		 */
 		void sendMetric(const std::string& name, const long unsigned int& value, const std::string& unit, bool accumulate = true)
 		{
 			// 22-Jul-2015, KAB - moved push_back here so that we always get the name
@@ -189,10 +291,15 @@ namespace artdaq
 			}
 		}
 
-
-		//Run Control
+		/**
+		 * \brief Perform startup actions. Simply calls the virtual startMetrics_ function
+		 */
 		void startMetrics() { startMetrics_(); }
 
+		/**
+		 * \brief Perform shutdown actions. Zeroes out all accumulators, and sends zeros for each metric.
+		 * Calls stopMetrics_() for any plugin-defined shutdown actions.
+		 */
 		void stopMetrics()
 		{
 			inhibit_ = true;
@@ -224,14 +331,22 @@ namespace artdaq
 			inhibit_ = false;
 		}
 
+		/**
+		 * \brief Set the threshold for sending metrics to the underlying storage.
+		 * \param level The new threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be sent.
+		 */
 		void setRunLevel(int level) { runLevel_ = level; }
+		/**
+		 * \brief Get the threshold for sending metrics to the underlying storage.
+		 * \return The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be sent.
+		 */
 		int getRunLevel() const { return runLevel_; }
 
 	protected:
-		int runLevel_;
-		fhicl::ParameterSet pset;
-		double accumulationTime_;
-		bool inhibit_;
+		int runLevel_; ///< The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be sent.
+		fhicl::ParameterSet pset; ///< The ParameterSet used to configure the MetricPlugin
+		double accumulationTime_; ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
+		bool inhibit_; ///< Whether to inhibit all metric sending
 
 	private:
 		std::unordered_map<std::string, std::vector<double>> doubleAccumulator_;

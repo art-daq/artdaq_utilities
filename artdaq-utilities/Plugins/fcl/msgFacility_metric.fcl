@@ -16,10 +16,10 @@ daq.metrics.msgfac: { # Can be named anything.
   #
   # Message Facility Metric Plugin Configuration
   #
-  output_message_application_name: "ARTDAQ Metric" # The application name associated with the metric.
+  output_message_category_name: "ARTDAQ Metric" # The category name associated with the metric.
   output_message_severity:         0               # The severity:
-                                                   # 0, Info, info, LogInfo: Equivalent to calling mf::LogInfo(application_name)
-												   # 1, Debug, debug, LogDebug: mf::LogDebug(application_name)
-												   # 2, Warning, Warn, warning, warn, LogWarning: mf::LogWarning(application_name)
-												   # 3, Error, error, LogError: mf::LogError(application_name)
+                                                   # 0, Info, info, LogInfo: Equivalent to calling mf::LogInfo(category_name)
+												   # 1, Debug, debug, LogDebug: mf::LogDebug(category_name)
+												   # 2, Warning, Warn, warning, warn, LogWarning: mf::LogWarning(category_name)
+												   # 3, Error, error, LogError: mf::LogError(category_name)
 }
