@@ -26,12 +26,14 @@ namespace artdaq
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
 		 * 
+		 * \verbatim
 		 * MetricPlugin accepts the following parameters:
 		 * "metricPluginType": The name of the plugin to load
 		 * "level" (Default: 0): The verbosity level of the metric plugin. Higher number = fewer metrics sent to the metric storage
 		 * "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
 		 *  metric. String metrics cannot be accumulated.
+		 *  \endverbatim
 		 */
 		explicit MetricPlugin(fhicl::ParameterSet const& ps) : pset(ps)
 		                                            , inhibit_(false)

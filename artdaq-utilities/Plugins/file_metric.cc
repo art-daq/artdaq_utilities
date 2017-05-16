@@ -31,10 +31,12 @@ namespace artdaq
 		 * \brief FileMetric Constructor. Opens the file and starts the metric
 		 * \param config ParameterSet used to configure FileMetric
 		 * 
+		 * \verbatim
 		 * FileMetric accepts the following Parameters:
 		 * "fileName" (Default: "FileMetric.out"): Name of the output file
 		 * "uniquify" (Default: false): If true, will replace %UID% with the PID of the current process, or append _%UID% to the end of the filename if %UID% is not present in fileName
 		 * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending
+		 * \endverbatim
 		 */
 		explicit FileMetric(fhicl::ParameterSet config) : MetricPlugin(config)
 		                                       , outputFile_(pset.get<std::string>("fileName", "FileMetric.out"))

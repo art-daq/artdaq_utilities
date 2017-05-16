@@ -45,10 +45,12 @@ namespace artdaq
 		 * \brief GraphiteMetric Constructor
 		 * \param config ParameterSet used to configure GraphiteMetric
 		 * 
+		 * \verbatim
 		 * GraphiteMetric accepts the following Parameters:
 		 * "host" (Default: "localhost"): Destination host
 		 * "port" (Default: 2003): Destination port
 		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
+		 * \endverbatim
 		 */
 		explicit GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config)
 		                                           , host_(pset.get<std::string>("host", "localhost"))

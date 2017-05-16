@@ -27,11 +27,13 @@ namespace artdaq
 		 * \brief MsgFacilityMetric Constructor
 		 * \param config ParameterSet used to configure MsgFacilityMetric
 		 * 
-		 * MsgFacilityMetric accepts the following Parameters:
-		 * "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
-		 * "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
-		 * the string name of the severity.
-		 * 0: Info, 1: Debug, 2: Warning, 3: Error
+		 * \verbatim
+		  MsgFacilityMetric accepts the following Parameters:
+		  "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
+		  "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
+		  the string name of the severity.
+		  0: Info, 1: Debug, 2: Warning, 3: Error
+		\endverbatim
 		 */
 		explicit MsgFacilityMetric(fhicl::ParameterSet config)
 			: MetricPlugin(config)
