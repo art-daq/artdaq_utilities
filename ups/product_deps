@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq_utilities  v1_02_02
+parent artdaq_utilities  v1_02_03
 defaultqual    a_u_intf_v1:e10:s46
 #defaultqual    a_u_intf_v1:e14:s46
 
@@ -19,7 +19,7 @@ fcldir      product_dir fcl
 
 #
 product		version		optional
-TRACE		v3_07_02
+TRACE		v3_08_00
 messagefacility v1_18_04        s48
 messagefacility v1_18_03        s47
 messagefacility v1_18_03        s46

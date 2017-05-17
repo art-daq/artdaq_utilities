@@ -12,12 +12,13 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include <chrono>
+#include <boost/exception/all.hpp>
 
 artdaq::MetricManager::
 MetricManager() : metric_plugins_(0)
-                , initialized_(false)
-                , running_(false)
-                , active_(false) { }
+				, initialized_(false)
+				, running_(false)
+				, active_(false) { }
 
 artdaq::MetricManager::~MetricManager()
 {
@@ -44,9 +45,24 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 			metric_plugins_.push_back(makeMetricPlugin(
 				plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset));
 		}
+		catch (const cet::exception& e)
+		{
+			mf::LogError("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+			", cet::exception object caught:" << e.explain_self();
+		}
+		catch (const boost::exception& e)
+		{
+			mf::LogError("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+				", boost::exception object caught: " <<	boost::diagnostic_information(e);
+		}
+		catch (const std::exception& e)
+		{
+			mf::LogError("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+				", std::exception caught: " << e.what();
+		}
 		catch (...)
 		{
-			mf::LogError("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name;
+			mf::LogError("MetricManager") << "Unknown Exception caught in MetricManager::initialize, error loading plugin with name " << name;
 		}
 	}
 
