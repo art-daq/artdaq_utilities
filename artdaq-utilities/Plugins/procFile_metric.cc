@@ -47,19 +47,19 @@ namespace artdaq
 		}
 		virtual std::string getLibName() const { return "procFile"; }
 
-		virtual void sendMetric_(const std::string& name __attribute__((unused)), const std::string& value __attribute__((unused)), const std::string& unit __attribute__((unused)))
+		virtual void sendMetric_(const std::string&, const std::string&, const std::string&)
 		{
 		}
 
-		virtual void sendMetric_(const std::string& name __attribute__((unused)), const int& value __attribute__((unused)), const std::string& unit __attribute__((unused)))
+		virtual void sendMetric_(const std::string&, const int&, const std::string&)
 		{
 		}
 
-		virtual void sendMetric_(const std::string& name __attribute__((unused)), const double& value __attribute__((unused)), const std::string& unit __attribute__((unused)))
+		virtual void sendMetric_(const std::string&, const double&, const std::string&)
 		{
 		}
 
-		virtual void sendMetric_(const std::string& name __attribute__((unused)), const float& value __attribute__((unused)), const std::string& unit __attribute__((unused)))
+		virtual void sendMetric_(const std::string&, const float&, const std::string&)
 		{
 		}
 
