@@ -42,8 +42,7 @@ namespace artdaq
 		}
 
 		~ProcFileMetric() {
-			stopMetrics(); unlink( pipe_.c_str() );
-			TRACE( 10, "~ProcFileMetric unlinked "+pipe_ );
+			stopMetrics();
 		}
 		virtual std::string getLibName() const { return "procFile"; }
 
@@ -87,10 +86,14 @@ namespace artdaq
 			{
 				stopped_ = true;
 				// do read on pipe to make sure writePipe is not blocking on open
-				int fd = open( pipe_.c_str(), O_RDONLY );
+				int fd = open( pipe_.c_str(), O_RDONLY|O_NONBLOCK );
 				if (fd == -1) { perror("stopMetrics_ open(\"r\")"); exit(1); }
+				unlink( pipe_.c_str() );
+				TRACE( 10, "stopMetrics_ unlinked "+pipe_ );
+# if 0
 				char buf[256];
 				read( fd, buf, sizeof(buf) );
+# endif
 				close(fd);
                 if(thread_.joinable()) thread_.join();
 			}
