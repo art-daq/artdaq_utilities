@@ -23,7 +23,7 @@ TRACE		v3_08_01
 messagefacility v1_18_04        s48
 messagefacility v1_18_03        s47
 messagefacility v1_18_03        s46
-cetbuildtools	v5_06_07	-	only_for_build
+cetbuildtools	v5_08_01	-	only_for_build
 end_product_list
 
 # See https://cdcvs.fnal.gov/redmine/projects/cet-is-public/wiki/AboutQualifiers for information about the qualifiers used
