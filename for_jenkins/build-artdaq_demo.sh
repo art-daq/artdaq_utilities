@@ -21,7 +21,6 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
-<<<<<<< Updated upstream
     s48:e14)
         basequal=e14
         squal=s48
@@ -42,37 +41,6 @@ case ${qual_set} in
         squal=s47
         artver=v2_06_02
         ;;
-=======
-s48:e10)
-       basequal=e10
-       squal=s48
-       artver=v2_06_03
-       nutoolsver=v2_12_00
-       ;;
- 
-s48:e14)
-       basequal=e14
-       squal=s48
-       artver=v2_06_03
-       nutoolsver=v2_12_00
-       ;;
- 
-	s41:e10)
-	basequal=e10
-	squal=s41
-	artver=v2_03_00
-    ;;
-    s43:e10)
-    basequal=e10
-    squal=s43
-    artver=v2_05_00
-    ;;
-    s44:e10)
-    basequal=e10
-    squal=s44
-    artver=v2_04_01
-    ;;
->>>>>>> Stashed changes
     s46:e10)
         basequal=e10
         squal=s46
