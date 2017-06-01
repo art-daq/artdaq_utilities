@@ -70,6 +70,9 @@ case ${version} in
   v2_09_03)
     artdaq_ver=v2_02_03
     ;;
+  v2_10_00)
+    artdaq_ver=v2_03_00
+    ;;
   *)
     echo "Unexpected artdaq_demo version ${version}"
     exit 1
