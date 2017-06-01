@@ -65,7 +65,7 @@ namespace artdaq
 		virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit __attribute__((unused)))
 		{
 			if (name == name_) {
-				TRACE( 11, "sendMetric_ setting value=%lu", value );
+				TRACE( 12, "sendMetric_ setting value=%lu", value );
 				value_ = value;
 			}
 		}
@@ -86,15 +86,18 @@ namespace artdaq
 			{
 				stopped_ = true;
 				// do read on pipe to make sure writePipe is not blocking on open
+				TRACE( 11, "stopMetrics_ before open "+pipe_ );
 				int fd = open( pipe_.c_str(), O_RDONLY|O_NONBLOCK );
 				if (fd == -1) { perror("stopMetrics_ open(\"r\")"); exit(1); }
+				TRACE( 10, "stopMetrics_ between open and unlink"+pipe_+" fd=%d",fd );
 				unlink( pipe_.c_str() );
-				TRACE( 10, "stopMetrics_ unlinked "+pipe_ );
+				TRACE( 11, "stopMetrics_ unlinked "+pipe_ );
 # if 0
 				char buf[256];
 				read( fd, buf, sizeof(buf) );
 # endif
 				close(fd);
+				TRACE( 11, "stopMetrics_ after close "+pipe_ );
                 if(thread_.joinable()) thread_.join();
 			}
 		}
@@ -103,11 +106,14 @@ namespace artdaq
         {   char buf[256];
             while(!stopped_)
 			{
+				TRACE( 11, "writePipe before open" );
                 int fd = open( pipe_.c_str(), O_WRONLY );
+				TRACE( 10, "writePipe open fd=%d value=%lu", fd, value_ );
 				snprintf(buf,sizeof(buf),"%s: %lu\n", name_.c_str(),value_);
-				TRACE( 10, "writePipe value=%lu", value_ );
-				write(fd, buf, strnlen(buf,sizeof(buf)) );
+				int sts=write(fd, buf, strnlen(buf,sizeof(buf)) );
+				TRACE( 11, "writePipe write complete sts=%d", sts );
 				close(fd);
+				TRACE( 11, "writePipe after close -- about to usleep" );
 				usleep(400000);	// must wait to make sure other end closes
 			}
    
