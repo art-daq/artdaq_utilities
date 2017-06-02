@@ -1,8 +1,3 @@
-// graphite_metric.cc: ProcFile Metric Plugin
-// Author: Eric Flumerfelt
-// Last Modified: 11/13/2014
-//
-// An implementation of the MetricPlugin for Graphite
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -13,110 +8,169 @@
 #include <sys/stat.h>			// mkfifo
 #include <fcntl.h>				// open
 #include <stdlib.h>				// exit
-#include <iostream>
 #include <ctime>
 #include <string>
 #include <thread>
+#include <map>
 
 namespace artdaq
 {
+	/**
+	 * \brief A MetricPlugin which writes a long unsigned int metric with a given name to a given pipe
+	 *
+	 * This MetricPlugin emulates the function of the /proc file system, where the kernel provides
+	 * access to various counters and parameters.
+	 */
 	class ProcFileMetric : public MetricPlugin
 	{
 	private:
 		std::string pipe_;
-		std::string name_;
+		std::unordered_map<std::string, std::string> value_map_;
 		bool stopped_;
-		unsigned long int value_;
 		std::thread thread_;
 	public:
-		ProcFileMetric(fhicl::ParameterSet config) : MetricPlugin(config)
-		                                           , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
-												   , name_(pset.get<std::string>("name", "bytesRead"))
-		                                           , stopped_(true)
-												   , value_(0)
+		/**
+		 * \brief ProcFileMetric Constructor
+		 * \param config FHiCL ParameterSet used to configure the ProcFileMetric
+		 *
+		 * \verbatim
+		 * ProcFileMetric accepts the following Parameters (in addition to those accepted by MetricPlugin):
+		 * "pipe": Name of pipe virtual file to write to
+		 * "name": Name of the metric to write to pipe
+		 * \endverbatim
+		 */
+		explicit ProcFileMetric(fhicl::ParameterSet config) : MetricPlugin(config)
+			, pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
+			, value_map_()
+			, stopped_(true)
 		{
-			int sts=mkfifo( pipe_.c_str(), 0777 );
-			if (sts!=0) { perror("ProcFileMetric mkfifo"); exit(1); }
-			TRACE( 10, "ProcFileMetric mkfifo("+name_+") sts=%d",sts );
+			auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
+
+			for (auto name : names)
+			{
+				value_map_[name] = "";
+			}
+
+			int sts = mkfifo(pipe_.c_str(), 0777);
+			if (sts != 0) { perror("ProcFileMetric mkfifo"); exit(1); }
+			TRACE(10, "ProcFileMetric mkfifo(" + pipe_ + ") sts=%d", sts);
 			startMetrics();
 		}
 
+		/**
+		 * \brief ProcFileMetric Destructor
+		 */
 		~ProcFileMetric() {
 			stopMetrics();
 		}
-		virtual std::string getLibName() const { return "procFile"; }
 
-		virtual void sendMetric_(const std::string&, const std::string&, const std::string&)
-		{
-		}
+		/**
+		 * \brief Get the "library name" of this Metric
+		 * \return The library name of this metric, "procFile"
+		 */
+		std::string getLibName() const override { return "procFile"; }
 
-		virtual void sendMetric_(const std::string&, const int&, const std::string&)
-		{
-		}
-
-		virtual void sendMetric_(const std::string&, const double&, const std::string&)
-		{
-		}
-
-		virtual void sendMetric_(const std::string&, const float&, const std::string&)
-		{
-		}
-
-		virtual void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit __attribute__((unused)))
-		{
-			if (name == name_) {
-				TRACE( 12, "sendMetric_ setting value=%lu", value );
-				value_ = value;
+		/**
+		 * \brief Send a string metric. No-Op
+		 */
+		void sendMetric_(const std::string& name, const std::string& value, const std::string&) override {
+			if (value_map_.count(name)) {
+				TRACE(12, "sendMetric_ setting value="+ value);
+				value_map_[name] = value;
 			}
 		}
 
-		virtual void startMetrics_()
+		/**
+		 * \brief Send an integer metric. No-Op.
+		 */
+		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override {
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		/**
+		 * \brief Send a double metric. No-Op.
+		 */
+		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override {
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		/**
+		 * \brief Send a float metric. No-Op.
+		 */
+		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override {
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		/**
+		 * \brief Set the value to be written to the pipe when it is opened by a reader
+		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+		 * \param value Value of the metric.
+		 */
+		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+		{
+			sendMetric(name, std::to_string(value), unit);
+		}
+
+		/**
+		 * \brief Start the metric-sending thread
+		 */
+		void startMetrics_() override
 		{
 			if (stopped_)
 			{
 				// start thread
-                stopped_ = false;
+				stopped_ = false;
 				thread_ = std::thread(&ProcFileMetric::writePipe, this);
 			}
 		}
 
-		virtual void stopMetrics_()
+		/**
+		 * \brief Open the pipe for reading to allow the metric-sending thread to end gracefully
+		 */
+		void stopMetrics_() override
 		{
 			if (!stopped_)
 			{
 				stopped_ = true;
 				// do read on pipe to make sure writePipe is not blocking on open
-				TRACE( 11, "stopMetrics_ before open "+pipe_ );
-				int fd = open( pipe_.c_str(), O_RDONLY|O_NONBLOCK );
+				TRACE(11, "stopMetrics_ before open " + pipe_);
+				int fd = open(pipe_.c_str(), O_RDONLY | O_NONBLOCK);
 				if (fd == -1) { perror("stopMetrics_ open(\"r\")"); exit(1); }
-				TRACE( 10, "stopMetrics_ between open and unlink"+pipe_+" fd=%d",fd );
-				unlink( pipe_.c_str() );
-				TRACE( 11, "stopMetrics_ unlinked "+pipe_ );
+				TRACE(10, "stopMetrics_ between open and unlink" + pipe_ + " fd=%d", fd);
+				unlink(pipe_.c_str());
+				TRACE(11, "stopMetrics_ unlinked " + pipe_);
 # if 0
 				char buf[256];
-				read( fd, buf, sizeof(buf) );
+				read(fd, buf, sizeof(buf));
 # endif
 				close(fd);
-				TRACE( 11, "stopMetrics_ after close "+pipe_ );
-                if(thread_.joinable()) thread_.join();
+				TRACE(11, "stopMetrics_ after close " + pipe_);
+				if (thread_.joinable()) thread_.join();
 			}
 		}
- 
-        void writePipe()
-        {   char buf[256];
-            while(!stopped_)
+
+		/**
+		 * \brief Wait for the pipe to be opened and then write the current value to it
+		 */
+		void writePipe()
+		{
+			while (!stopped_)
 			{
-				TRACE( 11, "writePipe before open" );
-                int fd = open( pipe_.c_str(), O_WRONLY );
-				TRACE( 10, "writePipe open fd=%d value=%lu", fd, value_ );
-				snprintf(buf,sizeof(buf),"%s: %lu\n", name_.c_str(),value_);
-				int sts=write(fd, buf, strnlen(buf,sizeof(buf)) );
-				TRACE( 11, "writePipe write complete sts=%d", sts );
+				TRACE(11, "writePipe before open");
+				int fd = open(pipe_.c_str(), O_WRONLY);
+				std::string str;
+				for (auto value : value_map_) {
+					TRACE(10, "writePipe open fd=%d name=" + value.first + " value=%lu", fd, value.second);
+					str += value.first + ": " + value.second + "\n";
+					//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
+				}
+				int sts = write(fd, str.c_str(), str.size());
+				TRACE(11, "writePipe write complete sts=%d", sts);
 				close(fd);
-				TRACE( 11, "writePipe after close -- about to usleep" );
+				TRACE(11, "writePipe after close -- about to usleep");
 				usleep(400000);	// must wait to make sure other end closes
 			}
-   
+
 		}
 	};
 } //End namespace artdaq
