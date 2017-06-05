@@ -160,7 +160,7 @@ namespace artdaq
 				int fd = open(pipe_.c_str(), O_WRONLY);
 				std::string str;
 				for (auto value : value_map_) {
-					TRACE(10, "writePipe open fd=%d name=" + value.first + " value="+value.second, fd );
+					TRACE(10, "writePipe open fd="+std::to_string(fd)+" name="+value.first+" value="+value.second ); // can't have args b/c name may have %
 					str += value.first + ": " + value.second + "\n";
 					//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
 				}
