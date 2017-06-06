@@ -37,6 +37,7 @@ if(DOXYGEN_FOUND)
 		
 	# install doxygen-generated HTML pages and MAN pages.
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION ${product}/${version}/doc)
-	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${product}/${version}/doc)
+	file(COPY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${LIBRARY_OUTPUT_PATH}/../share)
+	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${${product}_lib_dir}/../share)
 endif(DOXYGEN_FOUND)
 endmacro()
