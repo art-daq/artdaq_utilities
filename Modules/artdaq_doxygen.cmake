@@ -27,6 +27,10 @@ if(DOXYGEN_FOUND)
 				  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 					  COMMENT "Generating ${project} API documentation using Doxygen" VERBATIM)
 	add_custom_target(${product}_doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.tex)
+	add_custom_command(TARGET ${product}_doc POST_BUILD
+                       COMMAND echo Copying ${CMAKE_CURRENT_BINARY_DIR}/man to ${LIBRARY_OUTPUT_PATH}/../share/man
+					   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/man ${LIBRARY_OUTPUT_PATH}/../share/man
+					   )
 
 	create_pdf_documentation()
 
@@ -37,7 +41,6 @@ if(DOXYGEN_FOUND)
 		
 	# install doxygen-generated HTML pages and MAN pages.
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION ${product}/${version}/doc)
-	file(COPY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${LIBRARY_OUTPUT_PATH}/../share)
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION ${${product}_lib_dir}/../share)
 endif(DOXYGEN_FOUND)
 endmacro()
