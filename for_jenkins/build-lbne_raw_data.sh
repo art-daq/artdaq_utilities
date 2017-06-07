@@ -27,6 +27,8 @@ s50:e14)
 	squal=s50
 	artver=v2_07_03
 	nutoolsver=v2_13_03
+	;;
+
 s48:e10)
        basequal=e10
        squal=s48
