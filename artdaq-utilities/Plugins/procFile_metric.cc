@@ -71,7 +71,9 @@ namespace artdaq
 		std::string getLibName() const override { return "procFile"; }
 
 		/**
-		 * \brief Send a string metric. No-Op
+		 * \brief Set the value to be written to the pipe when it is opened by a reader
+		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+		 * \param value Value of the metric.
 		 */
 		void sendMetric_(const std::string& name, const std::string& value, const std::string&) override {
 			if (value_map_.count(name)) {
@@ -81,21 +83,30 @@ namespace artdaq
 		}
 
 		/**
-		 * \brief Send an integer metric. No-Op.
+		 * \brief Set the value to be written to the pipe when it is opened by a reader
+		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+		 * \param value Value of the metric.
+		 * \param unit Units of the metric.
 		 */
 		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override {
 			sendMetric(name, std::to_string(value), unit);
 		}
 
 		/**
-		 * \brief Send a double metric. No-Op.
+		 * \brief Set the value to be written to the pipe when it is opened by a reader
+		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+		 * \param value Value of the metric.
+		 * \param unit Units of the metric.
 		 */
 		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override {
 			sendMetric(name, std::to_string(value), unit);
 		}
 
 		/**
-		 * \brief Send a float metric. No-Op.
+		 * \brief Set the value to be written to the pipe when it is opened by a reader
+		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+		 * \param value Value of the metric.
+		 * \param unit Units of the metric.
 		 */
 		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override {
 			sendMetric(name, std::to_string(value), unit);
@@ -105,6 +116,7 @@ namespace artdaq
 		 * \brief Set the value to be written to the pipe when it is opened by a reader
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
+		 * \param unit Units of the metric.
 		 */
 		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
 		{
