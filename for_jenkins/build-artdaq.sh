@@ -64,13 +64,10 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-basequal_colon=$basequal
 basequal_dash=$basequal
 if [ $nu_flag -eq 1 ];then
-    basequal_colon=$basequal:nu
     basequal_dash=$basequal-nu
 fi
-unset $basequal
 
 case ${build_type} in
     debug) ;;
@@ -136,7 +133,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} nubase-${nuver} ${basequal_dash} ${build_type}
+./pullProducts ${blddir} ${flvr} nubase-${nuver} ${basequal} ${build_type}
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq/${version}.version ]; then
@@ -155,7 +152,7 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-./buildFW -t -b ${basequal_colon} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
