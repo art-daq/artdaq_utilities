@@ -152,10 +152,18 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
+if [ $nu_flag -eq 0 ];then
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
+else
+ # Build the nu version
+./buildFW -t -b ${basequal} -l nu -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+ { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+   exit 1 
+ }
+fi
 
 echo "Fix Manifests"
 cat art-${artver}-*-${basequal_dash}-${build_type}_MANIFEST.txt >>artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
