@@ -20,42 +20,50 @@ version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
-case ${qual_set} in
-    s48:e14)
-        basequal=e14
-        squal=s48
-        artver=v2_06_03
-        ;;
-    s48:e10)
-        basequal=e10
-        squal=s48
-        artver=v2_06_03
-        ;;
-    s47:e14)
-        basequal=e14
-        squal=s47
-        artver=v2_06_02
-        ;;
-    s47:e10)
-        basequal=e10
-        squal=s47
-        artver=v2_06_02
-        ;;
-    s46:e14)
-        basequal=e14
-        squal=s46
-        artver=v2_06_01
-        ;;
-    s46:e10)
-        basequal=e10
-        squal=s46
-        artver=v2_06_01
-        ;;
-    *)
+IFS_save=$IFS
+IFS=":"
+read -a qualarray <<<"$qual_set"
+IFS=$IFS_save
+nu_flag=0
+basequal=
+squal=
+artver=
+
+for qual in ${qualarray[@]};do
+	case ${qual} in
+		e10)
+			basequal=e10
+			;;
+		e14)
+			basequal=e14
+			;;
+		nu)
+			nu_flag=1
+			;;
+		s48)
+			squal=s48
+			artver=v2_06_03
+			;;
+		s47)
+			squal=s47
+			artver=v2_06_02
+			;;
+		s46)
+			squal=s46
+			artver=v2_06_01
+			;;
+		esac
+done
+
+if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	echo "unexpected qualifier set ${qual_set}"
 	usage
 	exit 1
-esac
+fi
+
+if [ $nu_flag -eq 1 ];then
+    basequal=$basequal-nu
+fi
 
 case ${build_type} in
     debug) ;;
