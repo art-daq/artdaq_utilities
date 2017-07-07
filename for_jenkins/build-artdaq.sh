@@ -28,6 +28,7 @@ nu_flag=0
 basequal=
 squal=
 artver=
+nuver=
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
@@ -43,6 +44,7 @@ for qual in ${qualarray[@]};do
 		s48)
 			squal=s48
 			artver=v2_06_03
+			nuver=v2_13_03
 			;;
 		s47)
 			squal=s47
@@ -51,6 +53,7 @@ for qual in ${qualarray[@]};do
 		s46)
 			squal=s46
 			artver=v2_06_01
+			nuver=v2_11_00
 			;;
 		esac
 done
@@ -61,9 +64,13 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
+basequal_colon=$basequal
+basequal_dash=$basequal
 if [ $nu_flag -eq 1 ];then
-    basequal=$basequal-nu
+    basequal_colon=$basequal:nu
+    basequal_dash=$basequal-nu
 fi
+unset $basequal
 
 case ${build_type} in
     debug) ;;
@@ -128,8 +135,9 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
+./pullProducts ${blddir} ${flvr} nubase-${nuver} ${basequal_dash} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq/${version}.version ]; then
   echo "Removing ${blddir}/artdaq/${version}.version"
@@ -147,15 +155,15 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal_colon} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
 
 echo "Fix Manifests"
-cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv artdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+cat art-${artver}-*-${basequal_dash}-${build_type}_MANIFEST.txt >>artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
+cat artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
+mv artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
