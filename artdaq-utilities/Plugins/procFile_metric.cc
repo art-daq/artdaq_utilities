@@ -52,7 +52,7 @@ namespace artdaq
 			}
 
 			int sts = mkfifo(pipe_.c_str(), 0777);
-			if (sts != 0) { perror("ProcFileMetric mkfifo"); exit(1); }
+			if (sts != 0) { perror("ProcFileMetric mkfifo"); }
 			TRACE(10, "ProcFileMetric mkfifo(" + pipe_ + ") sts=%d", sts);
 			startMetrics();
 		}
@@ -155,6 +155,7 @@ namespace artdaq
 				char buf[256];
 				read(fd, buf, sizeof(buf));
 # endif
+				usleep(10000);
 				close(fd);
 				TRACE(11, "stopMetrics_ after close " + pipe_);
 				if (thread_.joinable()) thread_.join();
