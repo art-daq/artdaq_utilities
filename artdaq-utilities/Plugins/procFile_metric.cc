@@ -61,6 +61,7 @@ namespace artdaq
 		 * \brief ProcFileMetric Destructor
 		 */
 		~ProcFileMetric() {
+			TRACE( 11, "~ProcFileMetric" );
 			stopMetrics();
 		}
 
