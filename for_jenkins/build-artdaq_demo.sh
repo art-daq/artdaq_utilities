@@ -19,24 +19,28 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
-artdaq_ver=${ARTDAQ_VERSION}
 
 case ${qual_set} in
-	s41:e10)
-	basequal=e10
-	squal=s41
-	artver=v2_03_00
-    ;;
-    s43:e10)
-    basequal=e10
-    squal=s43
-    artver=v2_05_00
-    ;;
-    s44:e10)
-    basequal=e10
-    squal=s44
-    artver=v2_04_01
-    ;;
+    s48:e14)
+        basequal=e14
+        squal=s48
+        artver=v2_06_03
+        ;;
+    s48:e10)
+        basequal=e10
+        squal=s48
+        artver=v2_06_03
+        ;;
+    s47:e14)
+        basequal=e14
+        squal=s47
+        artver=v2_06_02
+        ;;
+    s47:e10)
+        basequal=e10
+        squal=s47
+        artver=v2_06_02
+        ;;
     s46:e10)
         basequal=e10
         squal=s46
@@ -51,6 +55,27 @@ case ${qual_set} in
 	echo "unexpected qualifier set ${qual_set}"
 	usage
 	exit 1
+esac
+
+case ${version} in
+  v2_09_00)
+    artdaq_ver=v2_00_00
+    ;;
+  v2_09_01)
+    artdaq_ver=v2_01_00
+    ;;
+  v2_09_02)
+    artdaq_ver=v2_02_01
+    ;;
+  v2_09_03)
+    artdaq_ver=v2_02_03
+    ;;
+  v2_10_00)
+    artdaq_ver=v2_03_00
+    ;;
+  *)
+    echo "Unexpected artdaq_demo version ${version}"
+    exit 1
 esac
 
 case ${build_type} in

@@ -22,21 +22,36 @@ build_type=${BUILDTYPE}
 demo_version=${ARTDAQ_DEMO_VERSION}
 
 case ${qual_set} in
-	s41:e10)
-	basequal=e10
-	squal=s41
-	artver=v2_03_00
-    ;;
-	s43:e10)
-	basequal=e10
-	squal=s43
-	artver=v2_05_00
-    ;;
-	s44:e10)
-	basequal=e10
-	squal=s44
-	artver=v2_04_01
-    ;;
+    s48:e14)
+        basequal=e14
+        squal=s48
+        artver=v2_06_03
+        ;;
+    s48:e10)
+        basequal=e10
+        squal=s48
+        artver=v2_06_03
+        ;;
+    s47:e14)
+        basequal=e14
+        squal=s47
+        artver=v2_06_02
+        ;;
+    s47:e10)
+        basequal=e10
+        squal=s47
+        artver=v2_06_02
+        ;;
+    s46:e10)
+        basequal=e10
+        squal=s46
+        artver=v2_06_01
+        ;;
+    s46:e14)
+        basequal=e14
+        squal=s46
+        artver=v2_06_01
+        ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
@@ -46,6 +61,15 @@ esac
 case ${demo_version} in
    v2_09_00)
     artdaq_ver=v2_00_00
+    ;;
+  v2_09_01)
+    artdaq_ver=v2_01_00
+    ;;
+  v2_09_02)
+    artdaq_ver=v2_02_01
+    ;;
+  v2_09_03)
+    artdaq_ver=v2_02_03
     ;;
 esac
 

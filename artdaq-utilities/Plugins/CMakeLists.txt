@@ -1,5 +1,5 @@
 cet_make(
-  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc
+  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc
   LIBRARIES
   ${FHICLCPP}
   ${CETLIB}
@@ -26,6 +26,14 @@ basic_plugin("msgFacility" "metric"
 basic_plugin("graphite" "metric"
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
+  ${FHICLCPP}
+  ${CETLIB}
+  ${CETLIB_EXCEPT}
+   ${MF_MESSAGELOGGER}
+  pthread
+)
+
+basic_plugin("procFile" "metric"
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}
