@@ -44,6 +44,7 @@ for qual in ${qualarray[@]};do
 		s50)
 			squal=s50
 			artver=v2_07_03
+            ;;
 		s48)
 			squal=s48
 			artver=v2_06_03
