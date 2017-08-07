@@ -41,6 +41,9 @@ for qual in ${qualarray[@]};do
 		nu)
 			nu_flag=1
 			;;
+		s50)
+			squal=s50
+			artver=v2_07_03
 		s48)
 			squal=s48
 			artver=v2_06_03
@@ -133,7 +136,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}
+if [ $nu_flag -eq 1 ];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq/${version}.version ]; then

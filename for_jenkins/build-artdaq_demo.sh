@@ -21,6 +21,11 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+	s50:e14)
+		basequal=e14
+		squal=s50
+		artver=v2_07_03
+		;;
     s48:e14)
         basequal=e14
         squal=s48
@@ -72,6 +77,9 @@ case ${version} in
     ;;
   v2_10_00)
     artdaq_ver=v2_03_00
+    ;;
+  v2_10_01)
+    artdaq_ver=v2_03_01
     ;;
   *)
     echo "Unexpected artdaq_demo version ${version}"
