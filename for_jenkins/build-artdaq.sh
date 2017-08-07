@@ -137,7 +137,7 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-if [ $nu_flag -eq 1 ];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
+if [ $nu_flag -eq 1 ] && [[ "x$nuver" != "x" ]];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq/${version}.version ]; then
