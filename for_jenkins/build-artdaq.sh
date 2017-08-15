@@ -83,6 +83,7 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's^v//'`
 
 echo "building the artdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -176,9 +177,9 @@ fi
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${artdotver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
