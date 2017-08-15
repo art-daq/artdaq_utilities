@@ -202,11 +202,12 @@ echo
    exit 1 
  }
 
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${artver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${artdaq_ver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"

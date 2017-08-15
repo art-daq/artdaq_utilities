@@ -140,16 +140,20 @@ cd ${blddir} || exit 1
 if [ $nu_flag -eq 1 ] && [[ "x$nuver" != "x" ]];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/artdaq/${version}.version ]; then
-  echo "Removing ${blddir}/artdaq/${version}.version"
-  rm -rf ${blddir}/artdaq/${version}.version
+if [ -d ${blddir}/artdaq_utilities ]; then
+  echo "Removing ${blddir}/artdaq_utilities"
+  rm -rf ${blddir}/artdaq_utilities
+  if [ `ls -l ${blddir}/artdaq_utilities*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_utilities*.tar.bz2; fi
 fi
-if [ -d ${blddir}/artdaq/${version} ]; then
-  echo "Removing ${blddir}/artdaq/${version}"
-  rm -rf ${blddir}/artdaq/${version}
+if [ -d ${blddir}/artdaq_core ]; then
+  echo "Removing ${blddir}/artdaq_core"
+  rm -rf ${blddir}/artdaq_core
+  if [ `ls -l ${blddir}/artdaq_core*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_core*.tar.bz2; fi
 fi
-if [ `ls -1 ${blddir}/artdaq*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/artdaq*${dotver}*.tar.bz2
+if [ -d ${blddir}/artdaq ]; then
+  echo "Removing ${blddir}/artdaq"
+  rm -rf ${blddir}/artdaq
+  if [ `ls -l ${blddir}/artdaq*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq*.tar.bz2; fi
 fi
 
 echo
@@ -169,10 +173,11 @@ else
  }
 fi
 
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artver}-*-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${artver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
