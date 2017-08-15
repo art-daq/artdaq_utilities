@@ -173,6 +173,7 @@ else
  }
 fi
 
+source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
 cat ${blddir}/art-${artver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${version}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt

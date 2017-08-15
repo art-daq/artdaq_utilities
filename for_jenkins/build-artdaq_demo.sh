@@ -202,6 +202,7 @@ echo
    exit 1 
  }
 
+source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
 cat ${blddir}/art-${artver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${version}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
