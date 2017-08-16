@@ -41,6 +41,10 @@ for qual in ${qualarray[@]};do
 		nu)
 			nu_flag=1
 			;;
+		s50)
+			squal=s50
+			artver=v2_07_03
+            ;;
 		s48)
 			squal=s48
 			artver=v2_06_03
@@ -79,6 +83,7 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's^v//'`
 
 echo "building the artdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -133,19 +138,23 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}
+if [ $nu_flag -eq 1 ] && [[ "x$nuver" != "x" ]];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/artdaq/${version}.version ]; then
-  echo "Removing ${blddir}/artdaq/${version}.version"
-  rm -rf ${blddir}/artdaq/${version}.version
+if [ -d ${blddir}/artdaq_utilities ]; then
+  echo "Removing ${blddir}/artdaq_utilities"
+  rm -rf ${blddir}/artdaq_utilities
+  if [ `ls -l ${blddir}/artdaq_utilities*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_utilities*.tar.bz2; fi
 fi
-if [ -d ${blddir}/artdaq/${version} ]; then
-  echo "Removing ${blddir}/artdaq/${version}"
-  rm -rf ${blddir}/artdaq/${version}
+if [ -d ${blddir}/artdaq_core ]; then
+  echo "Removing ${blddir}/artdaq_core"
+  rm -rf ${blddir}/artdaq_core
+  if [ `ls -l ${blddir}/artdaq_core*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_core*.tar.bz2; fi
 fi
-if [ `ls -1 ${blddir}/artdaq*${dotver}*.tar.bz2 | wc -l` -gt 0 ]; then
-  rm -fv ${blddir}/artdaq*${dotver}*.tar.bz2
+if [ -d ${blddir}/artdaq ]; then
+  echo "Removing ${blddir}/artdaq"
+  rm -rf ${blddir}/artdaq
+  if [ `ls -l ${blddir}/artdaq*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq*.tar.bz2; fi
 fi
 
 echo
@@ -165,10 +174,12 @@ else
  }
 fi
 
+source ${blddir}/setups
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat art-${artver}-*-${basequal_dash}-${build_type}_MANIFEST.txt >>artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
-mv artdaq-${version}-*-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${artdotver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
@@ -176,4 +187,11 @@ echo
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
+
+echo
+echo "cleanup"
+echo
+rm -rf ${blddir}
+rm -rf ${srcdir}
+
 exit 0

@@ -21,6 +21,11 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+	s50:e14)
+		basequal=e14
+		squal=s50
+		artver=v2_07_03
+		;;
     s48:e14)
         basequal=e14
         squal=s48
@@ -73,6 +78,9 @@ case ${version} in
   v2_10_00)
     artdaq_ver=v2_03_00
     ;;
+  v2_10_01)
+    artdaq_ver=v2_03_01
+    ;;
   *)
     echo "Unexpected artdaq_demo version ${version}"
     exit 1
@@ -88,6 +96,8 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+art_dotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdaq_dotver=`echo ${artdaq_ver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the artdaq_demo distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -194,11 +204,13 @@ echo
    exit 1 
  }
 
+source ${blddir}/setups
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
@@ -206,5 +218,11 @@ echo
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
+
+echo
+echo "cleanup"
+echo
+rm -rf ${blddir}
+rm -rf ${srcdir}
 
 exit 0

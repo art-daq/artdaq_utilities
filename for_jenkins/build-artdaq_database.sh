@@ -184,4 +184,10 @@ mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
 
+
+echo
+echo "cleanup"
+echo
+rm -rf ${blddir}
+rm -rf ${srcdir}
 exit 0
