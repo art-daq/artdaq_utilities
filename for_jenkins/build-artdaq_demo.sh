@@ -21,6 +21,11 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
+	s50:e14)
+		basequal=e14
+		squal=s50
+		artver=v2_07_03
+		;;
     s48:e14)
         basequal=e14
         squal=s48
@@ -57,26 +62,11 @@ case ${qual_set} in
 	exit 1
 esac
 
-case ${version} in
-  v2_09_00)
-    artdaq_ver=v2_00_00
-    ;;
-  v2_09_01)
-    artdaq_ver=v2_01_00
-    ;;
-  v2_09_02)
-    artdaq_ver=v2_02_01
-    ;;
-  v2_09_03)
-    artdaq_ver=v2_02_03
-    ;;
-  v2_10_00)
-    artdaq_ver=v2_03_00
-    ;;
-  *)
-    echo "Unexpected artdaq_demo version ${version}"
-    exit 1
-esac
+wget https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/repository/revisions/${version}/raw/ups/product_deps && \
+artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \
+$(echo "Unexpected version ${version}" && usage && exit 1)
+rm product_deps
+echo "Building against artdaq version ${artdaq_ver}"
 
 case ${build_type} in
     debug) ;;
@@ -88,6 +78,8 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+art_dotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdaq_dotver=`echo ${artdaq_ver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the artdaq_demo distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -194,11 +186,13 @@ echo
    exit 1 
  }
 
+source ${blddir}/setups
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv artdaq_demo-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
@@ -206,5 +200,11 @@ echo
 mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
+
+echo
+echo "cleanup"
+echo
+rm -rf ${blddir}
+rm -rf ${srcdir}
 
 exit 0
