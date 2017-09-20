@@ -53,12 +53,14 @@ macro (create_nodejs_addon)
 
         file(GLOB NODEJS_ADDON_SOURCES  *.i)
         file(GLOB LIB_SOURCES  *.cpp)
+		file(GLOB SWIG_DEPENDS *.h *.i)
 
         set_source_files_properties (${NODEJS_ADDON_SOURCES} PROPERTIES CPLUSPLUS ON)
         set_source_files_properties (${NODEJS_ADDON_SOURCES} PROPERTIES SWIG_FLAGS "-node")
 
         list(APPEND CNA_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${NODE_INCLUDE_DIRS})
 
+		SET(SWIG_MODULE_${CNA_ADDON_NAME}_EXTRA_DEPS ${SWIG_DEPENDS})
         swig_add_module (${CNA_ADDON_NAME} javascript ${NODEJS_ADDON_SOURCES} ${LIB_SOURCES})
 
         swig_link_libraries (${CNA_ADDON_NAME} ${CNA_LIBRARIES})
