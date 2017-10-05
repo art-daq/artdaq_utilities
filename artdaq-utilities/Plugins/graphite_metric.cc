@@ -111,7 +111,7 @@ namespace artdaq
 		*/
 		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
 		{
-			sendMetric(name, std::to_string(value), unit);
+			sendMetric_(name, std::to_string(value), unit);
 		}
 
 		/**
@@ -122,7 +122,7 @@ namespace artdaq
 		*/
 		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
 		{
-			sendMetric(name, std::to_string(value), unit);
+			sendMetric_(name, std::to_string(value), unit);
 		}
 
 		/**
@@ -133,7 +133,7 @@ namespace artdaq
 		*/
 		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
 		{
-			sendMetric(name, std::to_string(value), unit);
+			sendMetric_(name, std::to_string(value), unit);
 		}
 
 		/**
@@ -144,7 +144,7 @@ namespace artdaq
 		*/
 		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
 		{
-			sendMetric(name, std::to_string(value), unit);
+			sendMetric_(name, std::to_string(value), unit);
 		}
 
 		/**
