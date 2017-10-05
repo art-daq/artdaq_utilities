@@ -240,6 +240,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		{
 			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			temp_list.swap(metric_queue_);
+			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
 		}
 
 		while (temp_list.size() > 0)
