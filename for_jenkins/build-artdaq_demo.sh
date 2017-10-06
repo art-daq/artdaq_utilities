@@ -62,32 +62,11 @@ case ${qual_set} in
 	exit 1
 esac
 
-case ${version} in
-  v2_09_00)
-    artdaq_ver=v2_00_00
-    ;;
-  v2_09_01)
-    artdaq_ver=v2_01_00
-    ;;
-  v2_09_02)
-    artdaq_ver=v2_02_01
-    ;;
-  v2_09_03)
-    artdaq_ver=v2_02_03
-    ;;
-  v2_10_00)
-    artdaq_ver=v2_03_00
-    ;;
-  v2_10_01)
-    artdaq_ver=v2_03_01
-    ;;
-v2_10_02)
-    artdaq_ver=v2_03_02
-    ;;
-  *)
-    echo "Unexpected artdaq_demo version ${version}"
-    exit 1
-esac
+wget https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/repository/revisions/${version}/raw/ups/product_deps && \
+artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \
+$(echo "Unexpected version ${version}" && usage && exit 1)
+rm product_deps
+echo "Building against artdaq version ${artdaq_ver}"
 
 case ${build_type} in
     debug) ;;

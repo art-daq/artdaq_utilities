@@ -10,6 +10,7 @@
 // relative to the application state.
 
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
+#include "artdaq-utilities/Plugins/MetricData.hh"
 #include "fhiclcpp/fwd.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
@@ -105,11 +106,14 @@ public:
 	 * \param value The value of the metric
 	 * \param unit The units of the metric
 	 * \param level The verbosity level of the metric. Higher number == more verbose
-	 * \param accumulate Whether to accumulate (average) over a reporting_interval, or directly report value to the metric storage
+	 * \param mode The MetricMode that the metric should operate in. Options are:
+	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
+	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
+	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
 	 * \param metricPrefix An additional prefix to prepend to the metric name
 	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
 	 */
-	void sendMetric(std::string const& name, std::string const& value, std::string const& unit, int level, bool accumulate = true, std::string const& metricPrefix = "", bool useNameOverride = false);
+	void sendMetric(std::string const& name, std::string const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -117,11 +121,14 @@ public:
 	* \param value The value of the metric
 	* \param unit The units of the metric
 	* \param level The verbosity level of the metric. Higher number == more verbose
-	* \param accumulate Whether to accumulate (average) over a reporting_interval, or directly report value to the metric storage
+	 * \param mode The MetricMode that the metric should operate in. Options are:
+	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
+	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
+	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, int const& value, std::string const& unit, int level, bool accumulate = true, std::string const& metricPrefix = "", bool useNameOverride = false);
+	void sendMetric(std::string const& name, int const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -129,11 +136,14 @@ public:
 	* \param value The value of the metric
 	* \param unit The units of the metric
 	* \param level The verbosity level of the metric. Higher number == more verbose
-	* \param accumulate Whether to accumulate (average) over a reporting_interval, or directly report value to the metric storage
+	 * \param mode The MetricMode that the metric should operate in. Options are:
+	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
+	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
+	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, double const& value, std::string const& unit, int level, bool accumulate = true, std::string const& metricPrefix = "", bool useNameOverride = false);
+	void sendMetric(std::string const& name, double const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -141,11 +151,14 @@ public:
 	* \param value The value of the metric
 	* \param unit The units of the metric
 	* \param level The verbosity level of the metric. Higher number == more verbose
-	* \param accumulate Whether to accumulate (average) over a reporting_interval, or directly report value to the metric storage
+	 * \param mode The MetricMode that the metric should operate in. Options are:
+	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
+	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
+	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, float const& value, std::string const& unit, int level, bool accumulate = true, std::string const& metricPrefix = "", bool useNameOverride = false);
+	void sendMetric(std::string const& name, float const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -153,11 +166,14 @@ public:
 	* \param value The value of the metric
 	* \param unit The units of the metric
 	* \param level The verbosity level of the metric. Higher number == more verbose
-	* \param accumulate Whether to accumulate (average) over a reporting_interval, or directly report value to the metric storage
+	 * \param mode The MetricMode that the metric should operate in. Options are:
+	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
+	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
+	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate = true, std::string const& metricPrefix = "", bool useNameOverride = false);
+	void sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	 * \brief Sets the prefix prepended to all metrics without useNameOverride set
@@ -174,105 +190,13 @@ private:
 	std::thread metric_sending_thread_;
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
+	int metric_send_interval_ms_;
 
 	bool initialized_;
 	bool running_;
 	bool active_;
 	std::string prefix_;
-
-
-	struct MetricData
-	{
-		MetricData(const MetricData&) = default;
-
-		MetricData(MetricData&&) noexcept = default;
-
-		MetricData& operator=(const MetricData&) = default;
-
-		MetricData& operator=(MetricData&&) noexcept = default;
-
-		std::string name_;
-		std::string stringValue_;
-
-		union
-		{
-			int intValue_;
-			double doubleValue_;
-			float floatValue_;
-			long unsigned int unsignedValue_;
-		};
-
-		enum MetricType
-		{
-			InvalidMetric,
-			StringMetric,
-			IntMetric,
-			DoubleMetric,
-			FloatMetric,
-			UnsignedMetric
-		};
-
-		MetricType type_;
-		std::string unit_;
-		int level_;
-		bool accumulate_;
-		std::string metricPrefix_;
-		bool useNameOverride_;
-
-		MetricData(std::string const& name, std::string const& value, std::string const& unit, int level, bool accumulate, std::string const& metricPrefix, bool useNameOverride)
-			: name_(name)
-			, stringValue_(value)
-			, type_(StringMetric)
-			, unit_(unit)
-			, level_(level)
-			, accumulate_(accumulate)
-			, metricPrefix_(metricPrefix)
-			, useNameOverride_(useNameOverride) {}
-
-		MetricData(std::string const& name, int const& value, std::string const& unit, int level, bool accumulate, std::string const& metricPrefix, bool useNameOverride)
-			: name_(name)
-			, intValue_(value)
-			, type_(IntMetric)
-			, unit_(unit)
-			, level_(level)
-			, accumulate_(accumulate)
-			, metricPrefix_(metricPrefix)
-			, useNameOverride_(useNameOverride) {}
-
-		MetricData(std::string const& name, double const& value, std::string const& unit, int level, bool accumulate, std::string const& metricPrefix, bool useNameOverride)
-			: name_(name)
-			, doubleValue_(value)
-			, type_(DoubleMetric)
-			, unit_(unit)
-			, level_(level)
-			, accumulate_(accumulate)
-			, metricPrefix_(metricPrefix)
-			, useNameOverride_(useNameOverride) {}
-
-		MetricData(std::string const& name, float const& value, std::string const& unit, int level, bool accumulate, std::string const& metricPrefix, bool useNameOverride)
-			: name_(name)
-			, floatValue_(value)
-			, type_(FloatMetric)
-			, unit_(unit)
-			, level_(level)
-			, accumulate_(accumulate)
-			, metricPrefix_(metricPrefix)
-			, useNameOverride_(useNameOverride) {}
-
-		MetricData(std::string const& name, long unsigned int const& value, std::string const& unit, int level, bool accumulate, std::string const& metricPrefix, bool useNameOverride)
-			: name_(name)
-			, unsignedValue_(value)
-			, type_(UnsignedMetric)
-			, unit_(unit)
-			, level_(level)
-			, accumulate_(accumulate)
-			, metricPrefix_(metricPrefix)
-			, useNameOverride_(useNameOverride) {}
-
-		MetricData() : name_("")
-		             , type_(InvalidMetric) {}
-	};
-
+	
 	std::list<std::unique_ptr<MetricData>> metric_queue_;
 	std::mutex metric_queue_mutex_;
 };
