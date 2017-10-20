@@ -2,6 +2,7 @@ cmake_policy(VERSION 3.0.1)
 
 include(FindDoxygen)
 include(FindLATEX)
+include(CetParseArgs)
 
 SET(DOXYFILE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
@@ -22,6 +23,13 @@ endfunction()
 
 macro (create_doxygen_documentation)
 if(DOXYGEN_FOUND)
+	cet_parse_args( CM "EXCLUDE" "" ${ARGN})
+	set(EXCLUDE_FILES "")
+	if(CM_EXCLUDE)
+		foreach(file ${CM_EXCLUDE})
+			set(EXCLUDE_FILES "${EXCLUDE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../${file}")
+		endforeach()
+endif()
 	configure_file(${DOXYFILE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.tex 
 				  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile > doxygen.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} 
