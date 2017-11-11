@@ -106,12 +106,12 @@ void artdaq::MetricManager::do_start()
 
 void artdaq::MetricManager::do_stop()
 {
-	TLOG_DEBUG("MetricManager") << "Stopping Metrics";
+	TLOG_DEBUG("MetricManager") << "Stopping Metrics" << TLOG_ENDL;
 	running_ = false;
 	metric_cv_.notify_all();
-	TLOG_DEBUG("MetricManager") << "Joining Metric-Sending thread";
+	TLOG_DEBUG("MetricManager") << "Joining Metric-Sending thread" << TLOG_ENDL;
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
-	TLOG_DEBUG("MetricManager") << "do_stop Complete";
+	TLOG_DEBUG("MetricManager") << "do_stop Complete" << TLOG_ENDL;
 }
 
 void artdaq::MetricManager::do_pause() { /*do_stop();*/ }
