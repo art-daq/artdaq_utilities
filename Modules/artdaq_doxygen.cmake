@@ -9,14 +9,13 @@ SET(DOXYFILE_DIR ${CMAKE_CURRENT_LIST_DIR})
 function(create_pdf_documentation)
 	find_package(LATEX COMPONENTS PDFLATEX PS2PDF MAKEINDEX)
 	if(LATEX_FOUND)
-	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/latex/API_Documentation.pdf
+	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf
 						   COMMAND make > pdflatex.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/latex 
-					   COMMAND mv refman.pdf API_Documentation.pdf
+					   COMMAND mv refman.pdf ${product}_API_Documentation.pdf
 				   DEPENDS ${product}_doc
-				   COMMENT "Generating PDF API Documentation file" VERBATIM)
-			   # ALL removed from this add_custom_target, as the PDF does not build correctly on woof
-			   add_custom_target(${product}_pdf DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/API_Documentation.pdf)
-			   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/API_Documentation.pdf DESTINATION ${product}/${version}/doc/ OPTIONAL)
+				   COMMENT "Generating ${project} PDF API Documentation file" VERBATIM)
+			   add_custom_target(${product}_pdf ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf)
+			   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf DESTINATION ${product}/${version}/doc/ OPTIONAL)
 	endif(LATEX_FOUND)
 endfunction()
 
