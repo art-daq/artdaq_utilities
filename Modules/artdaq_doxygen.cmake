@@ -39,7 +39,10 @@ endif()
 					   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/man ${LIBRARY_OUTPUT_PATH}/../share/man
 					   )
 
-	create_pdf_documentation()
+    # Only build PDF documentation in MRB
+	if(DEFINED ENV{MRB_BUILDDIR})
+	  create_pdf_documentation()
+    endif()
 
 	# install any documentation text files
 	install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION ${product}/${version} 
