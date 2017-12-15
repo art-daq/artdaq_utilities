@@ -11,3 +11,7 @@ BoardReader_*.fcl
 EventBuilder_*.fcl
 
 NONE
+
+bin/*
+obj/*
+*.vcxproj*
