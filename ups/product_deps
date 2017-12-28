@@ -19,7 +19,7 @@ fcldir      product_dir fcl
 
 #
 product		version		optional
-TRACE		v3_11_02
+TRACE		v3_13_01
 messagefacility v2_00_02        s50
 messagefacility v1_18_04        s48
 messagefacility v1_18_03        s47
