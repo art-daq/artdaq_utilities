@@ -282,7 +282,9 @@ void artdaq::MetricManager::startMetricLoop_()
 {
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
 	TLOG_INFO("MetricManager") << "Starting Metric Sending Thread" << TLOG_ENDL;
-	metric_sending_thread_ = std::thread(&MetricManager::sendMetricLoop_, this);
+	boost::thread::attributes attrs;
+	attrs.set_stack_size(4096 * 200); // 800 KB
+	metric_sending_thread_ = boost::thread(attrs, boost::bind(&MetricManager::sendMetricLoop_, this));
 }
 
 void artdaq::MetricManager::sendMetricLoop_()

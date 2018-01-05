@@ -16,9 +16,9 @@
 
 #include <sstream>
 #include <list>
-#include <thread>
 #include <condition_variable>
 #include <atomic>
+#include <boost/thread.hpp>
 
 namespace artdaq
 {
@@ -189,7 +189,7 @@ private:
 	void startMetricLoop_();
 
 	std::vector<std::unique_ptr<artdaq::MetricPlugin>> metric_plugins_;
-	std::thread metric_sending_thread_;
+	boost::thread metric_sending_thread_;
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
 	int metric_send_interval_ms_;
