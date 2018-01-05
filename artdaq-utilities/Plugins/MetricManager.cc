@@ -8,6 +8,7 @@
 
 #include "artdaq-utilities/Plugins/MetricManager.hh"
 #include "artdaq-utilities/Plugins/makeMetricPlugin.hh"
+#define TRACE_NAME "MetricManager"
 #include "tracemf.h"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -125,7 +126,11 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 
 void artdaq::MetricManager::shutdown()
 {
+#  if 0
 	TLOG_DEBUG("MetricManager") << "MetricManager is shutting down..." << TLOG_ENDL;
+#  else
+	TRACE(TLVL_DEBUG,"MetricManager is shutting down...");
+#  endif
 	do_stop();
 
 	if (initialized_)
@@ -136,13 +141,22 @@ void artdaq::MetricManager::shutdown()
 			{
 				std::string name = i->getLibName();
 				i.reset(nullptr);
+#              if 0
 				TLOG_DEBUG("MetricManager") << "Metric Plugin " << name << " shutdown." << TLOG_ENDL;
+#              else
+				TRACE(TLVL_DEBUG,"Metric Plugin "+name+" shutdown.");
+#              endif
 			}
 			catch (...)
 			{
+#              if 0
 				TLOG_ERROR("MetricManager") <<
 					"Exception caught in MetricManager::shutdown(), error shutting down metric with name " <<
 					i->getLibName() << TLOG_ENDL;
+#              else
+				TRACE(TLVL_ERROR,"Exception caught in MetricManager::shutdown(), error shutting down metric with name "
+				      +i->getLibName());
+#              endif
 			}
 		}
 		initialized_ = false;
