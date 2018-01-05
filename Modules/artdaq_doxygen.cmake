@@ -35,8 +35,8 @@ endif()
 					  COMMENT "Generating ${project} API documentation using Doxygen" VERBATIM)
 	add_custom_target(${product}_doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.tex)
 	add_custom_command(TARGET ${product}_doc POST_BUILD
-                       COMMAND echo Copying ${CMAKE_CURRENT_BINARY_DIR}/man to ${LIBRARY_OUTPUT_PATH}/../share/man
-					   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/man ${LIBRARY_OUTPUT_PATH}/../share/man
+                       COMMAND echo Copying ${CMAKE_CURRENT_BINARY_DIR}/man to ${${product}_lib_dir}/../share/man
+					   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/man ${${product}_lib_dir}/../share/man
 					   )
 
     # Only build PDF documentation in MRB
