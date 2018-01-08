@@ -6,10 +6,10 @@
 // and sends them data as it is recieved. It also maintains the state of the plugins
 // relative to the application state.
 
-#include "artdaq-utilities/Plugins/MetricManager.hh"
-#include "artdaq-utilities/Plugins/makeMetricPlugin.hh"
 #define TRACE_NAME "MetricManager"
 #include "tracemf.h"
+#include "artdaq-utilities/Plugins/MetricManager.hh"
+#include "artdaq-utilities/Plugins/makeMetricPlugin.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <chrono>
@@ -36,7 +36,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 	{
 		shutdown();
 	}
-	TLOG_DEBUG("MetricManager") << "Configuring metrics with parameter set:\n" << pset.to_string() << TLOG_ENDL;
+	TLOG_INFO("MetricManager") << "Configuring metrics with parameter set:\n" << pset.to_string() << TLOG_ENDL;
 
 	std::vector<std::string> names = pset.get_pset_names();
 
@@ -90,7 +90,7 @@ void artdaq::MetricManager::do_start()
 			try
 			{
 				metric->startMetrics();
-				TLOG_DEBUG("MetricManager") << "Metric Plugin " << metric->getLibName() << " started." << TLOG_ENDL;
+				TLOG_INFO("MetricManager") << "Metric Plugin " << metric->getLibName() << " started." << TLOG_ENDL;
 				active_ = true;
 			}
 			catch (...)
@@ -126,11 +126,7 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 
 void artdaq::MetricManager::shutdown()
 {
-#  if 0
 	TLOG_DEBUG("MetricManager") << "MetricManager is shutting down..." << TLOG_ENDL;
-#  else
-	TRACE(TLVL_DEBUG,"MetricManager is shutting down...");
-#  endif
 	do_stop();
 
 	if (initialized_)
@@ -141,22 +137,13 @@ void artdaq::MetricManager::shutdown()
 			{
 				std::string name = i->getLibName();
 				i.reset(nullptr);
-#              if 0
 				TLOG_DEBUG("MetricManager") << "Metric Plugin " << name << " shutdown." << TLOG_ENDL;
-#              else
-				TRACE(TLVL_DEBUG,"Metric Plugin "+name+" shutdown.");
-#              endif
 			}
 			catch (...)
 			{
-#              if 0
 				TLOG_ERROR("MetricManager") <<
 					"Exception caught in MetricManager::shutdown(), error shutting down metric with name " <<
 					i->getLibName() << TLOG_ENDL;
-#              else
-				TRACE(TLVL_ERROR,"Exception caught in MetricManager::shutdown(), error shutting down metric with name "
-				      +i->getLibName());
-#              endif
 			}
 		}
 		initialized_ = false;
