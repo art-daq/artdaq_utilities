@@ -161,7 +161,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_.push_back(std::move(metric));
+				metric_queue_.emplace(std::move(metric));
 			}
 		}
 		else
@@ -184,7 +184,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_.push_back(std::move(metric));
+				metric_queue_.emplace(std::move(metric));
 			}
 		}
 		else
@@ -207,7 +207,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_.push_back(std::move(metric));
+				metric_queue_.emplace(std::move(metric));
 			}
 		}
 		else
@@ -230,7 +230,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_.push_back(std::move(metric));
+				metric_queue_.emplace(std::move(metric));
 			}
 		}
 		else
@@ -253,7 +253,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_.push_back(std::move(metric));
+				metric_queue_.emplace(std::move(metric));
 			}
 		}
 		else
@@ -279,7 +279,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
-		while (metric_queue_.size() == 0 && running_)
+		while (metric_queue_.empty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
 			metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
@@ -291,21 +291,21 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
-		auto temp_list = std::list<std::unique_ptr<MetricData>>();
+		auto temp_list = std::queue<std::unique_ptr<MetricData>>();
 		{
 			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			temp_list.swap(metric_queue_);
-			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
+			temp_list.emplace(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
 			auto missed = missed_metric_calls_.exchange(0);
 
-			temp_list.emplace_back(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate, "", false));
+			temp_list.emplace(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate, "", false));
 			TLOG_TRACE("MetricManager") << "There are " << temp_list.size() << " Metric Calls to process (missed " << missed << ")" << TLOG_ENDL;
 		}
 
 		while (temp_list.size() > 0)
 		{
 			auto data_ = std::move(temp_list.front());
-			temp_list.pop_front();
+			temp_list.pop();
 			if (data_->Type == MetricType::InvalidMetric) continue;
 			if (!data_->UseNameOverride)
 			{

@@ -15,7 +15,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <sstream>
-#include <list>
+#include <queue>
 #include <condition_variable>
 #include <atomic>
 #include <boost/thread.hpp>
@@ -199,7 +199,7 @@ private:
 	bool active_;
 	std::string prefix_;
 	
-	std::list<std::unique_ptr<MetricData>> metric_queue_;
+	std::queue<std::unique_ptr<MetricData>> metric_queue_;
 	std::mutex metric_queue_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
 	size_t metric_queue_max_size_;
