@@ -10,7 +10,7 @@
 #include <stdlib.h>				// exit
 #include <ctime>
 #include <string>
-#include <thread>
+#include <boost/thread.hpp>
 #include <map>
 
 namespace artdaq
@@ -27,7 +27,7 @@ namespace artdaq
 		std::string pipe_;
 		std::unordered_map<std::string, std::string> value_map_;
 		bool stopped_;
-		std::thread thread_;
+		boost::thread thread_;
 	public:
 		/**
 		 * \brief ProcFileMetric Constructor
@@ -133,7 +133,9 @@ namespace artdaq
 			{
 				// start thread
 				stopped_ = false;
-				thread_ = std::thread(&ProcFileMetric::writePipe, this);
+				boost::thread::attributes attrs;
+				attrs.set_stack_size(4096 * 200); // 800 KB
+				thread_ = boost::thread(attrs, boost::bind(&ProcFileMetric::writePipe, this));
 			}
 		}
 

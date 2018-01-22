@@ -172,12 +172,11 @@ namespace artdaq
 
 						if (metricMode == MetricMode::LastPoint)
 						{
-							std::list<MetricData> tmpList(1);
-							auto lastPoint = metricData_[metricName].back();
-							tmpList.push_back(lastPoint);
-							metricData_[metricName].swap(tmpList);
-							assert(metricData_[metricName].size() == 1);
-							sendMetric_(lastPoint);
+							if (metricData_[metricName].size() > 1)
+							{
+								metricData_[metricName].erase(metricData_[metricName].begin(), std::prev(metricData_[metricName].end()));
+							}
+							sendMetric_(metricData_[metricName].back());
 						}
 						else
 						{

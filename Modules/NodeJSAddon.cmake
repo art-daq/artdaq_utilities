@@ -61,7 +61,8 @@ macro (create_nodejs_addon)
         list(APPEND CNA_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${NODE_INCLUDE_DIRS})
 
 		SET(SWIG_MODULE_${CNA_ADDON_NAME}_EXTRA_DEPS ${SWIG_DEPENDS})
-        swig_add_module (${CNA_ADDON_NAME} javascript ${NODEJS_ADDON_SOURCES} ${LIB_SOURCES})
+        #swig_add_module (${CNA_ADDON_NAME} javascript ${NODEJS_ADDON_SOURCES} ${LIB_SOURCES})
+		swig_add_library(${CNA_ADDON_NAME} LANGUAGE javascript SOURCES ${NODEJS_ADDON_SOURCES} ${LIB_SOURCES})
 
         swig_link_libraries (${CNA_ADDON_NAME} ${CNA_LIBRARIES})
 
@@ -75,12 +76,12 @@ macro (create_nodejs_addon)
 
         create_node_package_json(${CNA_ADDON_NAME})
 
-        install (FILES ${LIBRARY_OUTPUT_PATH}/${CNA_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${CNA_ADDON_NAME})
+        install (FILES ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${CNA_ADDON_NAME})
 
         # add_custom_command(TARGET ${CNA_ADDON_NAME} POST_BUILD 
-        # COMMAND echo "**** Exports for ${LIBRARY_OUTPUT_PATH}/${CNA_ADDON_NAME}.node"
+        # COMMAND echo "**** Exports for ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node"
         # COMMAND echo "**** BEGIN"
-        # COMMAND /usr/bin/nm ${LIBRARY_OUTPUT_PATH}/${CNA_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
+        # COMMAND /usr/bin/nm ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
         # COMMAND echo "**** END" )
 
     else(CAN_BUILD)

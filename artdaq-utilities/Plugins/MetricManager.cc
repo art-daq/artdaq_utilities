@@ -6,9 +6,10 @@
 // and sends them data as it is recieved. It also maintains the state of the plugins
 // relative to the application state.
 
+#define TRACE_NAME "MetricManager"
+#include "tracemf.h"
 #include "artdaq-utilities/Plugins/MetricManager.hh"
 #include "artdaq-utilities/Plugins/makeMetricPlugin.hh"
-#include "tracemf.h"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <chrono>
@@ -19,6 +20,8 @@ MetricManager() : metric_plugins_(0)
 , initialized_(false)
 , running_(false)
 , active_(false)
+, missed_metric_calls_(0)
+, metric_queue_max_size_(10000)
 {}
 
 artdaq::MetricManager::~MetricManager()
@@ -33,37 +36,44 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 	{
 		shutdown();
 	}
-	TLOG_DEBUG("MetricManager") << "Configuring metrics with parameter set:\n" << pset.to_string() << TLOG_ENDL;
+	TLOG_INFO("MetricManager") << "Configuring metrics with parameter set:\n" << pset.to_string() << TLOG_ENDL;
 
 	std::vector<std::string> names = pset.get_pset_names();
 
 	for (auto name : names)
 	{
-		try
+		if (name == "metric_queue_size")
 		{
-			TLOG_DEBUG("MetricManager") << "Constructing metric plugin with name " << name << TLOG_ENDL;
-			fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
-			metric_plugins_.push_back(makeMetricPlugin(
-				plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset));
+			metric_queue_max_size_ = pset.get<size_t>("metric_queue_size");
 		}
-		catch (const cet::exception& e)
+		else
 		{
-			TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
-				", cet::exception object caught:" << e.explain_self() << TLOG_ENDL;
-		}
-		catch (const boost::exception& e)
-		{
-			TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
-				", boost::exception object caught: " << boost::diagnostic_information(e) << TLOG_ENDL;
-		}
-		catch (const std::exception& e)
-		{
-			TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
-				", std::exception caught: " << e.what() << TLOG_ENDL;
-		}
-		catch (...)
-		{
-			TLOG_ERROR("MetricManager") << "Unknown Exception caught in MetricManager::initialize, error loading plugin with name " << name << TLOG_ENDL;
+			try
+			{
+				TLOG_DEBUG("MetricManager") << "Constructing metric plugin with name " << name << TLOG_ENDL;
+				fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
+				metric_plugins_.push_back(makeMetricPlugin(
+					plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset));
+			}
+			catch (const cet::exception& e)
+			{
+				TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+					", cet::exception object caught:" << e.explain_self() << TLOG_ENDL;
+			}
+			catch (const boost::exception& e)
+			{
+				TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+					", boost::exception object caught: " << boost::diagnostic_information(e) << TLOG_ENDL;
+			}
+			catch (const std::exception& e)
+			{
+				TLOG_ERROR("MetricManager") << "Exception caught in MetricManager::initialize, error loading plugin with name " << name <<
+					", std::exception caught: " << e.what() << TLOG_ENDL;
+			}
+			catch (...)
+			{
+				TLOG_ERROR("MetricManager") << "Unknown Exception caught in MetricManager::initialize, error loading plugin with name " << name << TLOG_ENDL;
+			}
 		}
 	}
 
@@ -80,7 +90,7 @@ void artdaq::MetricManager::do_start()
 			try
 			{
 				metric->startMetrics();
-				TLOG_DEBUG("MetricManager") << "Metric Plugin " << metric->getLibName() << " started." << TLOG_ENDL;
+				TLOG_INFO("MetricManager") << "Metric Plugin " << metric->getLibName() << " started." << TLOG_ENDL;
 				active_ = true;
 			}
 			catch (...)
@@ -97,9 +107,12 @@ void artdaq::MetricManager::do_start()
 
 void artdaq::MetricManager::do_stop()
 {
+	TLOG_DEBUG("MetricManager") << "Stopping Metrics" << TLOG_ENDL;
 	running_ = false;
 	metric_cv_.notify_all();
+	TLOG_DEBUG("MetricManager") << "Joining Metric-Sending thread" << TLOG_ENDL;
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
+	TLOG_DEBUG("MetricManager") << "do_stop Complete" << TLOG_ENDL;
 }
 
 void artdaq::MetricManager::do_pause() { /*do_stop();*/ }
@@ -143,10 +156,18 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+		if (metric_queue_.size() < metric_queue_max_size_)
 		{
-			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-			metric_queue_.push_back(std::move(metric));
+			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				metric_queue_.emplace(std::move(metric));
+			}
+		}
+		else
+		{
+			TLOG_ARB(10, "MetricManager") << "Rejecting metric because queue full" << TLOG_ENDL;
+			missed_metric_calls_++;
 		}
 		metric_cv_.notify_all();
 	}
@@ -158,10 +179,18 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+		if (metric_queue_.size() < metric_queue_max_size_)
 		{
-			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-			metric_queue_.push_back(std::move(metric));
+			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				metric_queue_.emplace(std::move(metric));
+			}
+		}
+		else
+		{
+			TLOG_ARB(10, "MetricManager") << "Rejecting metric because queue full" << TLOG_ENDL;
+			missed_metric_calls_++;
 		}
 		metric_cv_.notify_all();
 	}
@@ -173,10 +202,18 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+		if (metric_queue_.size() < metric_queue_max_size_)
 		{
-			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-			metric_queue_.push_back(std::move(metric));
+			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				metric_queue_.emplace(std::move(metric));
+			}
+		}
+		else
+		{
+			TLOG_ARB(10, "MetricManager") << "Rejecting metric because queue full" << TLOG_ENDL;
+			missed_metric_calls_++;
 		}
 		metric_cv_.notify_all();
 	}
@@ -188,10 +225,18 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+		if (metric_queue_.size() < metric_queue_max_size_)
 		{
-			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-			metric_queue_.push_back(std::move(metric));
+			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				metric_queue_.emplace(std::move(metric));
+			}
+		}
+		else
+		{
+			TLOG_ARB(10, "MetricManager") << "Rejecting metric because queue full" << TLOG_ENDL;
+			missed_metric_calls_++;
 		}
 		metric_cv_.notify_all();
 	}
@@ -203,10 +248,18 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+		if (metric_queue_.size() < metric_queue_max_size_)
 		{
-			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-			metric_queue_.push_back(std::move(metric));
+			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+			{
+				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
+				metric_queue_.emplace(std::move(metric));
+			}
+		}
+		else
+		{
+			TLOG_ARB(10, "MetricManager") << "Rejecting metric because queue full" << TLOG_ENDL;
+			missed_metric_calls_++;
 		}
 		metric_cv_.notify_all();
 	}
@@ -216,7 +269,9 @@ void artdaq::MetricManager::startMetricLoop_()
 {
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
 	TLOG_INFO("MetricManager") << "Starting Metric Sending Thread" << TLOG_ENDL;
-	metric_sending_thread_ = std::thread(&MetricManager::sendMetricLoop_, this);
+	boost::thread::attributes attrs;
+	attrs.set_stack_size(4096 * 200); // 800 KB
+	metric_sending_thread_ = boost::thread(attrs, boost::bind(&MetricManager::sendMetricLoop_, this));
 }
 
 void artdaq::MetricManager::sendMetricLoop_()
@@ -224,7 +279,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
-		while (metric_queue_.size() == 0 && running_)
+		while (metric_queue_.empty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
 			metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
@@ -236,17 +291,21 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
-		auto temp_list = std::list<std::unique_ptr<MetricData>>();
+		auto temp_list = std::queue<std::unique_ptr<MetricData>>();
 		{
 			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			temp_list.swap(metric_queue_);
-			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
+			temp_list.emplace(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
+			auto missed = missed_metric_calls_.exchange(0);
+
+			temp_list.emplace(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate, "", false));
+			TLOG_TRACE("MetricManager") << "There are " << temp_list.size() << " Metric Calls to process (missed " << missed << ")" << TLOG_ENDL;
 		}
 
 		while (temp_list.size() > 0)
 		{
 			auto data_ = std::move(temp_list.front());
-			temp_list.pop_front();
+			temp_list.pop();
 			if (data_->Type == MetricType::InvalidMetric) continue;
 			if (!data_->UseNameOverride)
 			{

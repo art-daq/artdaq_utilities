@@ -15,10 +15,10 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <sstream>
-#include <list>
-#include <thread>
+#include <queue>
 #include <condition_variable>
 #include <atomic>
+#include <boost/thread.hpp>
 
 namespace artdaq
 {
@@ -63,6 +63,8 @@ public:
 	 * 
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
+	 * "metric_queue_size": (Default: 10000): The maximum number of metric entries which can be stored in the metric queue.
+	 * If the queue is above this size, new metric entries will be dropped until the plugins catch up.
 	 */
 	void initialize(fhicl::ParameterSet const& pset, std::string prefix = "");
 
@@ -187,7 +189,7 @@ private:
 	void startMetricLoop_();
 
 	std::vector<std::unique_ptr<artdaq::MetricPlugin>> metric_plugins_;
-	std::thread metric_sending_thread_;
+	boost::thread metric_sending_thread_;
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
 	int metric_send_interval_ms_;
@@ -197,8 +199,10 @@ private:
 	bool active_;
 	std::string prefix_;
 	
-	std::list<std::unique_ptr<MetricData>> metric_queue_;
+	std::queue<std::unique_ptr<MetricData>> metric_queue_;
 	std::mutex metric_queue_mutex_;
+	std::atomic<size_t> missed_metric_calls_;
+	size_t metric_queue_max_size_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */

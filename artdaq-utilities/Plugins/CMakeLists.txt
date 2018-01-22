@@ -7,6 +7,8 @@ cet_make(
   ${MF_UTILITIES}
   ${CETLIB_EXCEPT}
   pthread
+  ${Boost_THREAD_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   )
 
 basic_plugin("file" "metric"
@@ -39,6 +41,8 @@ basic_plugin("procFile" "metric"
   ${CETLIB_EXCEPT}
    ${MF_MESSAGELOGGER}
   pthread
+  ${Boost_THREAD_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
 )
 
 install_headers()
