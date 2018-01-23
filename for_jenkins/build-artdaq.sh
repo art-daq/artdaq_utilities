@@ -74,7 +74,7 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
-artdotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the artdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
