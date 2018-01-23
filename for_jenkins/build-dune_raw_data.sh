@@ -6,7 +6,6 @@
 # this is a proof of concept script
 
 echo "dune-raw-data version: $DRD_VERSION"
-echo "base qualifiers: $QUAL"
 echo "target qualifier: $TARGETQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
@@ -14,7 +13,7 @@ echo "workspace: $WORKSPACE"
 # Don't do ifdh build on macos.
 
 #if uname | grep -q Darwin; then
-#  if ! echo $QUAL | grep -q noifdh; then
+#  if ! echo $TARGETQUAL | grep -q noifdh; then
 #    echo "Ifdh build requested on macos.  Quitting."
 #    exit
 #  fi
@@ -59,13 +58,25 @@ export MRB_PROJECT=dune
 echo "Mrb path:"
 which mrb
 
+# get the qualifier from product_deps
+
+rm -rf $WORKSPACE/temp2 || exit 1
+mkdir -p $WORKSPACE/temp2 || exit 1
+cd $WORKSPACE/temp2 || exit 1
+git clone https://cdcvs.fnal.gov/projects/dune-raw-data ||| exit 1
+FQUAL=`grep dune-raw-data/ups/product_deps $BUILDTYPE | grep $TARGETQUAL | awk '{print $1}'`
+echo "Full qualifier: $FQUAL"
+
 #dla set -x
 rm -rf $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/copyBack || exit 1
 rm -f $WORKSPACE/copyBack/* || exit 1
 cd $WORKSPACE/temp || exit 1
-mrb newDev -v $DRD_VERSION -q $QUAL:$TARGETQUAL:$BUILDTYPE || exit 1
+
+#mrb newDev -v $DRD_VERSION -q $QUAL:$TARGETQUAL:$BUILDTYPE || exit 1
+
+mrb newDev -v $DRD_VERSION -q $FQUAL || exit 1
 
 #dla set +x
 source localProducts*/setup || exit 1
