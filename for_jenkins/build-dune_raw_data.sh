@@ -7,6 +7,7 @@
 
 echo "dune-raw-data version: $DRD_VERSION"
 echo "base qualifiers: $QUAL"
+echo "target qualifier: $TARGETQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
@@ -64,7 +65,7 @@ mkdir -p $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/copyBack || exit 1
 rm -f $WORKSPACE/copyBack/* || exit 1
 cd $WORKSPACE/temp || exit 1
-mrb newDev -v $DRD_VERSION -q $QUAL:$BUILDTYPE || exit 1
+mrb newDev -v $DRD_VERSION -q $QUAL:$TARGETQUAL:$BUILDTYPE || exit 1
 
 #dla set +x
 source localProducts*/setup || exit 1
