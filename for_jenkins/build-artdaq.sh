@@ -120,17 +120,17 @@ cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
 # source code tarballs MUST be pulled first
-./pullProducts ${blddir} source artdaq-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of artdaq-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source art-${artver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
-EOF
-}
+#./pullProducts ${blddir} source artdaq-${version} || \
+#      { cat 1>&2 <<EOF
+#ERROR: pull of artdaq-${version} failed
+#EOF
+#        exit 1
+#      }
+#./pullProducts ${blddir} source art-${artver} || \
+#    { cat 1>&2 <<EOF
+#WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
+#EOF
+#}
 
 mv ${blddir}/*source* ${srcdir}/
 
