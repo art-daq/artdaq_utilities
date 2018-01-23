@@ -63,7 +63,7 @@ which mrb
 rm -rf $WORKSPACE/temp2 || exit 1
 mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
-git clone https://cdcvs.fnal.gov/projects/dune-raw-data ||| exit 1
+git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
 FQUAL=`grep dune-raw-data/ups/product_deps $BUILDTYPE | grep $TARGETQUAL | awk '{print $1}'`
 echo "Full qualifier: $FQUAL"
 
