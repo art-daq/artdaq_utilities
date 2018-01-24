@@ -205,6 +205,7 @@ private:
 	std::mutex metric_queue_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
 	size_t metric_queue_max_size_;
+	size_t metric_queue_notify_size_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */

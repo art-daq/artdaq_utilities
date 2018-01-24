@@ -22,6 +22,7 @@ MetricManager() : metric_plugins_(0)
 , active_(false)
 , missed_metric_calls_(0)
 , metric_queue_max_size_(1000)
+, metric_queue_notify_size(10)
 {}
 
 artdaq::MetricManager::~MetricManager()
@@ -45,6 +46,10 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		if (name == "metric_queue_size")
 		{
 			metric_queue_max_size_ = pset.get<size_t>("metric_queue_size");
+		}
+		else if (name == "metric_queue_notify_size")
+		{
+			metric_queue_notify_size_ = pset.get<size_t>("metric_queue_notify_size");
 		}
 		else
 		{
@@ -156,8 +161,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		if (metric_queue_[name].size() < metric_queue_max_size_)
+		auto size = metric_queue_[name].size();
+		if (size < metric_queue_max_size_)
 		{
+			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
@@ -179,8 +186,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		if (metric_queue_[name].size() < metric_queue_max_size_)
+		auto size = metric_queue_[name].size();
+		if (size < metric_queue_max_size_)
 		{
+			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
@@ -202,8 +211,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		if (metric_queue_[name].size() < metric_queue_max_size_)
+		auto size = metric_queue_[name].size();
+		if (size < metric_queue_max_size_)
 		{
+			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
@@ -225,8 +236,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		if (metric_queue_[name].size() < metric_queue_max_size_)
+		auto size = metric_queue_[name].size();
+		if (size < metric_queue_max_size_)
 		{
+			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
@@ -248,8 +261,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		if (metric_queue_[name].size() < metric_queue_max_size_)
+		auto size = metric_queue_[name].size();
+		if (size < metric_queue_max_size_)
 		{
+			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
