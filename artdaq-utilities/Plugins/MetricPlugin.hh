@@ -146,7 +146,7 @@ namespace artdaq
 					metricRegistry_[data.Name] = data;
 				}
 				metricData_[data.Name].push_back(data);
-				sendMetrics();
+				//sendMetrics();
 			}
 		}
 

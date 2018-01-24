@@ -188,6 +188,8 @@ private:
 
 	void startMetricLoop_();
 
+	bool metricQueueEmpty_();
+
 	std::vector<std::unique_ptr<artdaq::MetricPlugin>> metric_plugins_;
 	boost::thread metric_sending_thread_;
 	std::mutex metric_mutex_;
@@ -199,7 +201,7 @@ private:
 	bool active_;
 	std::string prefix_;
 	
-	std::queue<std::unique_ptr<MetricData>> metric_queue_;
+	std::unordered_map<std::string, std::list<std::unique_ptr<MetricData>>> metric_queue_;
 	std::mutex metric_queue_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
 	size_t metric_queue_max_size_;
