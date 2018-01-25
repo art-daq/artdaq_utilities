@@ -22,7 +22,7 @@ MetricManager() : metric_plugins_(0)
 , active_(false)
 , missed_metric_calls_(0)
 , metric_queue_max_size_(1000)
-, metric_queue_notify_size(10)
+, metric_queue_notify_size_(10)
 {}
 
 artdaq::MetricManager::~MetricManager()
