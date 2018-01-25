@@ -6,14 +6,14 @@
 # this is a proof of concept script
 
 echo "dune-raw-data version: $DRD_VERSION"
-echo "target qualifier: $TARGETQUAL"
+echo "target qualifier: $QUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
 # Don't do ifdh build on macos.
 
 #if uname | grep -q Darwin; then
-#  if ! echo $TARGETQUAL | grep -q noifdh; then
+#  if ! echo $QUAL | grep -q noifdh; then
 #    echo "Ifdh build requested on macos.  Quitting."
 #    exit
 #  fi
@@ -65,7 +65,7 @@ mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
 git checkout $DRD_VERSION
-FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${TARGETQUAL}: | awk '{print $1}'`
+FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
@@ -74,8 +74,6 @@ mkdir -p $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/copyBack || exit 1
 rm -f $WORKSPACE/copyBack/* || exit 1
 cd $WORKSPACE/temp || exit 1
-
-#mrb newDev -v $DRD_VERSION -q $QUAL:$TARGETQUAL:$BUILDTYPE || exit 1
 
 mrb newDev -v $DRD_VERSION -q $FQUAL || exit 1
 
