@@ -183,6 +183,37 @@ public:
 	 */
 	void setPrefix(std::string prefix) { prefix_ = prefix; }
 
+	/// <summary>
+	/// Returns whether the MetricManager has been initialized (configured)
+	/// </summary>
+	/// <returns>True if MetricManager is initialized</returns>
+	bool Initialized() { return initialized_; }
+
+	/// <summary>
+	/// Returns whether the MetricManager is running (accepting metric calls)
+	/// </summary>
+	/// <returns>True if MetricManager is running</returns>
+	bool Running() { return running_; }
+
+	/// <summary>
+	/// Returns whether any Metric Plugins are defined and configured
+	/// </summary>
+	/// <returns>True if a Metric Plugin can accept metrics</returns>
+	bool Active() { return active_; }
+
+	/// <summary>
+	/// Returns whether the metric queue is completely empty
+	/// </summary>
+	/// <returns>True if the metric queue is empty</returns>
+	bool metricQueueEmpty();
+
+	/// <summary>
+	/// Return the size of the named metric queue
+	/// </summary>
+	/// <param name="name">Name of the metric queue to query. "" returns size of all queues (default)</param>
+	/// <returns>Size of selected metric queue</returns>
+	size_t metricQueueSize(std::string name = "");
+
 private:
 	void sendMetricLoop_();
 
@@ -199,10 +230,16 @@ private:
 	bool active_;
 	std::string prefix_;
 	
-	std::queue<std::unique_ptr<MetricData>> metric_queue_;
+	//https://stackoverflow.com/questions/228908/is-listsize-really-on
+	// e10 does NOT properly have std::list::size as O(1)!!! Keep track of size separately while we still support e10.
+	typedef std::unique_ptr<MetricData> metric_data_ptr;
+	typedef std::pair<size_t, std::list<metric_data_ptr>> queue_entry;
+
+	std::unordered_map<std::string, queue_entry> metric_queue_;
 	std::mutex metric_queue_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
 	size_t metric_queue_max_size_;
+	size_t metric_queue_notify_size_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */

@@ -30,6 +30,9 @@ squal=
 artver=
 nuver=
 
+# Remove shared memory segments which have 0 nattach
+for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
+
 for qual in ${qualarray[@]};do
 	case ${qual} in
 		e10)
@@ -45,15 +48,6 @@ for qual in ${qualarray[@]};do
 			squal=s50
 			artver=v2_07_03
             ;;
-		s48)
-			squal=s48
-			artver=v2_06_03
-			nuver=v2_13_03
-			;;
-		s47)
-			squal=s47
-			artver=v2_06_02
-			;;
 		s46)
 			squal=s46
 			artver=v2_06_01
@@ -83,7 +77,7 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
-artdotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the artdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -119,18 +113,8 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
-# source code tarballs MUST be pulled first
-./pullProducts ${blddir} source artdaq-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of artdaq-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source art-${artver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
-EOF
-}
+curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/buildFW || exit 1
+chmod +x buildFW
 
 mv ${blddir}/*source* ${srcdir}/
 

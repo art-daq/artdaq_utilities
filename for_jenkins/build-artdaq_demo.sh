@@ -26,33 +26,8 @@ case ${qual_set} in
 		squal=s50
 		artver=v2_07_03
 		;;
-    s48:e14)
-        basequal=e14
-        squal=s48
-        artver=v2_06_03
-        ;;
-    s48:e10)
-        basequal=e10
-        squal=s48
-        artver=v2_06_03
-        ;;
-    s47:e14)
-        basequal=e14
-        squal=s47
-        artver=v2_06_02
-        ;;
-    s47:e10)
-        basequal=e10
-        squal=s47
-        artver=v2_06_02
-        ;;
     s46:e10)
         basequal=e10
-        squal=s46
-        artver=v2_06_01
-        ;;
-    s46:e14)
-        basequal=e14
         squal=s46
         artver=v2_06_01
         ;;
@@ -115,23 +90,8 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
-# source code tarballs MUST be pulled first
-./pullProducts ${blddir} source artdaq_demo-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of artdaq_demo-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source artdaq-${artdaq_ver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
-EOF
-}
-./pullProducts ${blddir} source art-${artver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
-EOF
-}
+curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/buildFW || exit 1
+chmod +x buildFW
 
 mv ${blddir}/*source* ${srcdir}/
 
