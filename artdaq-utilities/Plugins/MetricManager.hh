@@ -219,7 +219,6 @@ private:
 
 	void startMetricLoop_();
 
-
 	std::vector<std::unique_ptr<artdaq::MetricPlugin>> metric_plugins_;
 	boost::thread metric_sending_thread_;
 	std::mutex metric_mutex_;

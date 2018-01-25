@@ -161,15 +161,20 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		auto size = metric_queue_[name].first;
+		if (!metric_queue_.count(name)) {
+			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
+		}
+		auto entry = &(metric_queue_[name]);
+
+		auto size = entry->first;
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_[name].first++;
-				metric_queue_[name].second.emplace_back(std::move(metric));
+				entry->first++;
+				entry->second.emplace_back(std::move(metric));
 			}
 		}
 		else
@@ -187,15 +192,20 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		auto size = metric_queue_[name].first;
+		if (!metric_queue_.count(name)) {
+			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
+		}
+		auto entry = &(metric_queue_[name]);
+
+		auto size = entry->first;
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_[name].first++;
-				metric_queue_[name].second.emplace_back(std::move(metric));
+				entry->first++;
+				entry->second.emplace_back(std::move(metric));
 			}
 		}
 		else
@@ -213,15 +223,20 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		auto size = metric_queue_[name].first;
+		if (!metric_queue_.count(name)) {
+			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
+		}
+		auto entry = &(metric_queue_[name]);
+
+		auto size = entry->first;
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_[name].first++;
-				metric_queue_[name].second.emplace_back(std::move(metric));
+				entry->first++;
+				entry->second.emplace_back(std::move(metric));
 			}
 		}
 		else
@@ -239,15 +254,20 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		auto size = metric_queue_[name].first;
+		if (!metric_queue_.count(name)) {
+			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
+		}
+		auto entry = &(metric_queue_[name]);
+
+		auto size = entry->first;
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_[name].first++;
-				metric_queue_[name].second.emplace_back(std::move(metric));
+				entry->first++;
+				entry->second.emplace_back(std::move(metric));
 			}
 		}
 		else
@@ -265,15 +285,20 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (!running_) { TLOG_WARNING("MetricManager") << "Attempted to send metric when MetricManager stopped!" << TLOG_ENDL; }
 	else if (active_)
 	{
-		auto size = metric_queue_[name].first;
+		if (!metric_queue_.count(name)) {
+			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
+		}
+		auto entry = &(metric_queue_[name]);
+
+		auto size = entry->first;
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG_ARB(9, "MetricManager") << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." << TLOG_ENDL;
 			std::unique_ptr<MetricData> metric(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			{
 				std::unique_lock<std::mutex> lk(metric_queue_mutex_);
-				metric_queue_[name].first++;
-				metric_queue_[name].second.emplace_back(std::move(metric));
+				entry->first++;
+				entry->second.emplace_back(std::move(metric));
 			}
 		}
 		else
@@ -340,8 +365,8 @@ void artdaq::MetricManager::sendMetricLoop_()
 			for (auto& q : metric_queue_)
 			{
 				temp_list.splice(temp_list.end(), q.second.second);
+				q.second.first = 0;
 			}
-			metric_queue_.clear();
 
 			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
 			auto missed = missed_metric_calls_.exchange(0);
