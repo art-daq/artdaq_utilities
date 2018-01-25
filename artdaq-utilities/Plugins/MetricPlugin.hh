@@ -152,13 +152,14 @@ namespace artdaq
 
 		/**
 		 * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to the underlying metric storage
+		 * \param forceSend (Default = false): Force sending metrics, even if reporting interval has not elapsed
 		 */
-		void sendMetrics()
+		void sendMetrics(bool forceSend = false)
 		{
 			for (auto metric : metricData_)
 			{
 				auto metricName = metric.first;
-				if (readyToSend_(metricName))
+				if (readyToSend_(metricName) || forceSend)
 				{
 					if (metricData_[metricName].size() == 0 && metricRegistry_.count(metricName))
 					{
@@ -236,6 +237,7 @@ namespace artdaq
 		void stopMetrics()
 		{
 			inhibit_ = true;
+			sendMetrics(true);
 			for (auto metric : metricRegistry_)
 			{
 				sendZero_(metric.second);
