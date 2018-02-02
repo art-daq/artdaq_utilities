@@ -66,6 +66,9 @@ include(BasicPlugin)
 # source
 add_subdirectory(artdaq-utilities)
 
+# testing
+#add_subdirectory(test)
+
 # Useful tools and scripts for building ARTDAQ on Jenkins
 add_subdirectory(for_jenkins)
 

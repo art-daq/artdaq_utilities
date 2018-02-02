@@ -6,7 +6,7 @@
 # this is a proof of concept script
 
 echo "dune-raw-data version: $DRD_VERSION"
-echo "base qualifiers: $QUAL"
+echo "target qualifier: $QUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
@@ -58,13 +58,24 @@ export MRB_PROJECT=dune
 echo "Mrb path:"
 which mrb
 
+# get the qualifier from product_deps
+
+rm -rf $WORKSPACE/temp2 || exit 1
+mkdir -p $WORKSPACE/temp2 || exit 1
+cd $WORKSPACE/temp2 || exit 1
+git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
+git checkout $DRD_VERSION
+FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
+echo "Full qualifier: $FQUAL"
+
 #dla set -x
 rm -rf $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/temp || exit 1
 mkdir -p $WORKSPACE/copyBack || exit 1
 rm -f $WORKSPACE/copyBack/* || exit 1
 cd $WORKSPACE/temp || exit 1
-mrb newDev -v $DRD_VERSION -q $QUAL:$BUILDTYPE || exit 1
+
+mrb newDev -v $DRD_VERSION -q $FQUAL || exit 1
 
 #dla set +x
 source localProducts*/setup || exit 1
