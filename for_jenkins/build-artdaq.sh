@@ -162,7 +162,7 @@ source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
 cat ${blddir}/art-${artdotver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
+cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
 mv ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
