@@ -1,7 +1,6 @@
 #ifndef ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH
 #define ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH
 
-#include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "fhiclcpp/fwd.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
