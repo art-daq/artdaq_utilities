@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq_utilities  v1_04_01
+parent artdaq_utilities  v1_04_02
 defaultqual e14:s50
 #defaultqual    e14:s46
 
@@ -22,7 +22,7 @@ product		version		optional
 messagefacility v2_01_04        s62
 messagefacility v2_00_02        s50
 messagefacility v1_18_03        s46
-TRACE		v3_13_02
+TRACE		v3_13_04
 cetbuildtools	v7_00_02	-	only_for_build
 end_product_list
 
