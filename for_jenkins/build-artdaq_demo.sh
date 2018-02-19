@@ -20,6 +20,9 @@ version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
+# Remove shared memory segments which have 0 nattach
+for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
+
 case ${qual_set} in
 	s50:e14)
 		basequal=e14
