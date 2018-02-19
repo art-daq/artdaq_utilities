@@ -41,6 +41,9 @@ for qual in ${qualarray[@]};do
 		e14)
 			basequal=e14
 			;;
+        e15)
+            basequal=e15
+            ;;
 		nu)
 			nu_flag=1
 			;;
@@ -53,6 +56,10 @@ for qual in ${qualarray[@]};do
 			artver=v2_06_01
 			nuver=v2_11_00
 			;;
+        s64)
+            squal=s64
+            artver=v2_10_02
+            ;;
 		esac
 done
 
