@@ -24,6 +24,11 @@ build_type=${BUILDTYPE}
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 case ${qual_set} in
+    s64:e15)
+        basequal=e15
+        squal=s64
+        artver=v2_10_02
+        ;;
 	s50:e14)
 		basequal=e14
 		squal=s50
