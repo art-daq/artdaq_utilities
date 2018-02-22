@@ -106,7 +106,7 @@ cd ${blddir} || exit 1
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} ${blddir} ${build_type} artdaq_dependencies || \
+./buildFW -t -b ${basequal} ${blddir} ${build_type} artdaq_dependencies-v3_00_03 || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
