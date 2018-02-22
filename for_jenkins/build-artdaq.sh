@@ -168,9 +168,13 @@ fi
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artdotver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
+
+artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
+artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
+
+cat ${artManifest} >>${artdaqManifest}
+cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+mv ${artdaqManifest}.tmp ${artdaqManifest}
 
 echo
 echo "move files"

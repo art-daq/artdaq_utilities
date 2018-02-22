@@ -106,6 +106,7 @@ cd ${blddir} || exit 1
 echo
 echo "begin build"
 echo
+cp ${WORKSPACE}/artdaq-utilities/for_jenkins/artdaq_dependencies-v3_00_03 .
 ./buildFW -t -b ${basequal} ${blddir} ${build_type} artdaq_dependencies-v3_00_03 || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
