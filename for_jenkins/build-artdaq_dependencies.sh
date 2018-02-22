@@ -82,8 +82,8 @@ set -x
 srcdir=${working_dir}/source
 blddir=${working_dir}/build
 # start with clean directories
-#rm -rf ${blddir}
-#rm -rf ${srcdir}
+rm -rf ${blddir}
+rm -rf ${srcdir}
 rm -rf $WORKSPACE/copyBack 
 # now make the dfirectories
 mkdir -p ${srcdir} || exit 1
