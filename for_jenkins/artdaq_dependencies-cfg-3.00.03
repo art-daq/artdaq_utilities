@@ -7,12 +7,30 @@ check_ups v6_0_7
 ensure_cetpkgsupport v1_13_00
 ensure_cetbuildtools v5_14_03 v5_14_04 v6_00_02 v6_01_00 v6_01_01 v7_00_02 v7_01_00
 
+do_build cmake v3_10_1
+
+if [ "${basequal}" = "e10" ]; then
+   do_build gcc v4_9_3a
+elif [ "${basequal}" = "e14" ]; then
+	 do_build gcc v6_3_0
+elif [ "${basequal}" = "e15" ]; then
+	 do_build gcc v6_4_0
+elif [ "${basequal}" = "e17" ]; then
+	 do_build gcc v7_3_0
+elif [ "${basequal}" = "c2" ]; then
+	 do_build gcc v6_3_0
+	 do_build clang v5_0_1
+fi
+
 do_build epics v3_16_1b ${basequal}
-#do_build qt v5_7_1a ${basequal}
-build_noarch mrb v1_13_02
-build_noarch nodejs v4_5_0
-do_build swig v3_0_12b ${basequal}
-do_build ganglia v3_7_1
 do_build mongodb v3_4_6b ${basequal}
+do_build mpich v3_2_1a ${basequal}
+do_build swig v3_0_12b ${basequal}
+do_build xmlrpc_c v1_39_10c ${basequal}
+
+build_noarch nodejs v4_5_0
+do_build ganglia v3_7_1
+
+#do_build qt v5_7_1a ${basequal}
 
 return 0

@@ -91,17 +91,12 @@ mkdir -p ${blddir} || exit 1
 mkdir -p $WORKSPACE/copyBack || exit 1
 
 cd ${blddir} || exit 1
-curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
-chmod +x pullProducts
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/buildFW || exit 1
 chmod +x buildFW
 
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
-# pulling binaries is allowed to fail
-# we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
 
 echo
 echo "begin build"
