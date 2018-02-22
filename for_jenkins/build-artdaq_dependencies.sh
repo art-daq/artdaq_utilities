@@ -82,8 +82,8 @@ set -x
 srcdir=${working_dir}/source
 blddir=${working_dir}/build
 # start with clean directories
-rm -rf ${blddir}
-rm -rf ${srcdir}
+#rm -rf ${blddir}
+#rm -rf ${srcdir}
 rm -rf $WORKSPACE/copyBack 
 # now make the dfirectories
 mkdir -p ${srcdir} || exit 1
@@ -106,7 +106,7 @@ cd ${blddir} || exit 1
 echo
 echo "begin build"
 echo
-cp ${WORKSPACE}/artdaq-utilities/for_jenkins/artdaq_dependencies-v3_00_03 .
+cp ${WORKSPACE}/artdaq-utilities/for_jenkins/artdaq_dependencies-cfg-* .
 ./buildFW -t -b ${basequal} ${blddir} ${build_type} artdaq_dependencies-v3_00_03 || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
