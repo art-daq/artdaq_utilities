@@ -117,7 +117,7 @@ mv ${blddir}/*.log  $WORKSPACE/copyBack/
 echo
 echo "cleanup"
 echo
-#rm -rf ${blddir}
+rm -rf ${blddir}
 rm -rf ${srcdir}
 
 exit 0
