@@ -25,7 +25,7 @@ MetricManager() : metric_plugins_(0)
 , metric_queue_notify_size_(10)
 {}
 
-artdaq::MetricManager::~MetricManager()
+artdaq::MetricManager::~MetricManager() noexcept
 {
 	shutdown();
 }
