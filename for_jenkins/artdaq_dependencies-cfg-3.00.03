@@ -18,7 +18,7 @@ elif [ "${basequal}" = "e15" ]; then
 elif [ "${basequal}" = "e17" ]; then
 	 do_build gcc v7_3_0
 elif [ "${basequal}" = "c2" ]; then
-	 do_build gcc v6_3_0
+	 do_build gcc v6_4_0
 	 do_build clang v5_0_1
 fi
 
