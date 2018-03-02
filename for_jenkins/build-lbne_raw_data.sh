@@ -23,6 +23,13 @@ target_env=${TARGET_ENV}
 
 case ${qual_set} in
 
+s65:e15)
+	basequal=e15
+	squal=s65
+	artver=v2_10_03
+	nutoolsver=v2_19_00
+	;;
+
 s62:e15)
 	basequal=e15
 	squal=s62
