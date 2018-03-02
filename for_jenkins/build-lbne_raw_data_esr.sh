@@ -67,9 +67,11 @@ mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/lbne-raw-data || exit 1
 git checkout $LRD_VERSION
-# qualifiers are in different order in product_deps.  Hardcode "nu" as that's the only one we're using
+# qualifiers are in different order in product_deps. The grep used ind une-raw-data doesn't work here.
+# use the default qualifier
 # FQUAL=`grep $BUILDTYPE lbne-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
-FQUAL=nu:${QUAL}:${BUILDTYPE}
+FQ1=`grep defaultqual lbne-raw-data/ups/product_deps | awk '{print $2}'`
+FQUAL=${FQ1}:${BUILDTYPE}
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
