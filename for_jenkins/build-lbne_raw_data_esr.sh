@@ -3,7 +3,9 @@
 # build lbne_raw_data
 # use mrb
 # designed to work on Jenkins
-# this is a proof of concept script
+
+# qualifier is something like e15:nu:s65
+# buildtype is debug or prof
 
 echo "lbne-raw-data version: $LRD_VERSION"
 echo "target qualifier: $QUAL"
@@ -67,11 +69,10 @@ mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/lbne-raw-data || exit 1
 git checkout $LRD_VERSION
-# qualifiers are in different order in product_deps. The grep used ind une-raw-data doesn't work here.
-# use the default qualifier
+# allow qualifier to be specified externally -- just one set for this build anyway.
 # FQUAL=`grep $BUILDTYPE lbne-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
-FQ1=`grep defaultqual lbne-raw-data/ups/product_deps | awk '{print $2}'`
-FQUAL=${FQ1}:${BUILDTYPE}
+# FQ1=`grep defaultqual lbne-raw-data/ups/product_deps | awk '{print $2}'`
+FQUAL=${QUAL}:${BUILDTYPE}
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
