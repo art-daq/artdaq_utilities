@@ -154,7 +154,7 @@ namespace artdaq
 		 * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to the underlying metric storage
 		 * \param forceSend (Default = false): Force sending metrics, even if reporting interval has not elapsed
 		 */
-		void sendMetrics(bool forceSend = false)
+		void sendMetrics(bool forceSend = false, std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 		{
 			for (auto metric : metricData_)
 			{
@@ -187,32 +187,90 @@ namespace artdaq
 							{
 								auto ds = 0.0;
 								for (auto& mv : metricData_[metricName]) { ds += mv.DoubleValue; }
-								if (metricMode == MetricMode::Average) { ds /= metricData_[metricName].size(); }
+								switch (metricMode)
+								{
+								case MetricMode::Average: ds /= static_cast<double>(metricData_[metricName].size()); break;
+								case MetricMode::Rate: ds /= std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(); break;
+								case MetricMode::AccumulateAndRate: sendMetric_(metricName + " - Rate", ds / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s"); break;
+								default:
+									break;
+								}
 								sendMetric_(metricName, ds, metricUnits);
 							}
 							break;
 							case MetricType::FloatMetric:
 							{
 								auto fs = 0.0;
+								double ds = 0.0;
 								for (auto& mv : metricData_[metricName]) { fs += mv.FloatValue; }
-								if (metricMode == MetricMode::Average) { fs /= metricData_[metricName].size(); }
-								sendMetric_(metricName, fs, metricUnits);
+
+								switch (metricMode)
+								{
+								case MetricMode::Average:
+									ds = fs / static_cast<double>(metricData_[metricName].size());
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::Rate:
+									ds = fs / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count();
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::AccumulateAndRate:
+									sendMetric_(metricName + " - Rate", fs / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+								case MetricMode::Accumulate:
+								default:
+									sendMetric_(metricName, fs, metricUnits);
+									break;
+								}
 							}
 							break;
 							case MetricType::IntMetric:
 							{
 								auto is = 0;
+								double ds = 0.0;
 								for (auto& mv : metricData_[metricName]) { is += mv.IntValue; }
-								if (metricMode == MetricMode::Average) { is /= metricData_[metricName].size(); }
-								sendMetric_(metricName, is, metricUnits);
+
+								switch (metricMode)
+								{
+								case MetricMode::Average:
+									ds = is / static_cast<double>(metricData_[metricName].size());
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::Rate:
+									ds = is / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count();
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::AccumulateAndRate:
+									sendMetric_(metricName + " - Rate", is / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+								case MetricMode::Accumulate:
+								default:
+									sendMetric_(metricName, is, metricUnits);
+									break;
+								}
 							}
 							break;
 							case MetricType::UnsignedMetric:
 							{
-								auto us = 0;
+								auto us = 0UL;
+								double ds = 0.0;
 								for (auto& mv : metricData_[metricName]) { us += mv.UnsignedValue; }
-								if (metricMode == MetricMode::Average) { us /= metricData_[metricName].size(); }
-								sendMetric_(metricName, us, metricUnits);
+
+								switch (metricMode)
+								{
+								case MetricMode::Average:
+									ds = us / static_cast<double>(metricData_[metricName].size());
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::Rate:
+									ds = us / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count();
+									sendMetric_(metricName, ds, metricUnits);
+									break;
+								case MetricMode::AccumulateAndRate:
+									sendMetric_(metricName + " - Rate", us / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+								case MetricMode::Accumulate:
+								default:
+									sendMetric_(metricName, us, metricUnits);
+									break;
+								}
 							}
 							break;
 							default:
@@ -221,6 +279,7 @@ namespace artdaq
 							metricData_[metricName].clear();
 						}
 					}
+					interval_start_[metricName] = interval_end;
 				}
 			}
 		}
@@ -267,6 +326,7 @@ namespace artdaq
 		std::unordered_map<std::string, std::list<MetricData>> metricData_;
 		std::unordered_map<std::string, MetricData> metricRegistry_;
 		std::unordered_map<std::string, std::chrono::steady_clock::time_point> lastSendTime_;
+		std::unordered_map<std::string, std::chrono::steady_clock::time_point> interval_start_;
 
 		bool readyToSend_(std::string name)
 		{
@@ -298,6 +358,11 @@ namespace artdaq
 				break;
 			default:
 				break;
+			}
+
+			if (data.Mode == MetricMode::AccumulateAndRate)
+			{
+				sendMetric_(data.Name + " - Rate", static_cast<double>(0.0), data.Unit + "/s");
 			}
 		}
 

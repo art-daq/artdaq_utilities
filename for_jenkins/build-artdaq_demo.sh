@@ -20,7 +20,15 @@ version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
+# Remove shared memory segments which have 0 nattach
+for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
+
 case ${qual_set} in
+    s64:e15)
+        basequal=e15
+        squal=s64
+        artver=v2_10_02
+        ;;
 	s50:e14)
 		basequal=e14
 		squal=s50
@@ -149,6 +157,18 @@ echo
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
+
+artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
+artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
+artdaqDemoManifest=`ls ${blddir}/artdaq_demo-*_MANIFEST.txt|tail -1`
+
+cat ${artManifest} >>${artdaqManifest}
+cat ${artdaqManifest} >>${artdaqDemoManifest}
+cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+mv ${artdaqManifest}.tmp ${artdaqManifest}
+cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
+mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
+
 cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
 cat ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp

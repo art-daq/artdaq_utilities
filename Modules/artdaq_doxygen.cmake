@@ -8,7 +8,11 @@ SET(DOXYFILE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(create_pdf_documentation)
 	find_package(LATEX COMPONENTS PDFLATEX PS2PDF MAKEINDEX)
-	if(LATEX_FOUND)
+	find_program(EPSTOPDF_FOUND epstopdf)
+	if(EPSTOPDF_FOUND)
+	    MESSAGE("-- Found epstopdf")
+	endif(EPSTOPDF_FOUND)
+	if(LATEX_FOUND AND EPSTOPDF_FOUND)
 	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf
 						   COMMAND make > pdflatex.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/latex 
 					   COMMAND mv refman.pdf ${product}_API_Documentation.pdf
@@ -16,7 +20,7 @@ function(create_pdf_documentation)
 				   COMMENT "Generating ${project} PDF API Documentation file" VERBATIM)
 			   add_custom_target(${product}_pdf ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf)
 			   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/latex/${product}_API_Documentation.pdf DESTINATION ${product}/${version}/doc/ OPTIONAL)
-	endif(LATEX_FOUND)
+	endif(LATEX_FOUND AND EPSTOPDF_FOUND)
 endfunction()
 
 

@@ -25,7 +25,7 @@ MetricManager() : metric_plugins_(0)
 , metric_queue_notify_size_(10)
 {}
 
-artdaq::MetricManager::~MetricManager()
+artdaq::MetricManager::~MetricManager() noexcept
 {
 	shutdown();
 }
@@ -358,6 +358,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
+		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
 		{
 			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
@@ -368,10 +369,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 				q.second.first = 0;
 			}
 
-			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
+			temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::AccumulateAndRate, "", false));
 			auto missed = missed_metric_calls_.exchange(0);
 
-			temp_list.emplace_back(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate, "", false));
+			temp_list.emplace_back(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
 			TLOG_TRACE("MetricManager") << "There are " << temp_list.size() << " Metric Calls to process (missed " << missed << ")" << TLOG_ENDL;
 		}
 
@@ -413,7 +414,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 		for (auto& metric : metric_plugins_)
 		{
-			metric->sendMetrics();
+			metric->sendMetrics(false, processing_start);
 		}
 	}
 
@@ -427,10 +428,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 		metric_queue_.clear();
 
-		temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::Accumulate, "", false));
+		temp_list.emplace_back(new MetricData("Metric Calls", temp_list.size(), "metrics", 4, MetricMode::AccumulateAndRate, "", false));
 		auto missed = missed_metric_calls_.exchange(0);
 
-		temp_list.emplace_back(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate, "", false));
+		temp_list.emplace_back(new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
 		TLOG_TRACE("MetricManager") << "There are " << temp_list.size() << " Metric Calls to process (missed " << missed << ")" << TLOG_ENDL;
 	}
 

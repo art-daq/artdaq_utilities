@@ -41,6 +41,9 @@ for qual in ${qualarray[@]};do
 		e14)
 			basequal=e14
 			;;
+        e15)
+            basequal=e15
+            ;;
 		nu)
 			nu_flag=1
 			;;
@@ -53,6 +56,10 @@ for qual in ${qualarray[@]};do
 			artver=v2_06_01
 			nuver=v2_11_00
 			;;
+        s64)
+            squal=s64
+            artver=v2_10_02
+            ;;
 		esac
 done
 
@@ -161,9 +168,13 @@ fi
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artdotver}-${upsflavor}-${basequal_dash}-${build_type}_MANIFEST.txt >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq-${dotver}-${upsflavor}-${squal}-${basequal_dash}-${build_type}_MANIFEST.txt{.tmp,}
+
+artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
+artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
+
+cat ${artManifest} >>${artdaqManifest}
+cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+mv ${artdaqManifest}.tmp ${artdaqManifest}
 
 echo
 echo "move files"

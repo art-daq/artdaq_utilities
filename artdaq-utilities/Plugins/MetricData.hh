@@ -31,7 +31,9 @@ namespace artdaq
 	{
 		LastPoint, ///< Report only the last value recorded. Useful for event counters, run numbers, etc.
 		Accumulate, ///< Report the sum of all values. Use for counters to report accurate results.
-		Average ///< Report the average of all values. Use for rates to report accurate results.
+		Average, ///< Report the average of all values. Use for rates to report accurate results.
+		Rate, ///< Reports the sum of all values, divided by the length of the time interval they were accumulated over. Use to create rates from counters.
+		AccumulateAndRate, ///< Sends both the Accumulate mode and Rate mode metric. (Rate mode metric will append "/s" to metric units.)
 	};
 
 	/// <summary>
