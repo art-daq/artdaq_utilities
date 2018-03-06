@@ -22,11 +22,11 @@ elif [ "${basequal}" = "c2" ]; then
 	 do_build clang v5_0_1
 fi
 
-#do_build xmlrpc_c v1_39_10d ${basequal}
+do_build xmlrpc_c v1_39_10d ${basequal}
 do_build epics v3_16_1c ${basequal}
 do_build mongodb v3_4_6c ${basequal}
 do_build mpich v3_2_1b ${basequal}
-#do_build swig v3_0_12c ${basequal}
+do_build swig v3_0_12c ${basequal}
 
 build_noarch nodejs v4_5_0
 do_build ganglia v3_7_1
