@@ -48,8 +48,6 @@ else
   exit 1
 fi
 
-source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
-
 # Use system git on macos.
 
 if ! uname | grep -q Darwin; then
