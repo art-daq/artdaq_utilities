@@ -41,16 +41,7 @@ echo "ls /cvmfs/dune.opensciencegrid.org/products/dune/"
 ls /cvmfs/dune.opensciencegrid.org/products/dune/
 echo
 
-# this prefers /grid/fermiapp over cvmfs
-
-if [ -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
-  source /grid/fermiapp/products/dune/setup_dune_fermiapp.sh || exit 1
-elif [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
-  source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
-else
-  echo "No setup file found."
-  exit 1
-fi
+source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
 
 # Use system git on macos.
 
