@@ -27,6 +27,8 @@ do_build epics v3_16_1c ${basequal}
 do_build mongodb v3_4_6c ${basequal}
 do_build mpich v3_2_1b ${basequal}
 do_build swig v3_0_12c ${basequal}
+
+do_build xerces_c v3_1_4a ${basequal}
 do_build xdaq v14_4_0 ${basequal}
 
 build_noarch nodejs v4_5_0
