@@ -33,7 +33,7 @@ do_build xerces_c v3_1_4a ${basequal}
 else
 do_build xerces_c v3_2_0a ${basequal}
 fi
-if [ "${basequal}" != "c2" ]; then
+if [ "${basequal}" != "c2" ] && [ "${basequal}" != "e17" ]; then
 do_build xdaq v14_4_0 ${basequal}
 fi
 
