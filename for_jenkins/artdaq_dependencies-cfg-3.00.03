@@ -30,10 +30,8 @@ do_build swig v3_0_12c ${basequal}
 
 if [ "${basequal}" = "e10" ]; then
 do_build xerces_c v3_1_4a ${basequal}
-do_build log4cpp v1_1_2 ${basequal}
 else
 do_build xerces_c v3_2_0a ${basequal}
-do_build log4cpp v1_1_3a ${basequal}
 fi
 if [ "${basequal}" != "c2" ] && [ "${basequal}" != "e17" ]; then
 do_build xdaq v14_4_0 ${basequal}
