@@ -28,13 +28,9 @@ do_build mongodb v3_4_6c ${basequal}
 do_build mpich v3_2_1b ${basequal}
 do_build swig v3_0_12c ${basequal}
 
-if [ "${basequal}" = "e10" ]; then
-do_build xerces_c v3_1_4a ${basequal}
-else
-do_build xerces_c v3_2_0a ${basequal}
-fi
 if [ "${basequal}" != "c2" ] && [ "${basequal}" != "e17" ]; then
-do_build xdaq v14_4_0 ${basequal}
+    do_build xerces_c v3_1_4b
+    do_build xdaq v14_4_0 ${basequal}
 fi
 
 build_noarch nodejs v4_5_0
