@@ -29,7 +29,7 @@ do_build mpich v3_2_1b ${basequal}
 do_build swig v3_0_12c ${basequal}
 
 if [ "${basequal}" != "c2" ] && [ "${basequal}" != "e17" ]; then
-    do_build xerces_c v3_1_4b
+    do_build xerces_c v3_1_4b ${basequal}
     do_build xdaq v14_4_0 ${basequal}
 fi
 
