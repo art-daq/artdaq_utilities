@@ -21,8 +21,8 @@ product		version		optional
 messagefacility v2_01_06        s64
 messagefacility v2_00_02        s50
 messagefacility v1_18_03        s46
-TRACE		v3_13_04
-cetbuildtools	v7_01_00	-	only_for_build
+TRACE		v3_13_05
+cetbuildtools	v7_02_01	-	only_for_build
 end_product_list
 
 # See https://cdcvs.fnal.gov/redmine/projects/cet-is-public/wiki/AboutQualifiers for information about the qualifiers used
