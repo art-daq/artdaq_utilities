@@ -54,6 +54,14 @@ find_ups_product( messagefacility v1_14_01 )
 
 #find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
+# as of art v2_11_00, messagefacility has a single library
+check_ups_version(messagefacility $ENV{MESSAGEFACILITY_VERSION} v2_02_00 PRODUCT_MATCHES_VAR ONE_MF_LIBRARY)
+if(ONE_MF_LIBRARY)
+    set( MESSAGEFACILITY_LIBS MF_MessageLogger)
+else()
+    set( MESSAGEFACILITY_LIBS MF_MessageLogger MF_Utilities)
+endif()
+
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
 if(BTYPE_UC STREQUAL DEBUG)

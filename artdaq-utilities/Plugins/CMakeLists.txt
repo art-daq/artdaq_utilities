@@ -3,8 +3,7 @@ cet_make(
   LIBRARIES
   ${FHICLCPP}
   ${CETLIB}
-  ${MF_MESSAGELOGGER}
-  ${MF_UTILITIES}
+  ${MESSAGEFACILITY_LIBS}
   ${CETLIB_EXCEPT}
   pthread
   ${Boost_THREAD_LIBRARY}
@@ -21,8 +20,7 @@ basic_plugin("msgFacility" "metric"
    ${FHICLCPP}
    ${CETLIB}
   ${CETLIB_EXCEPT}
-   ${MF_MESSAGELOGGER}
-   ${MF_UTILITIES}
+  ${MESSAGEFACILITY_LIBS}
 )
 
 basic_plugin("graphite" "metric"
