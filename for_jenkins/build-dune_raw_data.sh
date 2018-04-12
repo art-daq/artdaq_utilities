@@ -33,16 +33,16 @@ if [ $ncores -lt 1 ]; then
 fi
 echo "Building using $ncores cores."
 
-# Environment setup, uses /grid/fermiapp or cvmfs.
+# Environment setup, uses cvmfs.
 
 echo "ls /cvmfs/dune.opensciencegrid.org/products/dune/"
 ls /cvmfs/dune.opensciencegrid.org/products/dune/
 echo
 
-if [ -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
-  source /grid/fermiapp/products/dune/setup_dune_fermiapp.sh || exit 1
-elif [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
+if [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
   source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
+elif [ -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
+  source /grid/fermiapp/products/dune/setup_dune_fermiapp.sh || exit 1
 else
   echo "No setup file found."
   exit 1

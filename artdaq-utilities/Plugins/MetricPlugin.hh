@@ -13,6 +13,10 @@
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq-utilities/Plugins/MetricData.hh"
+#include "cetlib/compiler_macros.h"
+#ifndef FALLTHROUGH
+#define FALLTHROUGH while(0)
+#endif
 
 namespace artdaq
 {
@@ -216,6 +220,7 @@ namespace artdaq
 									break;
 								case MetricMode::AccumulateAndRate:
 									sendMetric_(metricName + " - Rate", fs / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+									FALLTHROUGH;
 								case MetricMode::Accumulate:
 								default:
 									sendMetric_(metricName, fs, metricUnits);
@@ -241,6 +246,7 @@ namespace artdaq
 									break;
 								case MetricMode::AccumulateAndRate:
 									sendMetric_(metricName + " - Rate", is / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+									FALLTHROUGH;
 								case MetricMode::Accumulate:
 								default:
 									sendMetric_(metricName, is, metricUnits);
@@ -266,6 +272,7 @@ namespace artdaq
 									break;
 								case MetricMode::AccumulateAndRate:
 									sendMetric_(metricName + " - Rate", us / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(interval_end - interval_start_[metricName]).count(), metricUnits + "/s");
+									FALLTHROUGH;
 								case MetricMode::Accumulate:
 								default:
 									sendMetric_(metricName, us, metricUnits);

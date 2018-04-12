@@ -53,7 +53,7 @@ namespace artdaq
 
 			int sts = mkfifo(pipe_.c_str(), 0777);
 			if (sts != 0) { perror("ProcFileMetric mkfifo"); }
-			TRACE(10, "ProcFileMetric mkfifo(" + pipe_ + ") sts=%d", sts);
+			TLOG(10) << "ProcFileMetric mkfifo()" << pipe_ << " sts=" << sts;
 			startMetrics();
 		}
 
@@ -61,7 +61,7 @@ namespace artdaq
 		 * \brief ProcFileMetric Destructor
 		 */
 		~ProcFileMetric() {
-			TRACE( 11, "~ProcFileMetric" );
+			TLOG(11) << "~ProcFileMetric" ;
 			stopMetrics();
 		}
 
@@ -78,7 +78,7 @@ namespace artdaq
 		 */
 		void sendMetric_(const std::string& name, const std::string& value, const std::string&) override {
 			if (value_map_.count(name)) {
-				TRACE(12, "sendMetric_ setting value="+ value);
+				TLOG(12) << "sendMetric_ setting value=" << value;
 				value_map_[name] = value;
 			}
 		}
@@ -148,19 +148,19 @@ namespace artdaq
 			{
 				stopped_ = true;
 				// do read on pipe to make sure writePipe is not blocking on open
-				TRACE(11, "stopMetrics_ before open " + pipe_);
+				TLOG(11) << "stopMetrics_ before open " << pipe_;
 				int fd = open(pipe_.c_str(), O_RDONLY | O_NONBLOCK);
 				if (fd == -1) { perror("stopMetrics_ open(\"r\")"); exit(1); }
-				TRACE(10, "stopMetrics_ between open and unlink" + pipe_ + " fd=%d", fd);
+				TLOG(10) << "stopMetrics_ between open and unlink" << pipe_ << " fd=" << fd;
 				unlink(pipe_.c_str());
-				TRACE(11, "stopMetrics_ unlinked " + pipe_);
+				TLOG(11) << "stopMetrics_ unlinked " << pipe_;
 # if 0
 				char buf[256];
 				read(fd, buf, sizeof(buf));
 # endif
 				usleep(10000);
 				close(fd);
-				TRACE(11, "stopMetrics_ after close " + pipe_);
+				TLOG(11) << "stopMetrics_ after close " << pipe_;
 				if (thread_.joinable()) thread_.join();
 			}
 		}
@@ -172,18 +172,18 @@ namespace artdaq
 		{
 			while (!stopped_)
 			{
-				TRACE(11, "writePipe before open");
+				TLOG(11) << "writePipe before open";
 				int fd = open(pipe_.c_str(), O_WRONLY);
 				std::string str;
 				for (auto value : value_map_) {
-					TRACE(10, "writePipe open fd="+std::to_string(fd)+" name="+value.first+" value="+value.second ); // can't have args b/c name may have %
+					TLOG(10) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second; // can't have args b/c name may have %
 					str += value.first + ": " + value.second + "\n";
 					//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
 				}
 				int sts = write(fd, str.c_str(), str.size());
-				TRACE(11, "writePipe write complete sts=%d", sts);
+				TLOG(11) << "writePipe write complete sts=" << sts;
 				close(fd);
-				TRACE(11, "writePipe after close -- about to usleep");
+				TLOG(11) << "writePipe after close -- about to usleep";
 				usleep(400000);	// must wait to make sure other end closes
 			}
 
