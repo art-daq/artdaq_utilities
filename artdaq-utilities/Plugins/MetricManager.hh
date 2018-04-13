@@ -63,7 +63,9 @@ public:
 	 * 
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
-	 * "metric_queue_size": (Default: 10000): The maximum number of metric entries which can be stored in the metric queue.
+	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
+	 * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed.
+	 * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
 	 * If the queue is above this size, new metric entries will be dropped until the plugins catch up.
 	 */
 	void initialize(fhicl::ParameterSet const& pset, std::string prefix = "");

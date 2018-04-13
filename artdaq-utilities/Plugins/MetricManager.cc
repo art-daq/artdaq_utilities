@@ -17,6 +17,7 @@
 
 artdaq::MetricManager::
 MetricManager() : metric_plugins_(0)
+, metric_send_interval_ms_(15000)
 , initialized_(false)
 , running_(false)
 , active_(false)
@@ -50,6 +51,10 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		else if (name == "metric_queue_notify_size")
 		{
 			metric_queue_notify_size_ = pset.get<size_t>("metric_queue_notify_size");
+		}
+		else if (name == "metric_send_maximum_delay_ms")
+		{
+			metric_send_interval_ms_ = pset.get<int>("metric_send_maximum_delay_ms");
 		}
 		else
 		{
