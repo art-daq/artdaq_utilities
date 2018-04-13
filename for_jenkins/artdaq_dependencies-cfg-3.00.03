@@ -5,7 +5,7 @@ basequal=${1}
 check_ups v6_0_7
 
 ensure_cetpkgsupport v1_13_00
-ensure_cetbuildtools v7_00_02 v7_01_00 v7_02_01
+ensure_cetbuildtools v6_01_00 v7_00_02 v7_01_00 v7_02_01
 
 do_build cmake v3_10_1
 
