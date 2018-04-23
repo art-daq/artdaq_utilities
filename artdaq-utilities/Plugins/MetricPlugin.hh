@@ -13,6 +13,10 @@
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
+#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
+# include "fhiclcpp/types/ConfigurationTable.h"
+#endif
+
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "cetlib/compiler_macros.h"
 #ifndef FALLTHROUGH
