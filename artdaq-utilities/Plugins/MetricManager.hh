@@ -12,6 +12,7 @@
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "fhiclcpp/fwd.h"
+#include "fhiclcpp/types/OptionalTable.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <sstream>
@@ -33,6 +34,17 @@ namespace artdaq
 class artdaq::MetricManager
 {
 public:
+	struct Config
+	{
+		fhicl::Atom<size_t> metric_queue_size{ fhicl::Name{"metric_queue_size"}, fhicl::Comment{"The maximum number of metric entries which can be stored in the metric queue."}, 1000 };
+		fhicl::Atom<size_t> metric_queue_notify_size{ fhicl::Name{"metric_queue_notify_size"}, fhicl::Comment{"The number of metric entries in the list which will cause reports of the queue size to be printed."}, 10 };
+		fhicl::Atom<int> metric_send_maximum_delay_ms{ fhicl::Name{"metric_send_maximum_delay_ms"}, fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)"}, 15000 };
+		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{ fhicl::Name{"metricConfig"} };
+	};
+#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
+	using Parameters = fhicl::WrappedTable<Config>;
+#endif
+
 	/**
 	 * \brief Construct an instance of the MetricManager class
 	 */
@@ -45,7 +57,7 @@ public:
 
 	/**
 	 * \brief MetricManager destructor
-	 * 
+	 *
 	 * Calls shutdown()
 	 */
 	virtual ~MetricManager() noexcept;
@@ -60,7 +72,7 @@ public:
 	 * \brief Initialize the MetricPlugin instances
 	 * \param pset The ParameterSet used to configure the MetricPlugin instances
 	 * \param prefix The prefix to prepend to all metric names, unless useNameOverride is set to true
-	 * 
+	 *
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
 	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
@@ -94,7 +106,7 @@ public:
 	 * \brief Reinitialize all MetricPlugin Instances
 	 * \param pset ParameterSet used to configure the MetricPlugin instances
 	 * \param prefix Prefix to apply to Metric names
-	 * 
+	 *
 	 * Calls shutdown(), then initialize(pset, prefix).
 	 */
 	void reinitialize(fhicl::ParameterSet const& pset, std::string prefix = "");
@@ -231,7 +243,7 @@ private:
 	bool running_;
 	bool active_;
 	std::string prefix_;
-	
+
 	//https://stackoverflow.com/questions/228908/is-listsize-really-on
 	// e10 does NOT properly have std::list::size as O(1)!!! Keep track of size separately while we still support e10.
 	typedef std::unique_ptr<MetricData> metric_data_ptr;
