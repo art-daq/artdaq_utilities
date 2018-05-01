@@ -12,6 +12,11 @@
 #include <chrono>
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
+#include "fhiclcpp/types/Atom.h"
+#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
+# include "fhiclcpp/types/ConfigurationTable.h"
+#endif
+
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "cetlib/compiler_macros.h"
 #ifndef FALLTHROUGH
@@ -27,6 +32,16 @@ namespace artdaq
 	class MetricPlugin
 	{
 	public:
+		struct Config
+		{
+			fhicl::Atom<std::string> metricPluginType{ fhicl::Name{"metricPluginType"}, fhicl::Comment{"The name of the metric plugin to load (may have additional configuration parameters"} };
+			fhicl::Atom<int> level{ fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. Metrics with verbosity level greater than this will not be sent to the plugin"}, 0 };
+			fhicl::Atom<double> reporting_interval{ fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0 };
+		};
+#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
+		using Parameters = fhicl::WrappedTable<Config>;
+#endif
+
 		/**
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
@@ -393,7 +408,7 @@ namespace artdaq
 				break;
 			}
 		}
-	};
-} //End namespace artdaq
+		};
+	} //End namespace artdaq
 
 #endif //End ifndef __METRIC_INTERFACE__
