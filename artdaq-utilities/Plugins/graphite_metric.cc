@@ -44,6 +44,7 @@ namespace artdaq
 		/**
 		 * \brief GraphiteMetric Constructor
 		 * \param config ParameterSet used to configure GraphiteMetric
+		 * \param app_name Name of the application sending metrics
 		 * 
 		 * \verbatim
 		 * GraphiteMetric accepts the following Parameters:
@@ -52,7 +53,7 @@ namespace artdaq
 		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
 		 * \endverbatim
 		 */
-		explicit GraphiteMetric(fhicl::ParameterSet config) : MetricPlugin(config)
+		explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
 		                                           , host_(pset.get<std::string>("host", "localhost"))
 		                                           , port_(pset.get<int>("port", 2003))
 		                                           , namespace_(pset.get<std::string>("namespace", "artdaq."))

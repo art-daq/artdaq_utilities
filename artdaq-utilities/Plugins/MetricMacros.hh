@@ -13,9 +13,10 @@ namespace artdaq
 	/**
 	 * \brief Make a MetricPlugin instance, loading the plugin if necessary
 	 * \param ps ParameterSet used to configure the MetricPlugin instance
+     * \param app_name Name of the application sending metrics
 	 * \return A std::unique_ptr<artdaq::MetricPlugin> to the new instance
 	 */
-	typedef std::unique_ptr<artdaq::MetricPlugin> makeFunc_t(fhicl::ParameterSet const& ps);
+	typedef std::unique_ptr<artdaq::MetricPlugin> makeFunc_t(fhicl::ParameterSet const& ps, std::string const& app_name);
 }
 
 #ifndef EXTERN_C_FUNC_DECLARE_START
@@ -25,8 +26,8 @@ namespace artdaq
 #define DEFINE_ARTDAQ_METRIC(klass)                                \
   EXTERN_C_FUNC_DECLARE_START                                      \
   std::unique_ptr<artdaq::MetricPlugin>                          \
-  make(fhicl::ParameterSet const & ps) {                              \
-    return std::unique_ptr<artdaq::MetricPlugin>(new klass(ps)); \
+  make(fhicl::ParameterSet const & ps, std::string const& app_name) { \
+    return std::unique_ptr<artdaq::MetricPlugin>(new klass(ps, app_name)); \
   }}
 
 

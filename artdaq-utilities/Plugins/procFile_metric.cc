@@ -32,6 +32,7 @@ namespace artdaq
 		/**
 		 * \brief ProcFileMetric Constructor
 		 * \param config FHiCL ParameterSet used to configure the ProcFileMetric
+		 * \param app_name Name of the application sending metrics
 		 *
 		 * \verbatim
 		 * ProcFileMetric accepts the following Parameters (in addition to those accepted by MetricPlugin):
@@ -39,7 +40,7 @@ namespace artdaq
 		 * "name": Name of the metric to write to pipe
 		 * \endverbatim
 		 */
-		explicit ProcFileMetric(fhicl::ParameterSet config) : MetricPlugin(config)
+		explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
 			, pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
 			, value_map_()
 			, stopped_(true)

@@ -26,6 +26,7 @@ namespace artdaq
 		/**
 		 * \brief MsgFacilityMetric Constructor
 		 * \param config ParameterSet used to configure MsgFacilityMetric
+		 * \param app_name Name of the application sending metrics
 		 * 
 		 * \verbatim
 		  MsgFacilityMetric accepts the following Parameters:
@@ -35,8 +36,8 @@ namespace artdaq
 		  0: Info, 1: Debug, 2: Warning, 3: Error
 		\endverbatim
 		 */
-		explicit MsgFacilityMetric(fhicl::ParameterSet config)
-			: MetricPlugin(config)
+		explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name)
+			: MetricPlugin(config, app_name)
 			, facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
 			, outputLevel_(0)
 		{

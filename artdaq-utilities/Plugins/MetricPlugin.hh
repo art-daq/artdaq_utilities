@@ -55,7 +55,8 @@ namespace artdaq
 		 *  metric. String metrics cannot be accumulated.
 		 *  \endverbatim
 		 */
-		explicit MetricPlugin(fhicl::ParameterSet const& ps) : pset(ps)
+		explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name) : pset(ps)
+			, app_name_(app_name)
 			, inhibit_(false)
 		{
 			runLevel_ = pset.get<int>("level", 0);
@@ -342,6 +343,7 @@ namespace artdaq
 		int runLevel_; ///< The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be sent.
 		fhicl::ParameterSet pset; ///< The ParameterSet used to configure the MetricPlugin
 		double accumulationTime_; ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
+		std::string app_name_; ///< Name of the application which is sending metrics to this plugin
 		bool inhibit_; ///< Whether to inhibit all metric sending
 
 	private:

@@ -30,6 +30,7 @@ namespace artdaq
 		/**
 		 * \brief FileMetric Constructor. Opens the file and starts the metric
 		 * \param config ParameterSet used to configure FileMetric
+		 * \param app_name Name of the application sending metrics
 		 * 
 		 * \verbatim
 		 * FileMetric accepts the following Parameters:
@@ -38,7 +39,7 @@ namespace artdaq
 		 * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending
 		 * \endverbatim
 		 */
-		explicit FileMetric(fhicl::ParameterSet config) : MetricPlugin(config)
+		explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
 		                                       , outputFile_(pset.get<std::string>("fileName", "FileMetric.out"))
 		                                       , uniquify_file_name_(pset.get<bool>("uniquify", false))
 		                                       , stopped_(true)
