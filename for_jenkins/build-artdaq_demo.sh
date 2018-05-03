@@ -24,6 +24,26 @@ build_type=${BUILDTYPE}
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 case ${qual_set} in
+    s67:c2)
+        basequal=c2
+        squal=s67
+        artver=v2_11_01
+        ;;
+    s67:e17)
+        basequal=e17
+        squal=s67
+        artver=v2_11_01
+        ;;
+    s67:e15)
+        basequal=e15
+        squal=s67
+        artver=v2_11_01
+        ;;
+    s64:c2)
+        basequal=c2
+        squal=s64
+        artver=v2_10_02
+        ;;
     s64:e15)
         basequal=e15
         squal=s64
@@ -34,11 +54,6 @@ case ${qual_set} in
 		squal=s50
 		artver=v2_07_03
 		;;
-    s46:e10)
-        basequal=e10
-        squal=s46
-        artver=v2_06_01
-        ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage

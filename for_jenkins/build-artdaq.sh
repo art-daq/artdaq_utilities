@@ -51,14 +51,13 @@ for qual in ${qualarray[@]};do
 			squal=s50
 			artver=v2_07_03
             ;;
-		s46)
-			squal=s46
-			artver=v2_06_01
-			nuver=v2_11_00
-			;;
         s64)
             squal=s64
             artver=v2_10_02
+            ;;
+        s67)
+            squal=s67
+            artver=v2_11_01
             ;;
 		esac
 done
