@@ -28,21 +28,20 @@ nu_flag=0
 basequal=
 squal=
 artver=
-nuver=
 
 # Remove shared memory segments which have 0 nattach
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-		e10)
-			basequal=e10
-			;;
 		e14)
 			basequal=e14
 			;;
         e15)
             basequal=e15
+            ;;
+        c2)
+            basequal=c2
             ;;
 		nu)
 			nu_flag=1
