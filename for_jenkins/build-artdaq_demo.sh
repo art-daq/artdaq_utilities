@@ -39,6 +39,9 @@ for qual in ${qualarray[@]};do
         e15)
             basequal=e15
             ;;
+		e17)
+			basequal=e17
+			;;
         c2)
             basequal=c2
             ;;
