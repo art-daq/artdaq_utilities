@@ -29,6 +29,8 @@ squal=
 artver=
 
 # Remove shared memory segments which have 0 nattach
+killall art && sleep 5 && killall -9 art
+killall transfer_driver
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 for qual in ${qualarray[@]};do
