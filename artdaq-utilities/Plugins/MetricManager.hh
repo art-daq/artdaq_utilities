@@ -80,7 +80,7 @@ public:
 	 * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
 	 * If the queue is above this size, new metric entries will be dropped until the plugins catch up.
 	 */
-	void initialize(fhicl::ParameterSet const& pset, std::string prefix = "");
+	void initialize(fhicl::ParameterSet const& pset, std::string const& prefix = "");
 
 	/**
 	 * \brief Perform startup actions for each configured MetricPlugin
@@ -109,7 +109,7 @@ public:
 	 *
 	 * Calls shutdown(), then initialize(pset, prefix).
 	 */
-	void reinitialize(fhicl::ParameterSet const& pset, std::string prefix = "");
+	void reinitialize(fhicl::ParameterSet const& pset, std::string const& prefix = "");
 
 	/**
 	 * \brief Call the destructors for all configured MetricPlugin instances
@@ -195,7 +195,7 @@ public:
 	 * \brief Sets the prefix prepended to all metrics without useNameOverride set
 	 * \param prefix The prefix to prepend. Delimiter character in names is "."
 	 */
-	void setPrefix(std::string prefix) { prefix_ = prefix; }
+	void setPrefix(std::string const& prefix) { prefix_ = prefix; }
 
 	/// <summary>
 	/// Returns whether the MetricManager has been initialized (configured)
@@ -226,7 +226,7 @@ public:
 	/// </summary>
 	/// <param name="name">Name of the metric queue to query. "" returns size of all queues (default)</param>
 	/// <returns>Size of selected metric queue</returns>
-	size_t metricQueueSize(std::string name = "");
+	size_t metricQueueSize(std::string const& name = "");
 
 private:
 	void sendMetricLoop_();
