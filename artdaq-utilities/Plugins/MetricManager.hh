@@ -34,11 +34,18 @@ namespace artdaq
 class artdaq::MetricManager
 {
 public:
+	/**
+	 * \brief The Config struct defines the accepted configuration parameters for this class
+	 */
 	struct Config
 	{
+		/// "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
 		fhicl::Atom<size_t> metric_queue_size{ fhicl::Name{"metric_queue_size"}, fhicl::Comment{"The maximum number of metric entries which can be stored in the metric queue."}, 1000 };
+		/// "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed.
 		fhicl::Atom<size_t> metric_queue_notify_size{ fhicl::Name{"metric_queue_notify_size"}, fhicl::Comment{"The number of metric entries in the list which will cause reports of the queue size to be printed."}, 10 };
+		/// "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
 		fhicl::Atom<int> metric_send_maximum_delay_ms{ fhicl::Name{"metric_send_maximum_delay_ms"}, fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)"}, 15000 };
+		/// Example MetricPlugin Configuration
 		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{ fhicl::Name{"metricConfig"} };
 	};
 #if MESSAGEFACILITY_HEX_VERSION >= 0x20103
