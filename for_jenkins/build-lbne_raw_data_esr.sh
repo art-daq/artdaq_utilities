@@ -41,6 +41,10 @@ echo "ls /cvmfs/dune.opensciencegrid.org/products/dune/"
 ls /cvmfs/dune.opensciencegrid.org/products/dune/
 echo
 
+echo "ls /cvmfs/larsoft.opensciencegrid.org/products"
+ls /cvmfs/larsoft.opensciencegrid.org/products
+echo
+
 if [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
   source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
 elif [ -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
@@ -103,6 +107,8 @@ fi
 cd $MRB_SOURCE  || exit 1
 # check out a readonly version
 mrb g -r -t $LRD_VERSION -d lbne_raw_data lbne-raw-data || exit 1
+
+ups list -aK+ cetbuildtools || exit 1
 
 cd $MRB_BUILDDIR || exit 1
 mrbsetenv || exit 1

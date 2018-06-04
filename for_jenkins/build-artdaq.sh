@@ -28,21 +28,25 @@ nu_flag=0
 basequal=
 squal=
 artver=
-nuver=
 
 # Remove shared memory segments which have 0 nattach
+killall art && sleep 5 && killall -9 art
+killall transfer_driver
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-		e10)
-			basequal=e10
-			;;
 		e14)
 			basequal=e14
 			;;
         e15)
             basequal=e15
+            ;;
+		e17)
+			basequal=e17
+			;;
+        c2)
+            basequal=c2
             ;;
 		nu)
 			nu_flag=1
@@ -51,14 +55,13 @@ for qual in ${qualarray[@]};do
 			squal=s50
 			artver=v2_07_03
             ;;
-		s46)
-			squal=s46
-			artver=v2_06_01
-			nuver=v2_11_00
-			;;
         s64)
             squal=s64
             artver=v2_10_02
+            ;;
+        s67)
+            squal=s67
+            artver=v2_11_01
             ;;
 		esac
 done

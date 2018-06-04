@@ -31,14 +31,14 @@ artdaq::MetricManager::~MetricManager() noexcept
 	shutdown();
 }
 
-void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::string prefix)
+void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::string const& prefix)
 {
 	prefix_ = prefix;
 	if (initialized_)
 	{
 		shutdown();
 	}
-	TLOG(TLVL_INFO) << "Configuring metrics with parameter set:\n" << pset.to_string() ;
+	TLOG(TLVL_INFO) << "Configuring metrics with parameter set: " << pset.to_string() ;
 
 	std::vector<std::string> names = pset.get_pset_names();
 
@@ -128,7 +128,7 @@ void artdaq::MetricManager::do_stop()
 void artdaq::MetricManager::do_pause() { /*do_stop();*/ }
 void artdaq::MetricManager::do_resume() { /*do_start();*/ }
 
-void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::string prefix)
+void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::string const& prefix)
 {
 	shutdown();
 	initialize(pset, prefix);
@@ -333,11 +333,15 @@ bool artdaq::MetricManager::metricQueueEmpty()
 	return true;
 }
 
-size_t artdaq::MetricManager::metricQueueSize(std::string name)
+size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 {
+	std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 	size_t size = 0;
 	if (name == "") {
-
+		for (auto& q : metric_queue_)
+		{
+			size += q.second.first;
+		}
 	}
 	else {
 		if (metric_queue_.count(name)) size = metric_queue_[name].first;

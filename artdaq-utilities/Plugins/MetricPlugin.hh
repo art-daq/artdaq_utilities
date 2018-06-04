@@ -32,10 +32,16 @@ namespace artdaq
 	class MetricPlugin
 	{
 	public:
+		/**
+		* \brief The Config struct defines the accepted configuration parameters for this class
+		*/
 		struct Config
 		{
+			/// The name of the metric plugin to load (may have additional configuration parameters
 			fhicl::Atom<std::string> metricPluginType{ fhicl::Name{"metricPluginType"}, fhicl::Comment{"The name of the metric plugin to load (may have additional configuration parameters"} };
+			/// "level" (Default: 0): The verbosity level of the metric plugin. Higher number = fewer metrics sent to the metric storage
 			fhicl::Atom<int> level{ fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. Metrics with verbosity level greater than this will not be sent to the plugin"}, 0 };
+			/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 			fhicl::Atom<double> reporting_interval{ fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0 };
 		};
 #if MESSAGEFACILITY_HEX_VERSION >= 0x20103
@@ -45,6 +51,7 @@ namespace artdaq
 		/**
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
+		 * \param app_name The Application name which can be used by the Metric Plugin for identification
 		 *
 		 * \verbatim
 		 * MetricPlugin accepts the following parameters:
@@ -173,6 +180,7 @@ namespace artdaq
 		/**
 		 * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to the underlying metric storage
 		 * \param forceSend (Default = false): Force sending metrics, even if reporting interval has not elapsed
+		 * \param interval_end (Default = now): For calculating rates, when the current reporting interval ended (interval began at last value of interval_end)
 		 */
 		void sendMetrics(bool forceSend = false, std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 		{
