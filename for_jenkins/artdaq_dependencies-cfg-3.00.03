@@ -11,19 +11,27 @@ do_build cmake v3_9_5
 do_build cmake v3_10_1
 
 if [ "${basequal}" = "e10" ]; then
-   do_build gcc v4_9_3a
+    gccver=v4_9_3a
 elif [ "${basequal}" = "e14" ]; then
-	 do_build gcc v6_3_0
+	 gccver=v6_3_0
 elif [ "${basequal}" = "e15" ]; then
-	 do_build gcc v6_4_0
+	 gccver=v6_4_0
 elif [ "${basequal}" = "e17" ]; then
-	 do_build gcc v7_3_0
+	 gccver=v7_3_0
 elif [ "${basequal}" = "c2" ]; then
-	 do_build gcc v6_4_0
-	 do_build clang v5_0_1
+	 gccver=v6_4_0
+	 clangver=v5_0_1
 fi
 
-build_cet -p trace-git TRACE v3_13_07 -nq-
+do_build gcc ${gccver}
+
+if [[ "x${clangver:-}" != "x" ]];then
+    do_build clang ${clangver}
+fi
+
+setup gcc ${gccver}
+build_cet -p trace-git TRACE v3_13_09 -nq-
+unsetup gcc
 do_build xmlrpc_c v1_39_10d ${basequal}
 do_build epics v3_16_1c ${basequal}
 do_build mongodb v3_4_6c ${basequal}
