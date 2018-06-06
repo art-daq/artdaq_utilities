@@ -55,6 +55,10 @@ for qual in ${qualarray[@]};do
             squal=s64
             artver=v2_10_02
             ;;
+        s54)
+            squal=s65
+            artver=v2_10_03
+            ;;
         s67)
             squal=s67
             artver=v2_11_01
