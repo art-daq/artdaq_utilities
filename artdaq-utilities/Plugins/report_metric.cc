@@ -132,6 +132,7 @@ namespace artdaq
 		void stopMetrics_() override
 		{
 		  writeReportMessage_(true);
+          metrics_.clear();
 		}
 
 	private:
@@ -140,19 +141,22 @@ namespace artdaq
           std::unique_lock<std::mutex> lk(report_mutex_);
 		if(force || std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - last_report_time_).count() >= accumulationTime_)
 		  {
+              if(metrics_.size() == 0) return;
             last_report_time_ = std::chrono::steady_clock::now();
 			std::ostringstream str;
 
 		 int count = 0;
+           int live_metrics = 0;
 			for(auto& metric : metrics_)
 			  {
 				if(count != 0) str << "," << std::endl;
 				str << "\t" << metric.first << ": " << metric.second;
+                if(metric.second != "NOT REPORTED") live_metrics++;
 				metric.second = "NOT REPORTED";
                 count++;
 			  }
-
-        TLOG_INFO(app_name_) << "Periodic report: "  << std::endl << str.str();
+            if(live_metrics > 0) TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:"  << std::endl << str.str();
+            else TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
 		  }
 	  }
 	};
