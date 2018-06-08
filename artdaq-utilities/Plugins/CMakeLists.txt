@@ -1,5 +1,5 @@
 cet_make(
-  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc
+  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc
   LIBRARIES
   ${FHICLCPP}
   ${CETLIB}
@@ -14,6 +14,13 @@ basic_plugin("file" "metric"
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}
+)
+
+basic_plugin("report" "metric"
+  ${FHICLCPP}
+  ${CETLIB}
+  ${CETLIB_EXCEPT}
+  ${MESSAGEFACILITY_LIBS}
 )
 
 basic_plugin("msgFacility" "metric"
