@@ -135,8 +135,15 @@ namespace artdaq
 				// start thread
 				stopped_ = false;
 				boost::thread::attributes attrs;
-				attrs.set_stack_size(4096 * 200); // 800 KB
-				thread_ = boost::thread(attrs, boost::bind(&ProcFileMetric::writePipe, this));
+				attrs.set_stack_size(4096 * 2000); // 8000 KB
+				try {
+					thread_ = boost::thread(attrs, boost::bind(&ProcFileMetric::writePipe, this));
+				}
+				catch (boost::exception const& e)
+				{
+					std::cerr << "Creating ProcFile Metric thread failed! e: " << boost::diagnostic_information(e) << std::endl;
+					exit(4);
+				}
 			}
 		}
 

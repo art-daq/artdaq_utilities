@@ -318,10 +318,19 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 void artdaq::MetricManager::startMetricLoop_()
 {
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
-	TLOG(TLVL_INFO) << "Starting Metric Sending Thread" ;
 	boost::thread::attributes attrs;
-	attrs.set_stack_size(4096 * 200); // 800 KB
-	metric_sending_thread_ = boost::thread(attrs, boost::bind(&MetricManager::sendMetricLoop_, this));
+	attrs.set_stack_size(4096 * 2000); // 8000 KB
+	TLOG(TLVL_INFO) << "Starting Metric Sending Thread" ;
+	try {
+		metric_sending_thread_ = boost::thread(attrs, boost::bind(&MetricManager::sendMetricLoop_, this));
+	}
+	catch (const boost::exception& e)
+	{
+		TLOG(TLVL_ERROR) << "Caught boost::exception starting Metric Sending thread: " << boost::diagnostic_information(e) << ", errno=" << errno;
+		std::cerr << "Caught boost::exception starting Metric Sending thread: " << boost::diagnostic_information(e) << ", errno=" << errno << std::endl;
+		exit(5);
+	}
+	TLOG(TLVL_INFO) << "Metric Sending thread started";
 }
 
 bool artdaq::MetricManager::metricQueueEmpty()
@@ -352,6 +361,7 @@ size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 
 void artdaq::MetricManager::sendMetricLoop_()
 {
+	TLOG(TLVL_INFO) << "sendMetricLoop_ START";
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
