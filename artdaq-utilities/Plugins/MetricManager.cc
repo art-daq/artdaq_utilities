@@ -92,6 +92,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 void artdaq::MetricManager::do_start()
 {
+	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
 	if (!running_)
 	{
 		TLOG(TLVL_DEBUG) << "Starting MetricManager" ;
@@ -117,10 +118,12 @@ void artdaq::MetricManager::do_start()
 
 void artdaq::MetricManager::do_stop()
 {
+	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
 	TLOG(TLVL_DEBUG) << "Stopping Metrics" ;
 	running_ = false;
 	metric_cv_.notify_all();
 	TLOG(TLVL_DEBUG) << "Joining Metric-Sending thread" ;
+	lk.unlock();
 	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
 	TLOG(TLVL_DEBUG) << "do_stop Complete" ;
 }
@@ -139,6 +142,7 @@ void artdaq::MetricManager::shutdown()
 	TLOG(TLVL_DEBUG) << "MetricManager is shutting down..." ;
 	do_stop();
 
+	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
 	if (initialized_)
 	{
 		for (auto& i : metric_plugins_)
