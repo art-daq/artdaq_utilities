@@ -171,11 +171,12 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (active_)
 	{
 		if (!metric_queue_.count(name)) {
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
 		}
 		auto entry = &(metric_queue_[name]);
 
-		auto size = entry->first;
+		auto size = entry->first.load();
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG(9) << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." ;
@@ -202,11 +203,12 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (active_)
 	{
 		if (!metric_queue_.count(name)) {
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
 		}
 		auto entry = &(metric_queue_[name]);
 
-		auto size = entry->first;
+		auto size = entry->first.load();
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG(9) << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." ;
@@ -233,11 +235,12 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (active_)
 	{
 		if (!metric_queue_.count(name)) {
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
 		}
 		auto entry = &(metric_queue_[name]);
 
-		auto size = entry->first;
+		auto size = entry->first.load();
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG(9) << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." ;
@@ -264,11 +267,12 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (active_)
 	{
 		if (!metric_queue_.count(name)) {
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
 		}
 		auto entry = &(metric_queue_[name]);
 
-		auto size = entry->first;
+		auto size = entry->first.load();
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG(9) << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." ;
@@ -295,11 +299,12 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (active_)
 	{
 		if (!metric_queue_.count(name)) {
+			std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 			metric_queue_[name] = std::make_pair<size_t, std::list<metric_data_ptr>>(0, std::list<metric_data_ptr>());
 		}
 		auto entry = &(metric_queue_[name]);
 
-		auto size = entry->first;
+		auto size = entry->first.load();
 		if (size < metric_queue_max_size_)
 		{
 			if (size >= metric_queue_notify_size_) TLOG(9) << "Metric queue is at size " << size << " of " << metric_queue_max_size_ << "." ;
@@ -339,6 +344,7 @@ void artdaq::MetricManager::startMetricLoop_()
 
 bool artdaq::MetricManager::metricQueueEmpty()
 {
+	std::unique_lock<std::mutex> lk(metric_queue_mutex_);
 	for (auto& q : metric_queue_)
 	{
 		if (q.second.first != 0) return false;

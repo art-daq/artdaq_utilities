@@ -246,15 +246,15 @@ private:
 	std::condition_variable metric_cv_;
 	int metric_send_interval_ms_;
 
-	bool initialized_;
-	bool running_;
-	bool active_;
+	std::atomic<bool> initialized_;
+	std::atomic<bool> running_;
+	std::atomic<bool> active_;
 	std::string prefix_;
 
 	//https://stackoverflow.com/questions/228908/is-listsize-really-on
 	// e10 does NOT properly have std::list::size as O(1)!!! Keep track of size separately while we still support e10.
 	typedef std::unique_ptr<MetricData> metric_data_ptr;
-	typedef std::pair<size_t, std::list<metric_data_ptr>> queue_entry;
+	typedef std::pair<std::atomic<size_t>, std::list<metric_data_ptr>> queue_entry;
 
 	std::unordered_map<std::string, queue_entry> metric_queue_;
 	std::mutex metric_queue_mutex_;
