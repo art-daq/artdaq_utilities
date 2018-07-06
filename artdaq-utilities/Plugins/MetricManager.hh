@@ -48,9 +48,7 @@ public:
 		/// Example MetricPlugin Configuration
 		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{ fhicl::Name{"metricConfig"} };
 	};
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
 	using Parameters = fhicl::WrappedTable<Config>;
-#endif
 
 	/**
 	 * \brief Construct an instance of the MetricManager class

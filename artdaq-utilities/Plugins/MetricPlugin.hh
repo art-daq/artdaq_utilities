@@ -13,9 +13,7 @@
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
 # include "fhiclcpp/types/ConfigurationTable.h"
-#endif
 
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "cetlib/compiler_macros.h"
@@ -44,9 +42,7 @@ namespace artdaq
 			/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 			fhicl::Atom<double> reporting_interval{ fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0 };
 		};
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20103
 		using Parameters = fhicl::WrappedTable<Config>;
-#endif
 
 		/*
 		 * \brief MetricPlugin Constructor
