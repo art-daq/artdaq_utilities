@@ -26,9 +26,9 @@ namespace artdaq
 	private:
 	  std::chrono::steady_clock::time_point last_report_time_;
 
-	  std::unordered_map<std::string, std::string> metrics_;
+	  std::map<std::string, std::string> metrics_;
 
-      std::mutex report_mutex_;
+	  std::mutex report_mutex_;
 	public:
 		/**
 		 * \brief PeriodicReportMetric Constructor.
@@ -132,31 +132,31 @@ namespace artdaq
 		void stopMetrics_() override
 		{
 		  writeReportMessage_(true);
-          metrics_.clear();
+		  metrics_.clear();
 		}
 
 	private:
 	  void writeReportMessage_(bool force)
 	  {
-          std::unique_lock<std::mutex> lk(report_mutex_);
+		  std::unique_lock<std::mutex> lk(report_mutex_);
 		if(force || std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - last_report_time_).count() >= accumulationTime_)
 		  {
-              if(metrics_.size() == 0) return;
-            last_report_time_ = std::chrono::steady_clock::now();
+			  if(metrics_.size() == 0) return;
+			last_report_time_ = std::chrono::steady_clock::now();
 			std::ostringstream str;
 
 		 int count = 0;
-           int live_metrics = 0;
+		   int live_metrics = 0;
 			for(auto& metric : metrics_)
 			  {
 				if(count != 0) str << "," << std::endl;
 				str << "\t" << metric.first << ": " << metric.second;
-                if(metric.second != "NOT REPORTED") live_metrics++;
+				if(metric.second != "NOT REPORTED") live_metrics++;
 				metric.second = "NOT REPORTED";
-                count++;
+				count++;
 			  }
-            if(live_metrics > 0) TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:"  << std::endl << str.str();
-            else TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+			if(live_metrics > 0) TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:"  << std::endl << str.str();
+			else TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
 		  }
 	  }
 	};
