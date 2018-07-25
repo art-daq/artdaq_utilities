@@ -47,10 +47,13 @@ echo "ls /cvmfs/fermilab.opensciencegrid.org/products/common/db"
 ls /cvmfs/fermilab.opensciencegrid.org/products/common/db
 echo
 
-if [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
-  source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
-elif [ -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
+if [ `uname` = Darwin -a -f /grid/fermiapp/products/dune/setup_dune_fermiapp.sh ]; then
   source /grid/fermiapp/products/dune/setup_dune_fermiapp.sh || exit 1
+elif [ -f /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh ]; then
+  if [ -x /cvmfs/grid.cern.ch/util/cvmfs-uptodate ]; then
+    /cvmfs/grid.cern.ch/util/cvmfs-uptodate /cvmfs/dune.opensciencegrid.org/products
+  fi
+  source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh || exit 1
 else
   echo "No setup file found."
   exit 1
