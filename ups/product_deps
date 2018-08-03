@@ -21,7 +21,7 @@ product		version		optional
 messagefacility v2_02_01        s67
 messagefacility v2_01_06        s65
 messagefacility v2_01_06        s64
-TRACE		v3_13_09
+TRACE		v3_13_07
 cetbuildtools	v7_02_01	-	only_for_build
 end_product_list
 
