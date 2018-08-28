@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.41 $$Date: 2018/08/25 17:12:08 $'
+ # rev='$Revision: 1.45 $$Date: 2018/08/28 16:36:36 $'
 
 
 USAGE="\
@@ -13,8 +13,8 @@ options:
 --rgang=path/to/rgang
 --iperf=path/to/iperf
 --time=test_time_s  dflt:%d
---rcvbuf=#[KM]   server rcvbuf. Space/comma list (for multiple tests). \"default\" can be used.
---sndbuf=#[KM]   client/sender sndbuf. \"default\" can be used.
+--rcvbuf=#[KM]   server rcvbuf. Space/comma list (for multiple tests). \"default\" (which is likely 43656) can be used. (server limit: net.core.rmem_max)
+--sndbuf=#[KM]   client/sender sndbuf. \"default\" can be used. (client limit: net.core.wmem_max)
 -P, --parallel # number of parallel_connection
 --num-tests=#    default=1
 -v               more verbose (i.e. -vvv to see rgang output)
@@ -26,7 +26,7 @@ options:
 --bw=#[mg]       megabit or gigabits
 --bwudp=#[mg]    udp bw test
 --permutate      given serveral nodes, run tests with all, then tests with fewer -- can show effect of small rcvbuf
---leave-files --keep-files    (i.e. data file in pwd and others in /tmp)
+-k,--leave-files --keep-files    (i.e. data file in pwd and others in /tmp)
 --megabits       instead of default gigabits for throughput
 --use-itf=       for testing interface different than the one used for the rgang ssh
 --shark[=count]  enable tshark capture/analysis optionally with a limited number of packets
@@ -39,7 +39,21 @@ options:
 --flow=<on|off>
 --servers=       number of servers - clients get divided among the servers (so flows is still nodes*parallel)
 "
-VUSAGE="Note: "
+hdr="\
+#____________date____________ _%s/s_ errs drop ovrun frame ___rmt_retrans___ flows inflight(K) _rcv(K) snd(K)  rcalc(K)\n"
+VUSAGE="\
+In the header:
+$hdr
+errs drop ovrun frame = local device errors from ifconfig
+snd(K) = if the snd(K) value (which is the snd socket buffer size reported by the report clients)
+         has an asterisk (*) then all clients are not the same. If the kernel allows the full sndbuf setting,
+         the value of snd(K) should be twice the value specified.
+rcalc = rcalc is the result of calculations on rcvbuf base on values of net.ipv4.adv_win_scale and net.ipv4.app_win
+Note: if net.ipv4.tcp_moderate_rcvbuf (`sysctl net.ipv4.tcp_moderate_rcvbuf`) is 1, the kernel tries to
+automatically increase the rcvbuf between net.ipv4.tcp_rmem[1] and net.ipv4.tcp_rmem[2] - only in extreme memory
+pressure cases, does rcvbuf go down (to net.ipv4.tcp_rmem[0]). See Documentation/networking/ip-sysctl.txt.
+`sysctl net.ipv4.tcp_rmem`
+"
 
 RGANG=`which rgang`
 test -z "$RGANG" && RGANG=`which rgang.py`
@@ -84,8 +98,9 @@ while [ -n "${1-}" ];do
         -bw|-BW)      eval $reqarg; opt_BW=$1;              shift;;
         -bwudp)       eval $reqarg; opt_bwudp=$1;           shift;;
         -permutate)   opt_permutate=1;;
-        -leave-files) leave_files=`expr $leave_files + 1`;;
-        -keep*)       leave_files=`expr $leave_files + 1`;;
+        -leave-files)               leave_files=`expr $leave_files + 1`;;
+        k*)           eval $op1chr; leave_files=`expr $leave_files + 1`;;
+        -keep*)                     leave_files=`expr $leave_files + 1`;;
         -servers)     eval $reqarg; num_servers=$1;         shift;;
         -megabits)    format=m;;
         -use-itf)     eval $reqarg; opt_IF=$1;              shift;;
@@ -290,7 +305,7 @@ if [ -n "${opt_rcvbuf-}" ];then
         xx=`human2num $rr` && test $xx -gt $max_rcvbuf && max_rcvbuf=$xx
     done
     # 124928 is default for 2.6.32-504.30.3
-    test $max_rcvbuf -gt 124928 && echo $xx >|/proc/sys/net/core/rmem_max
+    test $max_rcvbuf -gt `cat /proc/sys/net/core/rmem_max` && echo $xx >|/proc/sys/net/core/rmem_max
 fi
 if [ -n "${opt_sndbuf-}" ];then
     sb_max=0
@@ -410,8 +425,8 @@ if [ -n "${opt_permutate-}" ];then
 fi
 
 test $format = g && fmt=Gb || fmt=Mb
-printf "\
-#____________date____________ _%s/s_ errs drop ovrun frame __rmt_retrans__ flows inflight(K) rcv(K) snd(K) rcalc(K)\n" $fmt |tee $data_file
+printf "$hdr" $fmt |tee $data_file
+#____________date____________ _%s/s_ errs drop ovrun frame __rmt_retrans__ flows inflight(K) rcv(K) snd(K) rcalc(K)\n
 #un Mar 20 15:06:21 CDT 2016  16.70  283    0     0   283 16598 16375 223     5     488.0    85.3  
 for nfile in $files;do  # for when opt_permutate
 
@@ -436,6 +451,8 @@ for nfile in $files;do  # for when opt_permutate
     fi
 
     for Para in `echo "$opt_P" | sed 's/,/ /g'`;do
+      for wrrd_len in `echo "${opt_len:-default}" | sed 's/,/ /g'`;do
+        test $wrrd_len = default && wrrd_len=
 
         for sbuf in `echo "$opt_sndbuf" | sed 's/,/ /g'`;do
             test $sbuf = default && sbuf=
@@ -444,7 +461,7 @@ for nfile in $files;do  # for when opt_permutate
             rcmd2='poff=`awk "BEGIN{nps=$num_nodes/$num_servers;xx=$RGANG_MACH_ID/nps;print int(xx);exit;}"`
 port=`expr 5001 + $poff`
 markRetrans;'
-rcmd3="taskset -c \$cpulist $IPERF $IPERF3_OPTS -c $myIP ${trade_off-} ${dualtest-} ${opt_len+-l$opt_len} ${sbuf:+-w$sbuf} ${opt_bwudp+-b$opt_bwudp -u} --format=k --port=\$port ${Para:+-P$Para} --time=$opt_time $interval"
+rcmd3="taskset -c \$cpulist $IPERF $IPERF3_OPTS -c $myIP ${trade_off-} ${dualtest-} ${wrrd_len:+-l$wrrd_len} ${sbuf:+-w$sbuf} ${opt_bwudp+-b$opt_bwudp -u} --format=k --port=\$port ${Para:+-P$Para} --time=$opt_time $interval"
 rcmd4='
 echo deltaRetrans: `deltaRetrans`
 /sbin/ethtool --show-pause $itf
@@ -494,8 +511,8 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     port=`expr 5001 + $poff`
                     #note taskset -c needs space between it and $cpulist
                     test $poff -eq 0 && vecho 1 \
-"The iperf server cmd is: taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${opt_len+-l$opt_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &"
-                          taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${opt_len+-l$opt_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &
+"The iperf server cmd is: taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &"
+                          taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &
                     srvr_pid="$srvr_pid $!"
                 done
 
@@ -556,10 +573,10 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     test $format = g && mORg=1000000 || mORg=1000
                     # iperf v2 will have 8 fields on the " 0\.00*-$opt_time\." line, where as iperf v3 will have 9 for rcv and 10 for snd (we just want the rcv)
                     tot_Xb=`awk "/ 0\.00*-$opt_time\./"'{if(NF<=9)tot+=$7}'"END{print tot/$mORg}" $clnt_ofile`
-                    SndBuf=`awk '/TCP win/{win[ii++]=$4}END{for(xx=1;xx<ii;++xx){if(win[xx]!=win[xx-1]){zz="*";break}}print win[0] zz}' $clnt_ofile`
+                    SndBuf=`awk '/TCP win/{win[ii++]=$4}END{zz=" ";for(xx=1;xx<ii;++xx){if(win[xx]!=win[xx-1]){zz="*";break}}print win[0] zz}' $clnt_ofile`
                     # NOTE $rmt_delt is 3 numbers
-                    printf "%29s %6.2f %4d %4d %5d %5d %5d %5s %3d %5d   %8.1f  %6.1f %6s %s\n" "`date`"\
-                $tot_Xb $lcl_delt $rmt_delt $flows $inflight $rbufK $SndBuf "$max_rwinK" |tee -a $data_file
+                    printf "%29s %6.2f %4d %4d %5d %5d %6d %6s %3d %5d  %9.1f  %7.1f %7s %7s\n" "`date`"\
+                $tot_Xb $lcl_delt $rmt_delt $flows $inflight $rbufK "$SndBuf" "$max_rwinK" |tee -a $data_file
                     if [ -n "${opt_shark+1}" ];then
                         kill $shark_pid_list 2>/dev/null
                         inflights=`grep inflight $clnt_ofile`
@@ -594,6 +611,7 @@ END{ave=tot/cnt;printf("%4.1f %4.1f %5.1f %5.1f",initial/1024,min/1024,ave/1024,
 
             done  # rcvbufs
         done # sndbufs
+      done # wrrd_len ($opt_len)
     done # opt_P (parallel)
     if [ -z "${do_this_once-}" ];then
         do_this_once=x
