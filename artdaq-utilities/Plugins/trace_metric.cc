@@ -18,7 +18,8 @@ namespace artdaq
 	{
 	private:
 		bool stopped_;
-		int tlvl_;
+		std::string name_;
+		int lvl_;
 
 	public:
 		/**
@@ -34,11 +35,9 @@ namespace artdaq
 		 */
 		explicit TRACEMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
 			, stopped_(true)
-			, tlvl_(config.get<int>("trace_level", TLVL_DEBUG))
+			, name_(config.get<std::string>("trace_name", app_name + "_TRACEMetric"))
+			, lvl_(config.get<int>("trace_level", TLVL_TRACE))
 		{
-			auto name = config.get<std::string>("trace_name", app_name + "_TRACEMetric");
-			
-			TRACE_CNTL("name", name.c_str());
 			startMetrics();
 		}
 
@@ -66,7 +65,7 @@ namespace artdaq
 		{
 			if (!stopped_ && !inhibit_)
 			{
-				TLOG(tlvl_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
+				TLOG(lvl_, name_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
 			}
 		}
 
@@ -80,7 +79,7 @@ namespace artdaq
 		{
 			if (!stopped_ && !inhibit_)
 			{
-				TLOG(tlvl_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
+				TLOG(lvl_, name_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
 			}
 		}
 
@@ -94,7 +93,7 @@ namespace artdaq
 		{
 			if (!stopped_ && !inhibit_)
 			{
-				TLOG(tlvl_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
+				TLOG(lvl_, name_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
 			}
 		}
 
@@ -108,7 +107,7 @@ namespace artdaq
 		{
 			if (!stopped_ && !inhibit_)
 			{
-				TLOG(tlvl_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
+				TLOG(lvl_, name_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
 			}
 		}
 
@@ -122,7 +121,7 @@ namespace artdaq
 		{
 			if (!stopped_ && !inhibit_)
 			{
-				TLOG(tlvl_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
+				TLOG(lvl_, name_) << "TRACEMetric: " << name << ": " << value << " " << unit << ".";
 			}
 		}
 
@@ -132,7 +131,7 @@ namespace artdaq
 		void startMetrics_() override
 		{
 			stopped_ = false;
-			TLOG(TLVL_INFO) << "TRACE Metric Plugin started";
+			TLOG(TLVL_INFO, name_) << "TRACE Metric Plugin started";
 		}
 
 		/**
@@ -141,7 +140,7 @@ namespace artdaq
 		void stopMetrics_() override
 		{
 			stopped_ = true;
-			TLOG(TLVL_INFO) << "TRACE Metric Plugin stopped";
+			TLOG(TLVL_INFO, name_) << "TRACE Metric Plugin stopped";
 		}
 
 	private:
