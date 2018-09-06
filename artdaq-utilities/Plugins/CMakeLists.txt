@@ -16,6 +16,12 @@ basic_plugin("file" "metric"
   ${CETLIB_EXCEPT}
 )
 
+basic_plugin("trace" "metric"
+  ${FHICLCPP}
+  ${CETLIB}
+  ${CETLIB_EXCEPT}
+)
+
 basic_plugin("report" "metric"
   ${FHICLCPP}
   ${CETLIB}
