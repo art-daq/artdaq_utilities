@@ -93,6 +93,9 @@ include(BasicPlugin)
 # source
 add_subdirectory(artdaq-utilities)
 
+# utility scripts/tools
+add_subdirectory(script)
+
 # testing
 #add_subdirectory(test)
 
