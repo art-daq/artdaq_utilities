@@ -69,6 +69,7 @@ for qual in ${qualarray[@]};do
             ;;
 		esac
 done
+export build_db
 
 if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	echo "unexpected qualifier set ${qual_set}"
