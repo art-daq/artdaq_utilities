@@ -11,7 +11,7 @@ ulimit -c unlimited
 
 opt_clean=0;
 counter=0
-max_counter=$CETPKG_J
+max_counter=$((`cat /proc/cpuinfo|grep processor|tail -1|awk '{print $3}'` + 1))
 build_j=1
 if [ $max_counter -gt 4 ]; then
 	build_j=$(($max_counter / 4))
