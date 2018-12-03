@@ -128,7 +128,7 @@ echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
 
-./buildFW -b ${basequal} -l ${pyqual} ${blddir} ${build_type} pqxx-${version} || \
+./buildFW -t -b ${basequal} -l ${pyqual} ${blddir} ${build_type} pqxx-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
