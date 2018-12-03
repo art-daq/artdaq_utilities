@@ -48,4 +48,7 @@ do_build ganglia v3_7_1
 
 do_build qt v5_10_1a ${basequal}
 
+do_build postresql v9_6_11a
+do_build pqxx v6_2_5 ${basequal}:p2715
+
 return 0
