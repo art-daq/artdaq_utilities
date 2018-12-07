@@ -86,7 +86,8 @@ mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
 git checkout $DRD_VERSION
-FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
+#FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
+FQUAL=${QUAL}
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
