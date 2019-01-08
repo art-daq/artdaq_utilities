@@ -9,20 +9,19 @@
 // and sends them data as it is recieved. It also maintains the state of the plugins
 // relative to the application state.
 
-#include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/MetricData.hh"
+#include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "fhiclcpp/fwd.h"
 #include "fhiclcpp/types/OptionalTable.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-#include <sstream>
-#include <queue>
-#include <condition_variable>
 #include <atomic>
 #include <boost/thread.hpp>
+#include <condition_variable>
+#include <queue>
+#include <sstream>
 
-namespace artdaq
-{
+namespace artdaq {
 	class MetricManager;
 }
 
@@ -31,20 +30,31 @@ namespace artdaq
  * It is designed to be a "black hole" for metrics, taking as little time as possible so that metrics do not impact
  * the data-taking performance.
  */
-class artdaq::MetricManager
-{
+class artdaq::MetricManager {
 public:
 	/**
 	 * \brief The Config struct defines the accepted configuration parameters for this class
 	 */
-	struct Config
-	{
-		/// "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
-		fhicl::Atom<size_t> metric_queue_size{ fhicl::Name{"metric_queue_size"}, fhicl::Comment{"The maximum number of metric entries which can be stored in the metric queue."}, 1000 };
-		/// "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed.
-		fhicl::Atom<size_t> metric_queue_notify_size{ fhicl::Name{"metric_queue_notify_size"}, fhicl::Comment{"The number of metric entries in the list which will cause reports of the queue size to be printed."}, 10 };
-		/// "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
-		fhicl::Atom<int> metric_send_maximum_delay_ms{ fhicl::Name{"metric_send_maximum_delay_ms"}, fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)"}, 15000 };
+  struct Config {
+    /// "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric
+    /// queue.
+    fhicl::Atom<size_t> metric_queue_size{
+        fhicl::Name{"metric_queue_size"},
+        fhicl::Comment{"The maximum number of metric entries which can be stored in the metric queue."}, 1000};
+    /// "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of
+    /// the queue size to be printed.
+    fhicl::Atom<size_t> metric_queue_notify_size{
+        fhicl::Name{"metric_queue_notify_size"},
+        fhicl::Comment{
+            "The number of metric entries in the list which will cause reports of the queue size to be printed."},
+        10};
+    /// "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will
+    /// send 0s for metrics which have not reported in this interval)
+    fhicl::Atom<int> metric_send_maximum_delay_ms{
+        fhicl::Name{"metric_send_maximum_delay_ms"},
+        fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not "
+                       "reported in this interval)"},
+        15000};
 		/// Example MetricPlugin Configuration
 		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{ fhicl::Name{"metricConfig"} };
 	};
@@ -81,9 +91,10 @@ public:
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
 	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
-	 * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed.
-	 * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
-	 * If the queue is above this size, new metric entries will be dropped until the plugins catch up.
+   * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the
+   * queue size to be printed. "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between
+   * metric send calls (will send 0s for metrics which have not reported in this interval) If the queue is above this
+   * size, new metric entries will be dropped until the plugins catch up.
 	 */
 	void initialize(fhicl::ParameterSet const& pset, std::string const& prefix = "");
 
@@ -134,7 +145,8 @@ public:
 	 * \param metricPrefix An additional prefix to prepend to the metric name
 	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
 	 */
-	void sendMetric(std::string const& name, std::string const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
+  void sendMetric(std::string const& name, std::string const& value, std::string const& unit, int level,
+                  MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -149,7 +161,8 @@ public:
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, int const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
+  void sendMetric(std::string const& name, int const& value, std::string const& unit, int level, MetricMode mode,
+                  std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -164,7 +177,8 @@ public:
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, double const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
+  void sendMetric(std::string const& name, double const& value, std::string const& unit, int level, MetricMode mode,
+                  std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -179,7 +193,8 @@ public:
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, float const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
+  void sendMetric(std::string const& name, float const& value, std::string const& unit, int level, MetricMode mode,
+                  std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
@@ -194,7 +209,8 @@ public:
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level, MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
+  void sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level,
+                  MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
 	 * \brief Sets the prefix prepended to all metrics without useNameOverride set
@@ -249,16 +265,12 @@ private:
 	std::atomic<bool> active_;
 	std::string prefix_;
 
-	//https://stackoverflow.com/questions/228908/is-listsize-really-on
-	// e10 does NOT properly have std::list::size as O(1)!!! Keep track of size separately while we still support e10.
-	typedef std::unique_ptr<MetricData> metric_data_ptr;
-	typedef std::pair<std::atomic<size_t>, std::list<metric_data_ptr>> queue_entry;
-
-	std::unordered_map<std::string, queue_entry> metric_queue_;
-	std::mutex metric_queue_mutex_;
+  std::unordered_map<std::string, std::unique_ptr<MetricData>> metric_cache_;
+  std::mutex metric_cache_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
-	size_t metric_queue_max_size_;
-	size_t metric_queue_notify_size_;
+  std::atomic<size_t> metric_calls_;
+  size_t metric_cache_max_size_;
+  size_t metric_cache_notify_size_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */
