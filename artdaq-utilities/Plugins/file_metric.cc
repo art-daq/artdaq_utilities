@@ -34,8 +34,12 @@ class FileMetric : public MetricPlugin {
     std::time_t tt = system_clock::to_time_t(system_clock::now());
 
     struct std::tm* ptm = std::localtime(&tt);
-
+    if (timeformat_.size()) {
+    
     return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
+	}
+
+	return stream;
   }
 
  public:
