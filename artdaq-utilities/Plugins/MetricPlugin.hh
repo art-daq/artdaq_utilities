@@ -187,10 +187,11 @@ namespace artdaq
             float fs;
             int is;
             unsigned long us;
-    size_t count = 0;
+    size_t count;
 
     for (auto metric : metricData_) {
-                auto *metricName = &metric.first;
+      auto *metricName = &metric.first;
+      count = 0;
       if (readyToSend_(*metricName) || forceSend) {
         if (metricData_[*metricName].size() == 0 && metricRegistry_.count(*metricName)) {
 						sendZero_(metricRegistry_[*metricName]);
