@@ -7,6 +7,7 @@
 
 echo "dune-raw-data version: $DRD_VERSION"
 echo "target qualifier: $QUAL"
+echo "s-qualifier (art) $SQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
@@ -64,6 +65,16 @@ fi
 if ! uname | grep -q Darwin; then
   setup git || exit 1
 fi
+
+# skip around a version of mrb that does not work on macOS
+
+if [ `uname` = Darwin ]; then
+  if [[ x`which mrb | grep v1_17_02` != x ]]; then
+    unsetup mrb || exit 1
+    setup mrb v1_16_02 || exit 1
+  fi
+fi
+
 setup gitflow || exit 1
 export MRB_PROJECT=dune
 echo "Mrb path:"
@@ -76,7 +87,7 @@ mkdir -p $WORKSPACE/temp2 || exit 1
 cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
 git checkout $DRD_VERSION
-FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | awk '{print $1}'`
+FQUAL=`grep $BUILDTYPE dune-raw-data/ups/product_deps | grep ${QUAL}: | grep ${SQUAL} | awk '{print $1}'`
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
