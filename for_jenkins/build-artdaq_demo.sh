@@ -27,6 +27,7 @@ IFS=$IFS_save
 basequal=
 squal=
 artver=
+build_db=1
 
 # Remove shared memory segments which have 0 nattach
 killall art && sleep 5 && killall -9 art
@@ -63,8 +64,12 @@ for qual in ${qualarray[@]};do
             squal=s67
             artver=v2_11_01
             ;;
+        nodb)
+            build_db=0
+            ;;
 		esac
 done
+export build_db
 
 if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	echo "unexpected qualifier set ${qual_set}"
