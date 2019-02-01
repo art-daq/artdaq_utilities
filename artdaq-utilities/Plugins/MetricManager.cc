@@ -42,6 +42,8 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 	std::vector<std::string> names = pset.get_pset_names();
 
+	metric_plugins_.clear();
+
 	for (auto name : names)
 	{
 		if (name == "metric_queue_size")
@@ -98,6 +100,7 @@ void artdaq::MetricManager::do_start()
 		TLOG(TLVL_DEBUG) << "Starting MetricManager" ;
 		for (auto& metric : metric_plugins_)
 		{
+			if (!metric) continue;
 			try
 			{
 				metric->startMetrics();
@@ -160,6 +163,7 @@ void artdaq::MetricManager::shutdown()
 					i->getLibName() ;
 			}
 		}
+		metric_plugins_.clear();
 		initialized_ = false;
 	}
 }
@@ -392,7 +396,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			auto now = std::chrono::steady_clock::now();
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() > metric_send_interval_ms_)
 			{
-				for (auto& metric : metric_plugins_) { metric->sendMetrics(); }
+				for (auto& metric : metric_plugins_) { if(metric) metric->sendMetrics(); }
 				last_send_time = now;
 			}
 		}
@@ -434,6 +438,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 			for (auto& metric : metric_plugins_)
 			{
+				if (!metric) continue;
 				if (metric->getRunLevel() >= data_->Level)
 				{
 					try
@@ -453,6 +458,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 		for (auto& metric : metric_plugins_)
 		{
+			if (!metric) continue;
 			metric->sendMetrics(false, processing_start);
 		}
 	}
@@ -493,6 +499,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 		for (auto& metric : metric_plugins_)
 		{
+			if (!metric) continue;
 			if (metric->getRunLevel() >= data_->Level)
 			{
 				try
@@ -512,6 +519,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 	for (auto& metric : metric_plugins_)
 	{
+		if (!metric) continue;
 		try
 		{
 			metric->stopMetrics();
