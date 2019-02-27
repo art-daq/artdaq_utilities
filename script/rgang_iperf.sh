@@ -24,7 +24,8 @@ options:
 --local          for reverse tunneling clients through ssh
 -l,--len=        set length of read/write buffer to n (default 8 KB)
 --bw=#[mg]       megabit or gigabits
---bwudp=#[mg]    udp bw test
+--bwudp=#[mg]    udp bw test (iperf sender opt)
+--bandwidth=#[KMG] bandwidth in bits/sec (0 for unlimited) (iperf client opt)
 --permutate      given serveral nodes, run tests with all, then tests with fewer -- can show effect of small rcvbuf
 -k,--leave-files --keep-files    (i.e. data file in pwd and others in /tmp)
 --megabits       instead of default gigabits for throughput
@@ -97,6 +98,7 @@ while [ -n "${1-}" ];do
         l*|-len)      eval $reqarg; opt_len=$1;             shift;;
         -bw|-BW)      eval $reqarg; opt_BW=$1;              shift;;
         -bwudp)       eval $reqarg; opt_bwudp=$1;           shift;;
+        -bandwidth)   eval $reqarg; opt_bandwidth=$1;       shift;;
         -permutate)   opt_permutate=1;;
         -leave-files)               leave_files=`expr $leave_files + 1`;;
         k*)           eval $op1chr; leave_files=`expr $leave_files + 1`;;
@@ -461,7 +463,9 @@ for nfile in $files;do  # for when opt_permutate
             rcmd2='poff=`awk "BEGIN{nps=$num_nodes/$num_servers;xx=$RGANG_MACH_ID/nps;print int(xx);exit;}"`
 port=`expr 5001 + $poff`
 markRetrans;'
-rcmd3="taskset -c \$cpulist $IPERF $IPERF3_OPTS -c $myIP ${trade_off-} ${dualtest-} ${wrrd_len:+-l$wrrd_len} ${sbuf:+-w$sbuf} ${opt_bwudp+-b$opt_bwudp -u} --format=k --port=\$port ${Para:+-P$Para} --time=$opt_time $interval"
+rcmd3="taskset -c \$cpulist $IPERF $IPERF3_OPTS -c $myIP ${trade_off-} ${dualtest-} ${wrrd_len:+-l$wrrd_len}"
+rcmd3="$rcmd3 ${sbuf:+-w$sbuf} ${opt_bwudp+-b$opt_bwudp -u} --format=k --port=\$port ${Para:+-P$Para} --time=$opt_time"
+rcmd3="$rcmd3 ${opt_bandwidth+-b$opt_bandwidth} $interval"
 rcmd4='
 echo deltaRetrans: `deltaRetrans`
 /sbin/ethtool --show-pause $itf
