@@ -353,8 +353,9 @@ expr "$IPERF" : '.*3$' >/dev/null && IPERF3_OPTS=-4 || IPERF3_OPTS=
 
 rcmd0='
 IP2if()
-{ /sbin/route -n | sed -n "/^[0-9]/p" | sort -rnk5 \
-  |awk "function numit(ip){n=split(ip,a,\".\")+1;r=0;while(--n)r+=lshift(a[n],(4-n)*8);return r}/^[0-9]/{if(and(numit(\$3),numit(\"$1\"))==numit(\$1)){print\$8;exit 0}}"
+{ awk_script="function numit(ip){n=split(ip,a,\".\")+1;r=0;while(--n)r+=lshift(a[n],(4-n)*8);return r}/^[0-9]/{if(and(numit(\$3),numit(\"$1\"))==numit(\$1)){print\$8;exit 0}}"
+  if_=`/sbin/route -n | sed -n "/^[0-9]/p" | grep -v "^0.0.0.0" | sort -rnk5 |awk "$awk_script"`
+  test -n "$if_" && echo $if_ || /sbin/route -n | sed -n "/^[0-9]/p" | sort -rnk5 |awk "$awk_script"
 }
 retrans()
 {   netstat -s | perl -e '"'"'
