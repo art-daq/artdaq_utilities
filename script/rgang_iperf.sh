@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.45 $$Date: 2018/08/28 16:36:36 $'
+ # rev='$Revision: 1.51 $$Date: 2019/02/27 17:57:59 $'
 
 
 USAGE="\
@@ -13,6 +13,7 @@ options:
 --rgang=path/to/rgang
 --iperf=path/to/iperf
 --time=test_time_s  dflt:%d
+-n, --num=       #[kmgKMG]    number of bytes to transmit (instead of -t)
 --rcvbuf=#[KM]   server rcvbuf. Space/comma list (for multiple tests). \"default\" (which is likely 43656) can be used. (server limit: net.core.rmem_max)
 --sndbuf=#[KM]   client/sender sndbuf. \"default\" can be used. (client limit: net.core.wmem_max)
 -P, --parallel # number of parallel_connection
@@ -37,8 +38,9 @@ options:
 --adv_win_scale= set server/rcvr side
 --max_backlog=   set server/rcvr side
 --initrwnd[=N]   set server/rcvr side  initial window N*mss or (without =N) reset to default
---flow=<on|off>
+--flow=<on|off>  turn interface flow control (via ethtool) on/off (both local and remote)
 --servers=       number of servers - clients get divided among the servers (so flows is still nodes*parallel)
+--skip=          pass this param to rgang
 "
 hdr="\
 #____________date____________ _%s/s_ errs drop ovrun frame ___rmt_retrans___ flows inflight(K) _rcv(K) snd(K)  rcalc(K)\n"
@@ -54,6 +56,12 @@ Note: if net.ipv4.tcp_moderate_rcvbuf (`sysctl net.ipv4.tcp_moderate_rcvbuf`) is
 automatically increase the rcvbuf between net.ipv4.tcp_rmem[1] and net.ipv4.tcp_rmem[2] - only in extreme memory
 pressure cases, does rcvbuf go down (to net.ipv4.tcp_rmem[0]). See Documentation/networking/ip-sysctl.txt.
 `sysctl net.ipv4.tcp_rmem`
+
+Examples:
+rgang_iperf.sh localhost
+rgang -n2 mu2edaq\{04,07,10,12} \\
+'PATH=~/bin:~/script:/sbin:\$PATH; rgang_iperf.sh --skip=\`hostname -s\` mu2edaq\{,}\{04,07,10,12} '\\
+'--servers=2 --time=20 --len=64K --rcvbuf=8K -P6'
 "
 
 RGANG=`which rgang`
@@ -95,6 +103,7 @@ while [ -n "${1-}" ];do
         -rcvbuf)      eval $reqarg; opt_rcvbuf=$1;          shift;;
         -sndbuf)      eval $reqarg; opt_sndbuf=$1;          shift;;
         -num-tests)   eval $reqarg; num_tests=$1;           shift;;
+        n*|-num)      eval $reqarg; opt_num=$1;             shift;;
         l*|-len)      eval $reqarg; opt_len=$1;             shift;;
         -bw|-BW)      eval $reqarg; opt_BW=$1;              shift;;
         -bwudp)       eval $reqarg; opt_bwudp=$1;           shift;;
@@ -115,6 +124,7 @@ while [ -n "${1-}" ];do
         -initrwnd)    test -z "$leq"&&opt_initrwnd= || { opt_initrwnd=$1;shift;};;
         -flow)        eval $reqarg; opt_flow=$1;            shift;;
         -mtux)        eval $reqarg; MTUX=$1;                shift;;
+        -skip)        eval $reqarg; skip=$1;                shift;;
         -*)           echo "unknown long option -$op";  do_help=1;;
         *)            echo unknown option `expr "$op" : '\(.\)'`; do_help=1;;
         esac
@@ -221,7 +231,7 @@ tot_delt_retrans()
 }
 
 
-$RGANG --list $node_spec >$nodes_file
+$RGANG ${skip:+--skip=$skip} --list $node_spec >$nodes_file
 num_nodes=`cat $nodes_file | wc -l`
 first_node=`head -1 $nodes_file`
 vecho 2 first_node=$first_node
@@ -391,6 +401,7 @@ echo send itf=$itf
 "'/sbin/ifconfig $itf | /bin/egrep -i "MTU|txqueuelen"
 ff=/sys/class/net/$itf/device/numa_node
 test -f $ff && { numa_node=`cat $ff`; cpulist=`cat /sys/devices/system/node/node$numa_node/cpulist`; } || cpulist=0
+echo cpulist=$cpulist
 '
 test `whoami` = root && rcmd0="${rcmd0}/sbin/ip route flush cache
 ${congestion_control+echo $congestion_control >|/proc/sys/net/ipv4/tcp_congestion_control}
@@ -425,6 +436,14 @@ if [ -n "${opt_permutate-}" ];then
         files="$files $nodes_file.$nn"
     done
     grep . $files
+fi
+
+if [ -n "${opt_num-}" ];then
+    # adjust number of bytes to send based on num_nodes and opt_P
+    tmp_num=`human2num $opt_num`
+    tmp_num=`expr $tmp_num / \( $num_nodes \* $opt_P \)`
+    vecho 1 "adjusting opt_num depending on num_nodes and opt_P from $opt_num to $tmp_num"
+    opt_num=$tmp_num; unset tmp_num
 fi
 
 test $format = g && fmt=Gb || fmt=Mb
@@ -466,7 +485,7 @@ port=`expr 5001 + $poff`
 markRetrans;'
 rcmd3="taskset -c \$cpulist $IPERF $IPERF3_OPTS -c $myIP ${trade_off-} ${dualtest-} ${wrrd_len:+-l$wrrd_len}"
 rcmd3="$rcmd3 ${sbuf:+-w$sbuf} ${opt_bwudp+-b$opt_bwudp -u} --format=k --port=\$port ${Para:+-P$Para} --time=$opt_time"
-rcmd3="$rcmd3 ${opt_bandwidth+-b$opt_bandwidth} $interval"
+rcmd3="$rcmd3 ${opt_bandwidth+-b$opt_bandwidth} ${opt_num:+--num=$opt_num} $interval"
 rcmd4='
 echo deltaRetrans: `deltaRetrans`
 /sbin/ethtool --show-pause $itf
@@ -567,6 +586,7 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     rgang_sts=`cat $clnt_ofile.sts`
                     test 0 -ne $rgang_sts && echo "Warning: rgang returned non-zero exit status ($rgang_sts)"
                     lcl_delt=`lcl_stats_delta`  # quadruple (4 numbers)
+                    ( echo test `expr $num_tests + 1 - $nn`:; cat $clnt_ofile ) >>$clnt_ofile.all_tests
 
                     if [ -z "${opt_bwudp-}" ];then
                         rmt_delt=`grep deltaRetrans $clnt_ofile | tot_delt_retrans` # triplet (3 numbers)
@@ -576,8 +596,14 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                         rmt_delt="0 $drop_pcnt% 0"   # should be noted somewhere that w/UDP, not "retrans", but "drop%"
                     fi
                     test $format = g && mORg=1000000 || mORg=1000
-                    # iperf v2 will have 8 fields on the " 0\.00*-$opt_time\." line, where as iperf v3 will have 9 for rcv and 10 for snd (we just want the rcv)
-                    tot_Xb=`awk "/ 0\.00*-$opt_time\./"'{if(NF<=9)tot+=$7}'"END{print tot/$mORg}" $clnt_ofile`
+                    if [ -n "${opt_num-}" ];then
+                        # time will vary in this mode
+                        # ignoring [SUM] (when -P >1) -- when $7 is not a number, 0 is added
+                        tot_Xb=`awk "/ 0\.00*- *[1-9][0-9]*\./"'{if(NF<=9)tot+=$7}'"END{print tot/$mORg}" $clnt_ofile`
+                    else
+                        # iperf v2 will have 8 fields on the " 0\.00*-$opt_time\." line, where as iperf v3 will have 9 for rcv and 10 for snd (we just want the rcv)
+                        tot_Xb=`awk "/ 0\.00*-$opt_time\./"'{if(NF<=9)tot+=$7}'"END{print tot/$mORg}" $clnt_ofile`
+                    fi
                     SndBuf=`awk '/TCP win/{win[ii++]=$4}END{zz=" ";for(xx=1;xx<ii;++xx){if(win[xx]!=win[xx-1]){zz="*";break}}print win[0] zz}' $clnt_ofile`
                     # NOTE $rmt_delt is 3 numbers
                     printf "%29s %6.2f %4d %4d %5d %5d %6d %6s %3d %5d  %9.1f  %7.1f %7s %7s\n" "`date`"\
