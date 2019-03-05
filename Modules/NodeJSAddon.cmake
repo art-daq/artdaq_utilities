@@ -51,7 +51,7 @@ macro (create_nodejs_addon)
 
         set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
 
-        file(GLOB NODEJS_ADDON_SOURCES  *.i)
+        file(GLOB NODEJS_ADDON_SOURCES  *_node.i)
         file(GLOB LIB_SOURCES  *.cpp)
 		file(GLOB SWIG_DEPENDS *.h *.i)
 
@@ -69,6 +69,7 @@ macro (create_nodejs_addon)
         target_include_directories ( ${CNA_ADDON_NAME} PUBLIC ${CNA_INCLUDES})
         #include_directories(${CNA_INCLUDES})
         set_target_properties (${CNA_ADDON_NAME} PROPERTIES
+		SWIG_FLAGS "-node"
         COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -DBUILDING_NODE_EXTENSION -DSWIG_V8_VERSION=0x0${V8_DEFINE_STRING}"
         PREFIX ""
         SUFFIX ".node"
@@ -76,12 +77,19 @@ macro (create_nodejs_addon)
 
         create_node_package_json(${CNA_ADDON_NAME})
 
-        install (FILES ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${CNA_ADDON_NAME})
+  set( mrb_build_dir $ENV{MRB_BUILDDIR} )
+  if( mrb_build_dir )
+    set( this_build_path ${mrb_build_dir}/${product} )
+  else()
+    set( this_build_path ${CETPKG_BUILD} )
+  endif()
+
+        install (FILES ${this_build_path}/lib/${CNA_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${CNA_ADDON_NAME})
 
         # add_custom_command(TARGET ${CNA_ADDON_NAME} POST_BUILD 
-        # COMMAND echo "**** Exports for ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node"
+        # COMMAND echo "**** Exports for ${this_build_path}/lib/${CNA_ADDON_NAME}.node"
         # COMMAND echo "**** BEGIN"
-        # COMMAND /usr/bin/nm ${CMAKE_CURRENT_BINARY_DIR}/../lib/${CNA_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
+        # COMMAND /usr/bin/nm ${this_build_path}/lib/${CNA_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
         # COMMAND echo "**** END" )
 
     else(CAN_BUILD)
