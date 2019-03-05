@@ -30,7 +30,7 @@ if [[ "x${clangver:-}" != "x" ]];then
 fi
 
 setup gcc ${gccver}
-build_cet -p trace-git TRACE v3_13_09 -nq-
+build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
 do_build xmlrpc_c v1_39_10d ${basequal}
 do_build epics v3_16_1c ${basequal}
