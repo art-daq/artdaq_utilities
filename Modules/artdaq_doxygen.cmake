@@ -49,10 +49,14 @@ if(DOXYGEN_FOUND)
 				  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile > doxygen.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 					  COMMENT "Generating ${project} API documentation using Doxygen" VERBATIM)
 	add_custom_target(${product}_doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${product}.tag)
-	if(CM_DEPENDS)
-		foreach(dependency ${CM_DEPENDS})
-			add_dependencies(${product}_doc ${dependency}_doc)
-		endforeach()
+	
+    # Only add cross-package dependencies in MRB
+    if(CM_DEPENDS)
+        if(DEFINED ENV{MRB_BUILDDIR})
+    		foreach(dependency ${CM_DEPENDS})
+	    		add_dependencies(${product}_doc ${dependency}_doc)
+		    endforeach()
+        endif()
 	endif()
 	add_custom_command(TARGET ${product}_doc POST_BUILD
                        COMMAND echo Copying ${CMAKE_CURRENT_BINARY_DIR}/man to ${${product}_lib_dir}/../share/man
