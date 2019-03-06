@@ -26,18 +26,38 @@ endfunction()
 
 macro (create_doxygen_documentation)
 if(DOXYGEN_FOUND)
-	cet_parse_args( CM "EXCLUDE" "" ${ARGN})
+	cet_parse_args( CM "EXCLUDE;DEPENDS" "" ${ARGN})
 	set(EXCLUDE_FILES "")
 	if(CM_EXCLUDE)
 		foreach(file ${CM_EXCLUDE})
 			set(EXCLUDE_FILES "${EXCLUDE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../${file}")
 		endforeach()
-endif()
+	endif()
+
+	set(TAG_FILES "")
+	if(CM_DEPENDS)
+		foreach(dependency ${CM_DEPENDS})
+			execute_process(COMMAND sh -c "find ${CMAKE_BINARY_DIR}/.. -type d -name doc | grep /${dependency}/" OUTPUT_VARIABLE dependency_tagdir WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/.." OUTPUT_STRIP_TRAILING_WHITESPACE)
+			message(STATUS "TAGFILE Directory for ${dependency}: ${dependency_tagdir}")
+			set(TAG_FILES "${TAG_FILES} ${dependency_tagdir}/${dependency}.tag=../${dependency}/")
+		endforeach()
+	endif()
+	
 	configure_file(${DOXYFILE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.tex 
-				  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile > doxygen.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} 
+	configure_file(${DOXYFILE_DIR}/header.html.in ${CMAKE_CURRENT_BINARY_DIR}/header.html @ONLY)
+	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${product}.tag
+				  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile > doxygen.log 2>&1 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 					  COMMENT "Generating ${project} API documentation using Doxygen" VERBATIM)
-	add_custom_target(${product}_doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.tex)
+	add_custom_target(${product}_doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${product}.tag)
+	
+    # Only add cross-package dependencies in MRB
+    if(CM_DEPENDS)
+        if(DEFINED ENV{MRB_BUILDDIR})
+    		foreach(dependency ${CM_DEPENDS})
+	    		add_dependencies(${product}_doc ${dependency}_doc)
+		    endforeach()
+        endif()
+	endif()
 	add_custom_command(TARGET ${product}_doc POST_BUILD
                        COMMAND echo Copying ${CMAKE_CURRENT_BINARY_DIR}/man to ${${product}_lib_dir}/../share/man
 					   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/man ${${product}_lib_dir}/../share/man

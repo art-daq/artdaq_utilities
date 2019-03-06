@@ -30,11 +30,11 @@ if [[ "x${clangver:-}" != "x" ]];then
 fi
 
 setup gcc ${gccver}
-build_cet -p trace-git TRACE v3_13_09 -nq-
+build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
 do_build xmlrpc_c v1_39_10d ${basequal}
 do_build epics v3_16_1c ${basequal}
-do_build mongodb v3_4_6c ${basequal}
+do_build mongodb v3_4_6d ${basequal}
 do_build mpich v3_2_1b ${basequal}
 do_build swig v3_0_12c ${basequal}
 
@@ -48,9 +48,13 @@ do_build ganglia v3_7_1
 
 do_build qt v5_10_1a ${basequal}
 
-do_pull -n sqlite v3_24_00_00
-do_pull -n python v2_7_15
-do_pull -n postgresql v9_6_11a p2715
-do_build pqxx v6_2_5 ${basequal}:p2715
+do_pull -n sqlite v3_20_01_00
+do_pull -n python v2_7_14b
+do_pull -n postgresql v9_6_6a p2714b
+do_build pqxx v6_2_5a ${basequal}:p2714b
+
+do_pull -n caencomm v1_2a
+do_pull -n caenvme v2_50
+do_build caendigitizer v2_12_0
 
 return 0
