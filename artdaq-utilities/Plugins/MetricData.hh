@@ -111,6 +111,10 @@ namespace artdaq
 		/// Whether to override the default naming convention for this metric
 		/// </summary>
 		bool UseNameOverride;
+		/// <summary>
+		/// Number of data points accumulated in this MetricData
+		/// </summary>
+                size_t DataPointCount;
 
 		/// <summary>
 		/// Construct a MetricData point using a string value
@@ -130,7 +134,9 @@ namespace artdaq
 			, Level(level)
 			, Mode(mode)
 			, MetricPrefix(metricPrefix)
-			, UseNameOverride(useNameOverride) {}
+			, UseNameOverride(useNameOverride)
+            , DataPointCount(1)
+		{}
 
 		/// <summary>
 		/// Construct a MetricData point using a int value
@@ -151,6 +157,7 @@ namespace artdaq
 			, Mode(mode)
 			, MetricPrefix(metricPrefix)
 			, UseNameOverride(useNameOverride)
+            , DataPointCount(1)
 		{}
 
 		/// <summary>
@@ -172,6 +179,7 @@ namespace artdaq
 			, Mode(mode)
 			, MetricPrefix(metricPrefix)
 			, UseNameOverride(useNameOverride)
+			, DataPointCount(1)
 		{}
 
 		/// <summary>
@@ -193,6 +201,7 @@ namespace artdaq
 			, Mode(mode)
 			, MetricPrefix(metricPrefix)
 			, UseNameOverride(useNameOverride)
+			, DataPointCount(1)
 		{}
 
 		/// <summary>
@@ -214,13 +223,14 @@ namespace artdaq
 			, Mode(mode)
 			, MetricPrefix(metricPrefix)
 			, UseNameOverride(useNameOverride)
+			, DataPointCount(1)
 		{}
 
 		/// <summary>
 		/// Default constructor, constructs an MetricType::InvalidMetric
 		/// </summary>
 		MetricData() : Name("")
-		             , Type(MetricType::InvalidMetric) {}
+		             , Type(MetricType::InvalidMetric), DataPointCount(0) {}
 	};
 }
 
