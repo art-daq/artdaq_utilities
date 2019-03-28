@@ -58,6 +58,7 @@ public:
 		/// Example MetricPlugin Configuration
 		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{ fhicl::Name{"metricConfig"} };
 	};
+  /// Used for ParameterSet validation (if desired)
 	using Parameters = fhicl::WrappedTable<Config>;
 
 	/**
