@@ -5,10 +5,11 @@ basequal=${1}
 check_ups v6_0_7
 
 ensure_cetpkgsupport v1_13_00
-ensure_cetbuildtools v6_01_00 v7_00_02 v7_01_00 v7_02_01
+ensure_cetbuildtools v6_01_00 v7_00_02 v7_01_00 v7_02_01 v7_12_01
 
 do_build cmake v3_9_5
 do_build cmake v3_10_1
+do_build cmake v3_13_1
 
 if [ "${basequal}" = "e10" ]; then
     gccver=v4_9_3a
@@ -34,7 +35,7 @@ build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
 do_build xmlrpc_c v1_39_10d ${basequal}
 do_build epics v3_16_1c ${basequal}
-do_build mongodb v3_4_6d ${basequal}
+do_build mongodb v4_0_8 ${basequal}
 do_build mpich v3_2_1b ${basequal}
 do_build swig v3_0_12c ${basequal}
 
