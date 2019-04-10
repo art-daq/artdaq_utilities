@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
+#include "fhiclcpp/types/Sequence.h"
 # include "fhiclcpp/types/ConfigurationTable.h"
 
 #include "artdaq-utilities/Plugins/MetricData.hh"
@@ -36,8 +37,12 @@ namespace artdaq
 		{
 			/// The name of the metric plugin to load (may have additional configuration parameters
 			fhicl::Atom<std::string> metricPluginType{ fhicl::Name{"metricPluginType"}, fhicl::Comment{"The name of the metric plugin to load (may have additional configuration parameters"} };
-			/// "level" (Default: 0): The verbosity level threshold for this plugin. sendMetric calls with verbosity level greater than this will not be sent to the plugin.
-			fhicl::Atom<int> level{ fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. sendMetric calls with verbosity level greater than this will not be sent to the plugin."}, 0 };
+		/// "level" (OPTIONAL): The verbosity level threshold for this plugin. sendMetric calls with verbosity level greater than this will not be sent to the plugin.
+		fhicl::Atom<size_t> level{fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. sendMetric calls with verbosity level greater than this will not be sent to the plugin. OPTIONAL"}, 0};
+		/// "metric_levels" (OPTIONAL): A list of levels that should be enabled for this plugin.
+		fhicl::Sequence<size_t> metric_levels{fhicl::Name{"metric_levels"}, fhicl::Comment{"A list of levels that should be enabled for this plugin. OPTIONAL"}, std::vector<size_t>()};
+		/// "level_string" (OPTIONAL): A string containing a comma-separated list of levels to enable. Ranges are supported. Example: "1,2,4-10,11"
+		fhicl::Atom<std::string> level_string{fhicl::Name{"level_string"}, fhicl::Comment{"A string containing a comma-separated list of levels to enable. Ranges are supported. Example: \"1,2,4-10,11\" OPTIONAL"}, ""};
 			/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 			fhicl::Atom<double> reporting_interval{ fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0 };
 		};
@@ -52,11 +57,64 @@ namespace artdaq
 		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
 		 *  metric. String metrics cannot be accumulated.
 		 */
-		explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name) : pset(ps)
+	explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name)
+	    : pset(ps)
 			, app_name_(app_name)
 			, inhibit_(false)
+	    , level_mask_(0ULL)
+	{
+		if (pset.has_key("level"))
 		{
-			runLevel_ = pset.get<int>("level", 0);
+			for (size_t ii = 0; ii <= pset.get<size_t>("level"); ++ii)
+			{
+				level_mask_[ii] = true;
+			}
+		}
+		if (pset.has_key("metric_levels"))
+		{
+			auto levels = pset.get<std::vector<size_t>>("metric_levels");
+			for (auto& l : levels)
+			{
+				level_mask_[l] = true;
+			}
+		}
+		if (pset.has_key("level_string"))
+		{
+			auto string = pset.get<std::string>("level_string");
+			std::stringstream ss(string);
+			std::string token;
+			while (std::getline(ss, token, ','))
+			{
+				auto it = token.find("-");
+				if (it == 0 || it == token.size() - 1) continue;
+
+				if (it != std::string::npos)
+				{
+					auto minStr = token.substr(0, it);
+					auto maxStr = token.substr(it + 1);
+					auto min = std::stoi(minStr);
+					auto max = std::stoi(maxStr);
+
+					if (min > max) std::swap(min, max);
+					if (min > 63) min = 63;
+					if (max > 63) max = 63;
+
+					for (int ii = min; ii <= max; ++ii)
+					{
+						level_mask_[ii] = true;
+					}
+				}
+				else
+		{
+					auto level = std::stoi(token);
+					if (level >= 0 && level < 63) level_mask_[level] = true;
+				}
+			}
+		}
+		if (level_mask_.to_ullong() == 0)
+		{
+			throw cet::exception("Configuration Error") << "No levels were enabled for this plugin! Please specify at least one of the following Parameters: \"level\", \"metric_levels\", or \"level_string\"!";
+		}
 			accumulationTime_ = pset.get<double>("reporting_interval", 15.0);
 		}
 
@@ -353,28 +411,19 @@ namespace artdaq
 			inhibit_ = false;
 		}
 
-		/**
-		 * \brief Set the threshold for sending metrics to the underlying storage.
-   * \param level The new threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_
-   * will be sent.
-		 */
-		void setRunLevel(int level) { runLevel_ = level; }
-
-		/**
-		 * \brief Get the threshold for sending metrics to the underlying storage.
-   * \return The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be
-   * sent.
-		 */
-		int getRunLevel() const { return runLevel_; }
+	bool IsLevelEnabled(int level)
+	{
+		if (level > 63) level = 63;
+		if (level < 0) return true;
+		return level_mask_[level];
+	}
 
 	protected:
-  int runLevel_;  ///< The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_
-                  ///< will be sent.
 		fhicl::ParameterSet pset; ///< The ParameterSet used to configure the MetricPlugin
-  double accumulationTime_;  ///< The amount of time to average metric values; except for accumulate=false metrics, will
-                             ///< be the interval at which each metric is sent.
+	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
 		std::string app_name_; ///< Name of the application which is sending metrics to this plugin
 		bool inhibit_; ///< Whether to inhibit all metric sending
+	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
 
 	private:
 		std::unordered_map<std::string, std::list<MetricData>> metricData_;

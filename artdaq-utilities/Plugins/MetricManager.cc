@@ -413,8 +413,10 @@ void artdaq::MetricManager::sendMetricLoop_() {
 
       for (auto& metric : metric_plugins_) {
 				if (!metric) continue;
-        if (metric->getRunLevel() >= data_->Level) {
-          try {
+				if (metric->IsLevelEnabled( data_->Level))
+				{
+					try
+					{
             metric->addMetricData(data_);
 						last_send_time = std::chrono::steady_clock::now();
           } catch (...) {
@@ -469,8 +471,10 @@ void artdaq::MetricManager::sendMetricLoop_() {
 
     for (auto& metric : metric_plugins_) {
 			if (!metric) continue;
-      if (metric->getRunLevel() >= data_->Level) {
-        try {
+			if (metric->IsLevelEnabled(data_->Level))
+			{
+				try
+				{
           metric->addMetricData(data_);
 					last_send_time = std::chrono::steady_clock::now();
         } catch (...) {
