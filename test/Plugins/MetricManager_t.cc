@@ -1,4 +1,3 @@
-#include "artdaq-core/Utilities/TimeUtils.hh"
 #include "artdaq-utilities/Plugins/MetricManager.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
 
@@ -174,14 +173,17 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 	usleep(100000);
 	{
 		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		bool present = false;
 		for (auto& point : artdaq::TestMetric::received_metrics)
 		{
 			if (point.metric == "Test Metric LastPoint")
 			{
 				BOOST_REQUIRE_EQUAL(point.value, "5");
 				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				present = true;
 			}
 		}
+		BOOST_REQUIRE(present);
 		artdaq::TestMetric::received_metrics.clear();
 	}
 
@@ -190,14 +192,17 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 	usleep(100000);
 	{
 		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		bool present = false;
 		for (auto& point : artdaq::TestMetric::received_metrics)
 		{
 			if (point.metric == "Test Metric Accumulate")
 			{
 				BOOST_REQUIRE_EQUAL(point.value, "9");
 				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				present = true;
 			}
 		}
+		BOOST_REQUIRE(present);
 		artdaq::TestMetric::received_metrics.clear();
 	}
 
@@ -206,14 +211,59 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 	usleep(100000);
 	{
 		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		bool present = false;
 		for (auto& point : artdaq::TestMetric::received_metrics)
 		{
 			if (point.metric == "Test Metric Average")
 			{
 				BOOST_REQUIRE_EQUAL(point.value, "2");
 				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				present = true;
 			}
 		}
+		BOOST_REQUIRE(present);
+		artdaq::TestMetric::received_metrics.clear();
+	}
+
+	mm.sendMetric("Test Metric Rate", 4, "Units", 2, artdaq::MetricMode::Rate);
+	mm.sendMetric("Test Metric Rate", 5, "Units", 2, artdaq::MetricMode::Rate);
+	usleep(100000);
+	{
+		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		bool present = false;
+		for (auto& point : artdaq::TestMetric::received_metrics)
+		{
+			if (point.metric == "Test Metric Rate")
+			{
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				present = true;
+			}
+		}
+		BOOST_REQUIRE(present);
+		artdaq::TestMetric::received_metrics.clear();
+	}
+
+	mm.sendMetric("Test Metric AccumulateAndRate", 4, "Units", 2, artdaq::MetricMode::AccumulateAndRate);
+	mm.sendMetric("Test Metric AccumulateAndRate", 5, "Units", 2, artdaq::MetricMode::AccumulateAndRate);
+	usleep(100000);
+	{
+		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		int present = 0;
+		for (auto& point : artdaq::TestMetric::received_metrics)
+		{
+			if (point.metric == "Test Metric AccumulateAndRate")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "9");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				present++;
+			}
+			if (point.metric == "Test Metric AccumulateAndRate - Rate")
+			{
+				BOOST_REQUIRE_EQUAL(point.unit, "Units/s");
+				present++;
+			}
+		}
+		BOOST_REQUIRE_EQUAL(present, 2);
 		artdaq::TestMetric::received_metrics.clear();
 	}
 
@@ -228,6 +278,119 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 BOOST_AUTO_TEST_CASE(SendMetrics_Levels)
 {
+	TLOG_DEBUG("MetricManager_t") << "BEGIN TEST SendMetrics_Levels" << TLOG_ENDL;
+	artdaq::MetricManager mm;
+	BOOST_REQUIRE_EQUAL(mm.Initialized(), false);
+	BOOST_REQUIRE_EQUAL(mm.Running(), false);
+	BOOST_REQUIRE_EQUAL(mm.Active(), false);
+	BOOST_REQUIRE_EQUAL(mm.metricQueueEmpty(), true);
+	BOOST_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
+
+	std::string testConfig = "msgFac: { level: 0 metric_levels: [ 1, 2 ] level_string: \"3-5,9,7\" metricPluginType: test reporting_interval: 0.01}";
+	fhicl::ParameterSet pset;
+	fhicl::make_ParameterSet(testConfig, pset);
+
+	mm.initialize(pset, "MetricManager_t");
+	BOOST_REQUIRE_EQUAL(mm.Initialized(), true);
+	BOOST_REQUIRE_EQUAL(mm.Running(), false);
+	BOOST_REQUIRE_EQUAL(mm.Active(), false);
+
+	mm.do_start();
+	BOOST_REQUIRE_EQUAL(mm.Running(), true);
+	BOOST_REQUIRE_EQUAL(mm.Active(), true);
+
+	mm.sendMetric("Test Metric 0", 0, "Units", 0, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 1", 1, "Units", 1, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 2", 2, "Units", 2, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 3", 3, "Units", 3, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 4", 4, "Units", 4, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 5", 5, "Units", 5, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 6", 6, "Units", 6, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 7", 7, "Units", 7, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 8", 8, "Units", 8, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 9", 9, "Units", 9, artdaq::MetricMode::LastPoint);
+	mm.sendMetric("Test Metric 10", 10, "Units", 10, artdaq::MetricMode::LastPoint);
+	std::bitset<11> received_metrics_;
+	usleep(100000);
+	{
+		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
+		for (auto& point : artdaq::TestMetric::received_metrics)
+		{
+			if (point.metric == "Test Metric 0")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "0");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[0] = true;
+			}
+			if (point.metric == "Test Metric 1")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "1");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[1] = true;
+			}
+			if (point.metric == "Test Metric 2")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "2");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[2] = true;
+			}
+			if (point.metric == "Test Metric 3")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "3");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[3] = true;
+			}
+			if (point.metric == "Test Metric 4")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "4");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[4] = true;
+			}
+			if (point.metric == "Test Metric 5")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "5");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[5] = true;
+			}
+			if (point.metric == "Test Metric 6")
+			{
+				BOOST_TEST_FAIL("Metric level 6 should not have been sent!");
+				received_metrics_[6] = true;
+			}
+			if (point.metric == "Test Metric 7")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "7");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[7] = true;
+			}
+			if (point.metric == "Test Metric 8")
+			{
+				BOOST_TEST_FAIL("Metric level 8 should not have been sent!");
+				received_metrics_[8] = true;
+			}
+			if (point.metric == "Test Metric 9")
+			{
+				BOOST_REQUIRE_EQUAL(point.value, "9");
+				BOOST_REQUIRE_EQUAL(point.unit, "Units");
+				received_metrics_[9] = true;
+			}
+			if (point.metric == "Test Metric 10")
+			{
+				BOOST_TEST_FAIL("Metric level 10 should not have been sent!");
+				received_metrics_[10] = true;
+			}
+		}
+		BOOST_REQUIRE_EQUAL(received_metrics_.to_ulong(), 0x2BF);
+		artdaq::TestMetric::received_metrics.clear();
+	}
+	
+	mm.do_stop();
+	BOOST_REQUIRE_EQUAL(mm.Running(), false);
+	BOOST_REQUIRE_EQUAL(mm.Initialized(), true);
+
+	mm.shutdown();
+	BOOST_REQUIRE_EQUAL(mm.Initialized(), false);
+	TLOG_DEBUG("MetricManager_t") << "END TEST SendMetrics_Levels" << TLOG_ENDL;
 }
 
 BOOST_AUTO_TEST_CASE(MetricFlood)
