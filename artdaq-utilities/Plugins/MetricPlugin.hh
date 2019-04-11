@@ -439,6 +439,11 @@ public:
 		inhibit_ = false;
 	}
 
+	/**
+	 * \brief Determine if the given level is enabled for this MetricPlugin instance
+	 * \param level Level to check
+	 * \return True if level is enabled, false otherwise
+	 */
 	bool IsLevelEnabled(int level)
 	{
 		if (level > 63) level = 63;
@@ -450,7 +455,7 @@ protected:
 	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
 	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
 	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
-	bool inhibit_;                ///< Whether to inhibit all metric sending
+	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
 	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
 
 private:
