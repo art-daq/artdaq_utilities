@@ -45,7 +45,7 @@ do_build xdaq v14_12_0 ${basequal}
 build_noarch nodejs v4_5_0
 do_build ganglia v3_7_1
 
-do_build qt v5_10_1b ${basequal}
+do_build qt v5_12_3 ${basequal}
 
 do_pull -n sqlite v3_20_01_00
 do_pull -n python v2_7_14b
