@@ -45,7 +45,7 @@ namespace artdaq
 			{
 				outputLevel_ = config.get<int>("output_message_severity", 0);
 			}
-			catch (cet::exception)
+			catch (const cet::exception&)
 			{
 				std::string levelString = config.get<std::string>("output_message_severity", "Info");
 				if (levelString == "Info" || levelString == "info" || levelString == "LogInfo")
