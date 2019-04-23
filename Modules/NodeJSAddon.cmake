@@ -49,7 +49,7 @@ macro (create_nodejs_addon)
         execute_process(COMMAND printf %d%02d%02d ${V8_STRING_MAJOR} ${V8_STRING_MINOR} ${V8_STRING_PATCH} OUTPUT_VARIABLE V8_DEFINE_STRING)
         message("V8_DEFINE_STRING is ${V8_DEFINE_STRING}")
 
-        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter")
 
         file(GLOB NODEJS_ADDON_SOURCES  *_node.i)
         file(GLOB LIB_SOURCES  *.cpp)
