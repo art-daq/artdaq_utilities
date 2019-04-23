@@ -39,7 +39,7 @@ do_build epics v3_16_2 ${basequal}
 do_build mongodb v4_0_8a ${basequal}
 do_build mpich v3_2_1e ${basequal}
 do_build swig v3_0_12d ${basequal}
-do_build swig v4_0_0-beta1 ${basequal}
+do_build swig v4_0_0 ${basequal}
 
 do_build xdaq v14_12_0 ${basequal}
 
