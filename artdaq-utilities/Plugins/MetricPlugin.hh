@@ -22,28 +22,29 @@
 
 namespace artdaq
 {
-	/*
+	/**
 	 * \brief The MetricPlugin class defines the interface that MetricManager uses to send metric data
 	 * to the various metric plugins.
 	 */
 	class MetricPlugin
 	{
 	public:
-		/*
+		/**
 		* \brief The Config struct defines the accepted configuration parameters for this class
 		*/
 		struct Config
 		{
-			/// The name of the metric plugin to load (may have additional configuration parameters
-			fhicl::Atom<std::string> metricPluginType{ fhicl::Name{"metricPluginType"}, fhicl::Comment{"The name of the metric plugin to load (may have additional configuration parameters"} };
+			/// "metricPluginType": The name of the metric plugin to load (may have additional configuration parameters)
+			fhicl::Atom<std::string> metricPluginType{ fhicl::Name{"metricPluginType"}, fhicl::Comment{"The name of the metric plugin to load (may have additional configuration parameters)"} };
 			/// "level" (Default: 0): The verbosity level of the metric plugin. Higher number = fewer metrics sent to the metric storage
 			fhicl::Atom<int> level{ fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. Metrics with verbosity level greater than this will not be sent to the plugin"}, 0 };
 			/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 			fhicl::Atom<double> reporting_interval{ fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0 };
 		};
+		/// Used for ParameterSet validation (if desired)
 		using Parameters = fhicl::WrappedTable<Config>;
 
-		/*
+		/**
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
 		 * \param app_name The Application name which can be used by the Metric Plugin for identification
@@ -65,7 +66,7 @@ namespace artdaq
 			accumulationTime_ = pset.get<double>("reporting_interval", 15.0);
 		}
 
-		/*
+		/**
 		 * \brief Default virtual Desctructor
 		 */
 		virtual ~MetricPlugin() = default;
@@ -76,13 +77,13 @@ namespace artdaq
 		//
 		///////////////////////////////////////////////////////////////////////////
 
-		/*
+		/**
 		 * \brief Return the name of the current MetricPlugin instance
 		 */
 		virtual std::string getLibName() const { return "ERROR"; }
 
 	protected:
-		/*
+		/**
 		 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		 * \param name Name of the metric
 		 * \param value Value of the metric
@@ -92,7 +93,7 @@ namespace artdaq
 		 */
 		virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) = 0;
 
-		/*
+		/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
@@ -102,7 +103,7 @@ namespace artdaq
 		*/
 		virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit) = 0;
 
-		/*
+		/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
@@ -112,7 +113,7 @@ namespace artdaq
 		*/
 		virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit) = 0;
 
-		/*
+		/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
@@ -122,7 +123,7 @@ namespace artdaq
 		*/
 		virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit) = 0;
 
-		/*
+		/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
@@ -132,14 +133,14 @@ namespace artdaq
 		*/
 		virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit) = 0;
 
-		/*
+		/**
 		 * \brief Perform any start-up actions necessary for the metric plugin
 		 *
 		 * This is a pure virtual function, it should be overridden by implementation plugins
 		 */
 		virtual void startMetrics_() = 0;
 
-		/*
+		/**
 		* \brief Perform any shutdown actions necessary for the metric plugin
 		*
 		* This is a pure virtual function, it should be overridden by implementation plugins
@@ -152,7 +153,7 @@ namespace artdaq
 		//
 		/////////////////////////////////////////////////////////////////////////////////
 	public:
-		/*
+		/**
 		* \brief Send a metric value to the MetricPlugin
 		* \param data A MetricData struct containing the metric value
 		*/
@@ -173,7 +174,7 @@ namespace artdaq
 	}
   }
 
-   /*
+   /**
    * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to
    * the underlying metric storage 
    * \param forceSend (Default = false): Force sending metrics, even if reporting interval
@@ -339,12 +340,12 @@ namespace artdaq
 			}
 		}
 
-		/*
+		/**
 		 * \brief Perform startup actions. Simply calls the virtual startMetrics_ function
 		 */
 		void startMetrics() { startMetrics_(); }
 
-		/*
+		/**
 		 * \brief Perform shutdown actions. Zeroes out all accumulators, and sends zeros for each metric.
 		 * Calls stopMetrics_() for any plugin-defined shutdown actions.
 		 */
@@ -358,13 +359,14 @@ namespace artdaq
 			inhibit_ = false;
 		}
 
-		/*
+		/**
 		 * \brief Set the threshold for sending metrics to the underlying storage.
    * \param level The new threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_
    * will be sent.
 		 */
 		void setRunLevel(int level) { runLevel_ = level; }
-		/*
+
+		/**
 		 * \brief Get the threshold for sending metrics to the underlying storage.
    * \return The threshold for sending metrics to the underlying storage. Metrics with level <= to runLevel_ will be
    * sent.
