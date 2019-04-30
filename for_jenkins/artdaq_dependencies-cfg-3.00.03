@@ -11,17 +11,18 @@ do_build cmake v3_9_5
 do_build cmake v3_10_1
 do_build cmake v3_13_1
 
-if [ "${basequal}" = "e10" ]; then
-    gccver=v4_9_3a
-elif [ "${basequal}" = "e14" ]; then
-	 gccver=v6_3_0
-elif [ "${basequal}" = "e15" ]; then
+if [ "${basequal}" = "e15" ]; then
 	 gccver=v6_4_0
 elif [ "${basequal}" = "e17" ]; then
 	 gccver=v7_3_0
+elif [ "${basequal}" = "e19" ]; then
+     gccver=v8_2_0
 elif [ "${basequal}" = "c2" ]; then
 	 gccver=v6_4_0
 	 clangver=v5_0_1
+elif [ "${basequal}" = "c7" ]; then
+     gccver=v8_2_0
+     clangver=v7_0_0
 fi
 
 do_build gcc ${gccver}
@@ -33,26 +34,24 @@ fi
 setup gcc ${gccver}
 build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
-do_build xmlrpc_c v1_39_10d ${basequal}
-do_build epics v3_16_1c ${basequal}
-do_build mongodb v4_0_8 ${basequal}
-do_build mpich v3_2_1b ${basequal}
-do_build swig v3_0_12c ${basequal}
+do_build xmlrpc_c v1_51_03 ${basequal}
+do_build epics v3_16_2 ${basequal}
+do_build mongodb v4_0_8a ${basequal}
+do_build mpich v3_2_1e ${basequal}
+do_build swig v3_0_12d ${basequal}
+do_build swig v4_0_0 ${basequal}
 
-if [ "${basequal}" != "c2" ] && [ "${basequal}" != "e17" ]; then
-#    do_build xerces_c v3_1_4b ${basequal}
-    do_build xdaq v14_4_1a ${basequal}
-fi
+do_build xdaq v14_12_0 ${basequal}
 
 build_noarch nodejs v4_5_0
 do_build ganglia v3_7_1
 
-do_build qt v5_10_1a ${basequal}
+do_build qt v5_12_3 ${basequal}
 
 do_pull -n sqlite v3_20_01_00
 do_pull -n python v2_7_14b
 do_pull -n postgresql v9_6_6a p2714b
-do_build pqxx v6_2_5a ${basequal}:p2714b
+do_build pqxx v6_2_5b ${basequal}:p2714b
 
 do_pull -n caencomm v1_2a
 do_pull -n caenvme v2_50
