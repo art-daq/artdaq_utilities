@@ -36,25 +36,20 @@ for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;do
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-		e14)
-			basequal=e14
-			;;
         e15)
             basequal=e15
             ;;
 		e17)
 			basequal=e17
 			;;
+        e19)
+            basequal=e19
+            ;;
         c2)
             basequal=c2
             ;;
-        s64)
-            squal=s64
-            artver=v2_10_02
-            ;;
-        s65)
-            squal=s65
-            artver=v2_10_03
+        c7)
+            basequal=c7
             ;;
         s67)
             squal=s67
@@ -63,6 +58,10 @@ for qual in ${qualarray[@]};do
         s73)
             squal=s73
             artver=v2_11_05
+            ;;
+        s82)
+            squal=s82
+            artver=v3_02_04
             ;;
         nodb)
             build_db=0
