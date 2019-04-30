@@ -38,8 +38,13 @@ macro (create_python_addon)
         if( PIA_DEFAULT_ARGS )
             message(FATAL_ERROR  " undefined arguments ${CNA_DEFAULT_ARGS} \n ${create_python_addon_usage}")
         endif()
-
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter -Wno-register")
+		
+		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
+		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
+		        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter")
+		else()
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter")
+		endif()
 
     file(GLOB PIA_SOURCES  *_python.i)
     file(GLOB LIB_SOURCES  *.cpp)
