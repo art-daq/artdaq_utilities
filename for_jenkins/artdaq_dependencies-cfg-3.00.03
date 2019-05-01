@@ -57,4 +57,11 @@ do_pull -n caencomm v1_2a
 do_pull -n caenvme v2_50
 do_build caendigitizer v2_12_0
 
+if [[ "${basequal}" = "e17"]; then
+  build_bundle art-2.12.01 e17
+  build_cet -p artdaq-core artdaq_core v3_04_11 e17:s79
+  build_cet -p pcie_linux_kernel_module pcie_linux_kernel_module v2_01_02 e17
+fi
+
+
 return 0
