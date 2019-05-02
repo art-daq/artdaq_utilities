@@ -195,7 +195,7 @@ artdaqDemoManifest=`ls ${blddir}/artdaq_demo-*_MANIFEST.txt|tail -1`
 
 cat ${artManifest} >>${artdaqManifest}
 cat ${artdaqManifest} >>${artdaqDemoManifest}
-cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.tmp
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
