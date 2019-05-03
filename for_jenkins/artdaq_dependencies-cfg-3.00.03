@@ -35,6 +35,8 @@ setup gcc ${gccver}
 build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
 do_build xmlrpc_c v1_51_03 ${basequal}
+return 0
+
 do_build epics v3_16_2 ${basequal}
 do_build mongodb v4_0_8a ${basequal}
 do_build mpich v3_2_1e ${basequal}
