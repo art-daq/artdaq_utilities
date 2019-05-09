@@ -35,6 +35,8 @@ setup gcc ${gccver}
 build_cet -p trace-git TRACE v3_13_12 -nq-
 unsetup gcc
 do_build xmlrpc_c v1_51_03 ${basequal}
+
+do_build zmq v4_3_1 ${basequal}
 return 0
 
 do_build epics v3_16_2 ${basequal}
