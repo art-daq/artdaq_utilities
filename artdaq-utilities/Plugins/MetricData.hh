@@ -37,10 +37,22 @@ enum class MetricMode : uint32_t
 	Minimum = 0x10,    ///< Reports the minimum value recorded.
 	Maximum = 0x20,    ///< Repots the maximum value recorded.
 };
+/// <summary>
+/// Bitwise OR operator for MetricMode
+/// </summary>
+/// <param name="a">LHS of OR</param>
+/// <param name="b">RHS of OR</param>
+/// <returns>Logical OR of two MetricMode instances</returns>
 constexpr MetricMode operator|(MetricMode a, MetricMode b)
 {
 	return static_cast<MetricMode>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
+/// <summary>
+/// Bitwise AND operator for MetricMode
+/// </summary>
+/// <param name="a">LHS of AND</param>
+/// <param name="b">RHS of AND</param>
+/// <returns>Logical AND of two MetricMode instances</returns>
 constexpr MetricMode operator&(MetricMode a, MetricMode b)
 {
 	return static_cast<MetricMode>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
@@ -96,14 +108,33 @@ struct MetricData
 		float f;              ///< Value of the metric, if it is a MetricType::FloatMetric
 		long unsigned int u;  ///< Value of the metric, if it is a MetricType::UnsignedMetric
 
+		/// <summary>
+		/// Construct a MetricDataValue
+		/// </summary>
 		MetricDataValue()
 		    : i(0) {}
+		/// <summary>
+		/// Construct a MetricDataValue as integer
+		/// </summary>
+		/// <param name="v">Integer to store</param>
 		MetricDataValue(int v)
 		    : i(v) {}
+		/// <summary>
+		/// Construct a MetricDataValue as double
+		/// </summary>
+		/// <param name="v">Double to store</param>
 		MetricDataValue(double v)
 		    : d(v) {}
+		/// <summary>
+		/// Construct a MetricDataValue as fload
+		/// </summary>
+		/// <param name="v">Float to store</param>
 		MetricDataValue(float v)
 		    : f(v) {}
+		/// <summary>
+		/// Construct a MetricDataValue as unsigned int
+		/// </summary>
+		/// <param name="v">Unsigned int to store</param>
 		MetricDataValue(long unsigned int v)
 		    : u(v) {}
 	};
@@ -112,9 +143,9 @@ struct MetricData
 	/// Accumulated value of this MetricData
 	/// </summary>
 	MetricDataValue Value;
-	MetricDataValue Last;
-	MetricDataValue Min;
-	MetricDataValue Max;
+	MetricDataValue Last; ///< Last value of this MetricData
+	MetricDataValue Min; ///< Minimum recorded value of this MetricData
+	MetricDataValue Max; ///< Maximum recorded vaule of this MetricData
 
 	/// <summary>
 	/// Type of the metric
@@ -221,6 +252,11 @@ struct MetricData
 	MetricData()
 	    : Name(""), Type(MetricType::InvalidMetric), DataPointCount(0) {}
 
+	/// <summary>
+	/// Add two MetricData instances together
+	/// </summary>
+	/// <param name="other">MetricData to add to this one</param>
+	/// <returns>True if the other MetricData is compatible and was added, false otherwise</returns>
 	bool Add(MetricData other)
 	{
 		if (other.Name == Name && other.Type == Type && other.Unit == Unit && other.Level == Level)
@@ -263,6 +299,10 @@ struct MetricData
 		return false;
 	}
 
+	/// <summary>
+	/// Add an integer point to this MetricData
+	/// </summary>
+	/// <param name="point">Int value to add</param>
 	void AddPoint(int point)
 	{
 		Last.i = point;
@@ -271,6 +311,10 @@ struct MetricData
 		if (point > Max.i) Max.i = point;
 		if (point < Min.i) Min.i = point;
 	}
+	/// <summary>
+	/// Add a double point to this MetricData
+	/// </summary>
+	/// <param name="point">Double value to add</param>
 	void AddPoint(double point)
 	{
 		Last.d = point;
@@ -279,6 +323,10 @@ struct MetricData
 		if (point > Max.d) Max.d = point;
 		if (point < Min.d) Min.d = point;
 	}
+	/// <summary>
+	/// Add a float point to this MetricData
+	/// </summary>
+	/// <param name="point">Float value to add</param>
 	void AddPoint(float point)
 	{
 		Last.f = point;
@@ -287,6 +335,10 @@ struct MetricData
 		if (point > Max.f) Max.f = point;
 		if (point < Min.f) Min.f = point;
 	}
+	/// <summary>
+	/// Add an unsigned int point to this MetricData
+	/// </summary>
+	/// <param name="point">Unsigned int value to add</param>
 	void AddPoint(unsigned long int point)
 	{
 		Last.u = point;
