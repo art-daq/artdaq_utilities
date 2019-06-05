@@ -27,7 +27,7 @@ class FileMetric : public MetricPlugin {
   std::string timeformat_;
   bool stopped_;
 
-  std::ostream& getTime_(std::ostream & stream) {
+  std::ostream& getTime_(std::ostream& stream) {
     static std::mutex timeMutex;
     std::unique_lock<std::mutex> lk(timeMutex);
     using std::chrono::system_clock;
@@ -35,11 +35,10 @@ class FileMetric : public MetricPlugin {
 
     struct std::tm* ptm = std::localtime(&tt);
     if (timeformat_.size()) {
-    
-    return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
-	}
+      return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
+    }
 
-	return stream;
+    return stream;
   }
 
  public:
@@ -69,7 +68,9 @@ class FileMetric : public MetricPlugin {
     }
 
     if (uniquify_file_name_) {
-      std::string unique_id = std::to_string(getpid());
+      struct timespec ts;
+      clock_gettime(CLOCK_REALTIME, &ts);
+      std::string unique_id = std::to_string(ts.tv_sec) + "_" + std::to_string(getpid());
       if (outputFile_.find("%UID%") != std::string::npos) {
         outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
       } else {
