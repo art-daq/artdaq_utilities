@@ -27,11 +27,8 @@ class FileMetric : public MetricPlugin {
   std::string timeformat_;
   bool stopped_;
 
-  std::ostream& getTime_(std::ostream & stream) {
-    static std::mutex timeMutex;
-    std::unique_lock<std::mutex> lk(timeMutex);
-    using std::chrono::system_clock;
-    std::time_t tt = system_clock::to_time_t(system_clock::now());
+  std::ostream& getTime_(std::ostream& stream) {
+	std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     struct std::tm* ptm = std::localtime(&tt);
     if (timeformat_.size()) {

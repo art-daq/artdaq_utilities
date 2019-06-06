@@ -29,7 +29,7 @@ namespace artdaq
 	 *     
 	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
 	 */
-	class GraphiteMetric : public MetricPlugin
+class GraphiteMetric final : public MetricPlugin
 	{
 	private:
 		std::string host_;
@@ -167,7 +167,8 @@ namespace artdaq
 		{
 			if (!stopped_)
 			{
-				socket_.shutdown(boost::asio::socket_base::shutdown_send);
+			boost::system::error_code ignored;
+			socket_.shutdown(boost::asio::socket_base::shutdown_send, ignored);
 				socket_.close();
 				stopped_ = true;
 			}
