@@ -39,7 +39,7 @@ fi
 #do_build zmq v4_3_1 ${basequal}
 
 #do_build epics v3_16_2 ${basequal}
-#do_build mongodb v4_0_8a ${basequal}
+do_build mongodb v4_0_8a ${basequal}
 #do_build mpich v3_2_1e ${basequal}
 #do_build swig v3_0_12d ${basequal}
 #do_build swig v4_0_0 ${basequal}
@@ -51,12 +51,12 @@ fi
 
 #do_build qt v5_12_3 ${basequal}
 
-if [[ "${basequal}" != "e15" ]]; then
-    do_pull -n sqlite v3_26_00_00
-    do_pull -n python v2_7_15a
-    do_pull -n postgresql v9_6_11b p2715a
-    do_build pqxx v6_2_5c ${basequal}:p2715a
-fi
+#if [[ "${basequal}" != "e15" ]]; then
+#    do_pull -n sqlite v3_26_00_00
+#    do_pull -n python v2_7_15a
+#    do_pull -n postgresql v9_6_11b p2715a
+#    do_build pqxx v6_2_5c ${basequal}:p2715a
+#fi
 
 #do_pull -n caencomm v1_2a
 #do_pull -n caenvme v2_50
