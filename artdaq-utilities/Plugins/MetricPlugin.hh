@@ -261,7 +261,7 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit);
+						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
 					{
