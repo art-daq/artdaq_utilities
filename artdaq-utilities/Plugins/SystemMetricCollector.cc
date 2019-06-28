@@ -6,8 +6,13 @@
 #include "sys/types.h"
 #include "unistd.h"
 
-artdaq::SystemMetricCollector::SystemMetricCollector()
-    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0)
+#define MLEVEL_PROCESS 6
+#define MLEVEL_CPU 7
+#define MLEVEL_RAM 8
+#define MLEVEL_NETWORK 9
+
+artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetricsOnly)
+    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), processMetricsOnly_(processMetricsOnly)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -132,18 +137,23 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 {
 	auto start_time = std::chrono::steady_clock::now();
 	std::list<std::unique_ptr<MetricData>> output;
-	output.emplace_back(new MetricData("System CPU Usage", GetSystemCPUUsagePercent(), "%", 6, MetricMode::Average, "", false));
-	output.emplace_back(new MetricData("Process CPU Usage", GetProcessCPUUsagePercent(), "%", 6, MetricMode::Average, "", false));
+	output.emplace_back(new MetricData("Process CPU Usage", GetProcessCPUUsagePercent(), "%", MLEVEL_PROCESS, MetricMode::Average, "", false));
+	output.emplace_back(new MetricData("Process RAM Usage", GetProcessMemUsage(), "B", MLEVEL_PROCESS, MetricMode::LastPoint, "", false));
 
-	output.emplace_back(new MetricData("Free RAM", GetAvailableRAM(), "B", 7, MetricMode::LastPoint, "", false));
-	output.emplace_back(new MetricData("Total RAM", GetTotalRAM(), "B", 7, MetricMode::LastPoint, "", false));
-	output.emplace_back(new MetricData("Available RAM", GetAvailableRAMPercent(true), "%", 7, MetricMode::LastPoint, "", false));
-	output.emplace_back(new MetricData("Process RAM Usage", GetProcessMemUsage(), "B", 7, MetricMode::LastPoint, "", false));
+	if (!processMetricsOnly_)
+	{
+		output.emplace_back(new MetricData("System CPU Usage", GetSystemCPUUsagePercent(), "%", MLEVEL_CPU, MetricMode::Average, "", false));
 
-	output.emplace_back(new MetricData("Network Receive Rate", GetNetworkReceiveBytes(), "B", 8, MetricMode::Rate, "", false));
-	output.emplace_back(new MetricData("Network Send Rate", GetNetworkSendBytes(), "B", 8, MetricMode::Rate, "", false));
-	output.emplace_back(new MetricData("Network Send Errors", GetNetworkSendErrors(), "Errors", 8, MetricMode::Accumulate, "", false));
-	output.emplace_back(new MetricData("Network Receive Errors", GetNetworkReceiveErrors(), "Errors", 8, MetricMode::Accumulate, "", false));
+		output.emplace_back(new MetricData("Free RAM", GetAvailableRAM(), "B", MLEVEL_RAM, MetricMode::LastPoint, "", false));
+		output.emplace_back(new MetricData("Total RAM", GetTotalRAM(), "B", MLEVEL_RAM, MetricMode::LastPoint, "", false));
+		output.emplace_back(new MetricData("Available RAM", GetAvailableRAMPercent(true), "%", MLEVEL_RAM, MetricMode::LastPoint, "", false));
+
+		output.emplace_back(new MetricData("Network Receive Rate", GetNetworkReceiveBytes(), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
+		output.emplace_back(new MetricData("Network Send Rate", GetNetworkSendBytes(), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
+		output.emplace_back(new MetricData("Network Send Errors", GetNetworkSendErrors(), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
+		output.emplace_back(new MetricData("Network Receive Errors", GetNetworkReceiveErrors(), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
+	}
+
 	TLOG(TLVL_DEBUG)
 	    << "Time to collect system metrics: "
 	    << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()

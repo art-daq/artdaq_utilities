@@ -33,6 +33,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 	metric_plugins_.clear();
 	bool send_system_metrics = false;
+	bool send_process_metrics = false;
 
 	for (auto name : names)
 	{
@@ -59,6 +60,10 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		else if (name == "send_system_metrics")
 		{
 			send_system_metrics = pset.get<bool>("send_system_metrics");
+		}
+		else if (name == "send_process_metrics")
+		{
+			send_process_metrics = pset.get<bool>("send_process_metrics");
 		}
 		else
 		{
@@ -92,9 +97,9 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		}
 	}
 
-	if (send_system_metrics)
+	if (send_system_metrics || send_process_metrics)
 	{
-		system_metric_collector_.reset(new SystemMetricCollector());
+		system_metric_collector_.reset(new SystemMetricCollector(!send_system_metrics));
 	}
 
 	initialized_ = true;
