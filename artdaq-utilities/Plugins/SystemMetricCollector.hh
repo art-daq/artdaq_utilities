@@ -8,7 +8,7 @@ namespace artdaq {
 class SystemMetricCollector
 {
 public:
-	SystemMetricCollector(bool processMetricsOnly);
+	SystemMetricCollector(bool processMetrics, bool systemMetrics);
 
 	double GetSystemCPUUsagePercent();
 	double GetProcessCPUUsagePercent();
@@ -52,6 +52,7 @@ private:
 	clock_t lastProcessCPUTime_;
 	netstat thisNetStat_;
 	netstat lastNetStat_;
-	bool processMetricsOnly_;
+	bool sendProcessMetrics_;
+	bool sendSystemMetrics_;
 };
 }  // namespace artdaq

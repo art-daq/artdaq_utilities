@@ -99,7 +99,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 	if (send_system_metrics || send_process_metrics)
 	{
-		system_metric_collector_.reset(new SystemMetricCollector(!send_system_metrics));
+		system_metric_collector_.reset(new SystemMetricCollector(send_process_metrics, send_system_metrics));
 	}
 
 	initialized_ = true;

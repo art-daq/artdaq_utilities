@@ -58,8 +58,8 @@ public:
 		    fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not "
 		                   "reported in this interval)"},
 		    15000};
-		/// "send_system_metrics": (Default: false): Whether to collect and send system metrics such as CPU usage, Memory usage and network activity. Implies send_process_metrics
-		fhicl::Atom<bool> send_system_metrics{fhicl::Name{"send_system_metrics"}, fhicl::Comment{"Whether to collect and send system metrics such as CPU usage, Memory usage and network activity. Implies send_process_metrics"}, false};
+		/// "send_system_metrics": (Default: false): Whether to collect and send system metrics such as CPU usage, Memory usage and network activity.
+		fhicl::Atom<bool> send_system_metrics{fhicl::Name{"send_system_metrics"}, fhicl::Comment{"Whether to collect and send system metrics such as CPU usage, Memory usage and network activity."}, false};
 		/// "send_process_metrics" (Default: false): Whether to collect and send process CPU usage and Memory usage
 		fhicl::Atom<bool> send_process_metrics{fhicl::Name{"send_process_metrics"}, fhicl::Comment{"Whether to collect and send process CPU usage and Memory usage"}, false};
 		/// Example MetricPlugin Configuration

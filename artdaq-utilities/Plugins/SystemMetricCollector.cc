@@ -11,8 +11,8 @@
 #define MLEVEL_RAM 8
 #define MLEVEL_NETWORK 9
 
-artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetricsOnly)
-    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), processMetricsOnly_(processMetricsOnly)
+artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
+    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -137,10 +137,12 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 {
 	auto start_time = std::chrono::steady_clock::now();
 	std::list<std::unique_ptr<MetricData>> output;
-	output.emplace_back(new MetricData("Process CPU Usage", GetProcessCPUUsagePercent(), "%", MLEVEL_PROCESS, MetricMode::Average, "", false));
-	output.emplace_back(new MetricData("Process RAM Usage", GetProcessMemUsage(), "B", MLEVEL_PROCESS, MetricMode::LastPoint, "", false));
-
-	if (!processMetricsOnly_)
+	if (sendProcessMetrics_)
+	{
+		output.emplace_back(new MetricData("Process CPU Usage", GetProcessCPUUsagePercent(), "%", MLEVEL_PROCESS, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("Process RAM Usage", GetProcessMemUsage(), "B", MLEVEL_PROCESS, MetricMode::LastPoint, "", false));
+	}
+	if (sendSystemMetrics_)
 	{
 		output.emplace_back(new MetricData("System CPU Usage", GetSystemCPUUsagePercent(), "%", MLEVEL_CPU, MetricMode::Average, "", false));
 
