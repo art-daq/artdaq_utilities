@@ -236,16 +236,9 @@ public:
 	void sendMetrics(bool forceSend = false,
 	                 std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 	{
-		double ds;
-		float fs;
-		int is;
-		unsigned long us;
-		size_t count;
-
 		for (auto metric : metricData_)
 		{
 			auto* metricName = &metric.first;
-			count = 0;
 			if (readyToSend_(*metricName) || forceSend)
 			{
 				if (metricData_[*metricName].size() == 0 && metricRegistry_.count(*metricName))
@@ -254,165 +247,84 @@ public:
 				}
 				else if (metricData_[*metricName].size() > 0)
 				{
-					auto metricMode = &metricData_[*metricName].back().Mode;
-					auto metricUnits = &metricData_[*metricName].back().Unit;
-					auto metricType = &metricData_[*metricName].back().Type;
-
-					if (*metricMode == MetricMode::LastPoint)
+					MetricData& data = metricData_[*metricName].front();
+					auto it = ++(metricData_[*metricName].begin());
+					while (it != metricData_[*metricName].end())
 					{
-						if (metricData_[*metricName].size() > 1)
-						{
-							metricData_[*metricName].erase(metricData_[*metricName].begin(),
-							                               std::prev(metricData_[*metricName].end()));
-						}
-						sendMetric_(metricData_[*metricName].back());
+						data.Add(*it);
+						it = metricData_[*metricName].erase(it);
 					}
-					else
+
+					std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
+					bool useSuffix = true;
+					if (modeSet.count() <= 1) useSuffix = false;
+
+					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
-						switch (*metricType)
+						sendMetric_(data.Name + (useSuffix ? " - Last" : ""), data.Last, data.Unit, data.Type);
+					}
+					if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
+					{
+						sendMetric_(data.Name + (useSuffix ? " - Total" : ""), data.Value, data.Unit, data.Type);
+					}
+					if ((data.Mode & MetricMode::Average) != MetricMode::None)
+					{
+						double average = 0.0;
+						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
-							{
-								ds = 0.0;
-								for (auto& mv : metricData_[*metricName])
-								{
-									ds += mv.DoubleValue;
-									count += mv.DataPointCount;
-								}
-								switch (*metricMode)
-								{
-									case MetricMode::Average:
-										ds /= static_cast<double>(count);
+								average = data.Value.d / static_cast<double>(data.DataPointCount);
 										break;
-									case MetricMode::Rate:
-										ds /= std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										          interval_end - interval_start_[*metricName])
-										          .count();
-										break;
-									case MetricMode::AccumulateAndRate:
-										sendMetric_(*metricName + " - Rate",
-										            ds / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										                     interval_end - interval_start_[*metricName])
-										                     .count(),
-										            *metricUnits + "/s");
-										break;
-									default:
-										break;
-								}
-								sendMetric_(*metricName, ds, *metricUnits);
-							}
-							break;
 							case MetricType::FloatMetric:
-							{
-								fs = 0.0;
-								for (auto& mv : metricData_[*metricName])
-								{
-									fs += mv.FloatValue;
-									count += mv.DataPointCount;
-								}
-
-								switch (*metricMode)
-								{
-									case MetricMode::Average:
-										ds = fs / static_cast<double>(count);
-										sendMetric_(*metricName, ds, *metricUnits);
+								average = data.Value.f / static_cast<double>(data.DataPointCount);
 										break;
-									case MetricMode::Rate:
-										ds = fs / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										              interval_end - interval_start_[*metricName])
-										              .count();
-										sendMetric_(*metricName, ds, *metricUnits);
-										break;
-									case MetricMode::AccumulateAndRate:
-										sendMetric_(*metricName + " - Rate",
-										            fs / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										                     interval_end - interval_start_[*metricName])
-										                     .count(),
-										            *metricUnits + "/s");
-										FALLTHROUGH;
-									case MetricMode::Accumulate:
-									default:
-										sendMetric_(*metricName, fs, *metricUnits);
-										break;
-								}
-							}
-							break;
 							case MetricType::IntMetric:
-							{
-								is = 0;
-								for (auto& mv : metricData_[*metricName])
-								{
-									is += mv.IntValue;
-									count += mv.DataPointCount;
-								}
-
-								switch (*metricMode)
-								{
-									case MetricMode::Average:
-										ds = is / static_cast<double>(count);
-										sendMetric_(*metricName, ds, *metricUnits);
-										break;
-									case MetricMode::Rate:
-										ds = is / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										              interval_end - interval_start_[*metricName])
-										              .count();
-										sendMetric_(*metricName, ds, *metricUnits);
-										break;
-									case MetricMode::AccumulateAndRate:
-										sendMetric_(*metricName + " - Rate",
-										            is / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										                     interval_end - interval_start_[*metricName])
-										                     .count(),
-										            *metricUnits + "/s");
-										FALLTHROUGH;
-									case MetricMode::Accumulate:
-									default:
-										sendMetric_(*metricName, is, *metricUnits);
-										break;
-								}
-							}
-							break;
-							case MetricType::UnsignedMetric:
-							{
-								us = 0UL;
-								for (auto& mv : metricData_[*metricName])
-								{
-									us += mv.UnsignedValue;
-									count += mv.DataPointCount;
-								}
-
-								switch (*metricMode)
-								{
-									case MetricMode::Average:
-										ds = us / static_cast<double>(count);
-										sendMetric_(*metricName, ds, *metricUnits);
-										break;
-									case MetricMode::Rate:
-										ds = us / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										              interval_end - interval_start_[*metricName])
-										              .count();
-										sendMetric_(*metricName, ds, *metricUnits);
-										break;
-									case MetricMode::AccumulateAndRate:
-										sendMetric_(*metricName + " - Rate",
-										            us / std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										                     interval_end - interval_start_[*metricName])
-										                     .count(),
-										            *metricUnits + "/s");
-										FALLTHROUGH;
-									case MetricMode::Accumulate:
-									default:
-										sendMetric_(*metricName, us, *metricUnits);
-										break;
-								}
-							}
-							break;
-							default:
+								average = data.Value.i / static_cast<double>(data.DataPointCount);
 								break;
+							case MetricType::UnsignedMetric:
+								average = data.Value.u / static_cast<double>(data.DataPointCount);
+										break;
+									default:
+										break;
+								}
+						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit);
+					}
+					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
+					{
+						double duration = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
+										              interval_end - interval_start_[*metricName])
+										              .count();
+						double rate = 0.0;
+						switch (data.Type)
+						{
+							case MetricType::DoubleMetric:
+								rate = data.Value.d / duration;
+										break;
+							case MetricType::FloatMetric:
+								rate = data.Value.f / duration;
+										break;
+							case MetricType::IntMetric:
+								rate = data.Value.i / duration;
+										break;
+							case MetricType::UnsignedMetric:
+								rate = data.Value.u / duration;
+										break;
+									default:
+										break;
+								}
+						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
+					}
+					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
+					{
+						sendMetric_(data.Name + (useSuffix ? " - Min" : ""), data.Min, data.Unit, data.Type);
+					}
+					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
+					{
+						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
 						}
+
 						metricData_[*metricName].clear();
 					}
-				}
 				interval_start_[*metricName] = interval_end;
 			}
 		}
@@ -479,45 +391,70 @@ private:
 
 	void sendZero_(MetricData data)
 	{
+		std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
+		bool useSuffix = true;
+		if (modeSet.count() <= 1) useSuffix = false;
+
+		MetricData::MetricDataValue zero;
 		switch (data.Type)
 		{
 			case MetricType::DoubleMetric:
-				sendMetric_(data.Name, static_cast<double>(0.0), data.Unit);
+				zero.d = 0.0;
 				break;
 			case MetricType::FloatMetric:
-				sendMetric_(data.Name, static_cast<float>(0.0), data.Unit);
+				zero.f = 0.0f;
 				break;
 			case MetricType::IntMetric:
-				sendMetric_(data.Name, static_cast<int>(0), data.Unit);
+				zero.i = 0;
 				break;
 			case MetricType::UnsignedMetric:
-				sendMetric_(data.Name, static_cast<unsigned long>(0), data.Unit);
+				zero.u = 0;
 				break;
 			default:
 				break;
 		}
 
-		if (data.Mode == MetricMode::AccumulateAndRate)
+		if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 		{
-			sendMetric_(data.Name + " - Rate", static_cast<double>(0.0), data.Unit + "/s");
+			sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+		}
+		if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
+		{
+			sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
+		}
+		if ((data.Mode & MetricMode::Average) != MetricMode::None)
+		{
+			sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
+		}
+		if ((data.Mode & MetricMode::Rate) != MetricMode::None)
+		{
+			sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
+		}
+		if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
+		{
+			sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
+		}
+		if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
+		{
+			sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
 		}
 	}
 
-	void sendMetric_(MetricData data)
+	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type)
 	{
-		switch (data.Type)
+		switch (type)
 		{
 			case MetricType::DoubleMetric:
-				sendMetric_(data.Name, data.DoubleValue, data.Unit);
+				sendMetric_(name, data.d, unit);
 				break;
 			case MetricType::FloatMetric:
-				sendMetric_(data.Name, data.FloatValue, data.Unit);
+				sendMetric_(name, data.f, unit);
 				break;
 			case MetricType::IntMetric:
-				sendMetric_(data.Name, data.IntValue, data.Unit);
+				sendMetric_(name, data.i, unit);
 				break;
 			case MetricType::UnsignedMetric:
-				sendMetric_(data.Name, data.UnsignedValue, data.Unit);
+				sendMetric_(name, data.u, unit);
 				break;
 			default:
 				break;

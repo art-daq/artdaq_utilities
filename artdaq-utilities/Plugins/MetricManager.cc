@@ -253,16 +253,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					if (mode == MetricMode::LastPoint)
-					{
-						metric_cache_[name]->IntValue = value;
-						metric_cache_[name]->DataPointCount = 1;
-					}
-					else
-					{
-						metric_cache_[name]->IntValue += value;
-						metric_cache_[name]->DataPointCount++;
-					}
+					metric_cache_[name]->AddPoint(value);
 				}
 				else
 				{
@@ -306,16 +297,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					if (mode == MetricMode::LastPoint)
-					{
-						metric_cache_[name]->DoubleValue = value;
-						metric_cache_[name]->DataPointCount = 1;
-					}
-					else
-					{
-						metric_cache_[name]->DoubleValue += value;
-						metric_cache_[name]->DataPointCount++;
-					}
+					metric_cache_[name]->AddPoint(value);
 				}
 				else
 				{
@@ -359,16 +341,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					if (mode == MetricMode::LastPoint)
-					{
-						metric_cache_[name]->FloatValue = value;
-						metric_cache_[name]->DataPointCount = 1;
-					}
-					else
-					{
-						metric_cache_[name]->FloatValue += value;
-						metric_cache_[name]->DataPointCount++;
-					}
+					metric_cache_[name]->AddPoint(value);
 				}
 				else
 				{
@@ -413,16 +386,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					if (mode == MetricMode::LastPoint)
-					{
-						metric_cache_[name]->UnsignedValue = value;
-						metric_cache_[name]->DataPointCount = 1;
-					}
-					else
-					{
-						metric_cache_[name]->UnsignedValue += value;
-						metric_cache_[name]->DataPointCount++;
-					}
+					metric_cache_[name]->AddPoint(value);
 				}
 				else
 				{
@@ -516,11 +480,11 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 			auto calls = metric_calls_.exchange(0);
 			temp_list.emplace_back(
-			    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
+			    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 			auto missed = missed_metric_calls_.exchange(0);
 			temp_list.emplace_back(
-			    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
+			    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 			TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 			                 << " missed)";
@@ -584,11 +548,11 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 		auto calls = metric_calls_.exchange(0);
 		temp_list.emplace_back(
-		    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
+		    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 		auto missed = missed_metric_calls_.exchange(0);
 		temp_list.emplace_back(
-		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::AccumulateAndRate, "", false));
+		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 		TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 		                 << " missed)";

@@ -243,8 +243,8 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 		artdaq::TestMetric::received_metrics.clear();
 	}
 
-	mm.sendMetric("Test Metric AccumulateAndRate", 4, "Units", 2, artdaq::MetricMode::AccumulateAndRate);
-	mm.sendMetric("Test Metric AccumulateAndRate", 5, "Units", 2, artdaq::MetricMode::AccumulateAndRate);
+	mm.sendMetric("Test Metric AccumulateAndRate", 4, "Units", 2, artdaq::MetricMode::Accumulate|artdaq::MetricMode::Rate);
+	mm.sendMetric("Test Metric AccumulateAndRate", 5, "Units", 2, artdaq::MetricMode::Accumulate|artdaq::MetricMode::Rate);
 	usleep(100000);
 	{
 		std::lock_guard<std::mutex> lk(artdaq::TestMetric::received_metrics_mutex);
