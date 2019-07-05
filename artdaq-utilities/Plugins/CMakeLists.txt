@@ -14,6 +14,8 @@ basic_plugin("file" "metric"
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
 )
 
 basic_plugin("test" "metric"
