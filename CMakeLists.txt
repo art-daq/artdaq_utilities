@@ -97,7 +97,7 @@ add_subdirectory(artdaq-utilities)
 add_subdirectory(script)
 
 # testing
-#add_subdirectory(test)
+add_subdirectory(test)
 
 # Useful tools and scripts for building ARTDAQ on Jenkins
 add_subdirectory(for_jenkins)

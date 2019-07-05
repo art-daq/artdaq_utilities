@@ -532,7 +532,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			for (auto& metric : metric_plugins_)
 			{
 				if (!metric) continue;
-				if (metric->getRunLevel() >= data_->Level)
+				if (metric->IsLevelEnabled(data_->Level))
 				{
 					try
 					{
@@ -600,7 +600,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		for (auto& metric : metric_plugins_)
 		{
 			if (!metric) continue;
-			if (metric->getRunLevel() >= data_->Level)
+			if (metric->IsLevelEnabled(data_->Level))
 			{
 				try
 				{
