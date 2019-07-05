@@ -61,7 +61,7 @@ public:
    * FileMetric accepts the following Parameters:
    * "fileName" (Default: "FileMetric.out"): Name of the output file
    * "absolute_file_path" (Default: true): Whether the fileName should be treated as an absolute path (default), or as relative to
-   * "relative_directory_env_var" (Default: ARTDAQ_LOG_ROOT): The name of the environment variable containing the directory that relative-mode FileMetrics should be placed in
+   * "relative_directory_env_var" (Default: ARTDAQ_LOG_ROOT): If fileName is not an absolute path (absolute_file_path: false), it will be treated as relative to the directory specified in this environment variable.
    * "uniquify" (Default: false): If true, will replace %UID% with the PID of the current process, or append _%UID% to the end of the filename if %UID% is not present in fileName 
    * "time_format" (Default: "%c"): Format to use for time printout (see std::put_time)
    * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
