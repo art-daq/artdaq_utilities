@@ -11,6 +11,7 @@
 
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
+#include "artdaq-utilities/Plugins/SystemMetricCollector.hh"
 #include "fhiclcpp/fwd.h"
 #include "fhiclcpp/types/OptionalTable.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -57,6 +58,10 @@ public:
 		    fhicl::Comment{"The maximum amount of time between metric send calls (will send 0s for metrics which have not "
 		                   "reported in this interval)"},
 		    15000};
+		/// "send_system_metrics": (Default: false): Whether to collect and send system metrics such as CPU usage, Memory usage and network activity.
+		fhicl::Atom<bool> send_system_metrics{fhicl::Name{"send_system_metrics"}, fhicl::Comment{"Whether to collect and send system metrics such as CPU usage, Memory usage and network activity."}, false};
+		/// "send_process_metrics" (Default: false): Whether to collect and send process CPU usage and Memory usage
+		fhicl::Atom<bool> send_process_metrics{fhicl::Name{"send_process_metrics"}, fhicl::Comment{"Whether to collect and send process CPU usage and Memory usage"}, false};
 		/// Example MetricPlugin Configuration
 		fhicl::OptionalTable<artdaq::MetricPlugin::Config> metricConfig{fhicl::Name{"metricConfig"}};
 	};
@@ -262,6 +267,7 @@ private:
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
 	int metric_send_interval_ms_;
+	std::unique_ptr<SystemMetricCollector> system_metric_collector_;
 
 	std::atomic<bool> initialized_;
 	std::atomic<bool> running_;

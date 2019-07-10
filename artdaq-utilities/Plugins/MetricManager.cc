@@ -16,7 +16,7 @@
 #include <chrono>
 
 artdaq::MetricManager::MetricManager()
-    : metric_plugins_(0), metric_send_interval_ms_(15000), initialized_(false), running_(false), active_(false), missed_metric_calls_(0), metric_calls_(0), metric_cache_max_size_(1000), metric_cache_notify_size_(10) {}
+    : metric_plugins_(0), metric_send_interval_ms_(15000), system_metric_collector_(nullptr), initialized_(false), running_(false), active_(false), missed_metric_calls_(0), metric_calls_(0), metric_cache_max_size_(1000), metric_cache_notify_size_(10) {}
 
 artdaq::MetricManager::~MetricManager() noexcept { shutdown(); }
 
@@ -29,9 +29,11 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 	}
 	TLOG(TLVL_INFO) << "Configuring metrics with parameter set: " << pset.to_string();
 
-	std::vector<std::string> names = pset.get_pset_names();
+	std::vector<std::string> names = pset.get_names();
 
 	metric_plugins_.clear();
+	bool send_system_metrics = false;
+	bool send_process_metrics = false;
 
 	for (auto name : names)
 	{
@@ -54,6 +56,14 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		else if (name == "metric_send_maximum_delay_ms")
 		{
 			metric_send_interval_ms_ = pset.get<int>("metric_send_maximum_delay_ms");
+		}
+		else if (name == "send_system_metrics")
+		{
+			send_system_metrics = pset.get<bool>("send_system_metrics");
+		}
+		else if (name == "send_process_metrics")
+		{
+			send_process_metrics = pset.get<bool>("send_process_metrics");
 		}
 		else
 		{
@@ -85,6 +95,11 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 				                 << name;
 			}
 		}
+	}
+
+	if (send_system_metrics || send_process_metrics)
+	{
+		system_metric_collector_.reset(new SystemMetricCollector(send_process_metrics, send_system_metrics));
 	}
 
 	initialized_ = true;
@@ -488,6 +503,13 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 			TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 			                 << " missed)";
+
+			if (system_metric_collector_ != nullptr)
+			{
+				TLOG(TLVL_TRACE) << "Collecting System metrics (CPU, RAM, Network)";
+				auto systemMetrics = system_metric_collector_->SendMetrics();
+				for (auto& m : systemMetrics) { temp_list.emplace_back(std::move(m)); }
+			}
 		}
 
 		while (temp_list.size() > 0)
