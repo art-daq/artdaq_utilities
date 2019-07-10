@@ -16,6 +16,7 @@ basic_plugin("file" "metric"
   ${CETLIB_EXCEPT}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
+  ${MESSAGEFACILITY_LIBS}
 )
 
 basic_plugin("test" "metric"

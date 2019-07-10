@@ -5,7 +5,7 @@
 // An implementation of the MetricPlugin for Log Files
 
 #define TRACE_NAME "FileMetric"
-#include "trace.h"
+#include "tracemf.h"
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -255,7 +255,14 @@ private:
 			TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 			outputStream_.open(outputFile_, mode_);
 		}
-		getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+		if (outputStream_.is_open())
+		{
+			getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+		}
+		else
+		{
+			TLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
+		}
 	}
 
 	void closeFile_()
