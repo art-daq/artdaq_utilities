@@ -25,13 +25,12 @@ elif [ "${basequal}" = "c7" ]; then
      clangver=v7_0_0
 fi
 
-do_build gcc ${gccver}
+#do_build gcc ${gccver}
 
-if [[ "x${clangver:-}" != "x" ]];then
-    do_build clang ${clangver}
-fi
+#if [[ "x${clangver:-}" != "x" ]];then
+#    do_build clang ${clangver}
+#fi
 
-setup gcc ${gccver}
 # as of v1_07_00, artdaq_core is built with canvas and TRACE
 if ! version_greater v3_14_00 v3_14_01; then
   # TRACE >= v3_14_00 needs buildFW >= 4.00.00 and cetmodules.
@@ -39,11 +38,10 @@ if ! version_greater v3_14_00 v3_14_01; then
     echo "ERROR TRACE >= v3_14_00 needs buildFW >= 4.00.00" 1>&2
     return 1;
   fi
-  build_cet_null -DWANT_UPS=1 cetmodules v1_02_00
+  build_cet_null -DWANT_UPS=1 cetmodules v1_02_02
 fi
 
 build_cet -p trace-git TRACE v3_14_01 -nq-
-unsetup gcc
 
 #do_build xmlrpc_c v1_51_03 ${basequal}
 
