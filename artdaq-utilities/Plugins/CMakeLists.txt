@@ -14,6 +14,7 @@ basic_plugin("file" "metric"
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}
+  ${MESSAGEFACILITY_LIBS}
 )
 
 basic_plugin("test" "metric"

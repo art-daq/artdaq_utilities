@@ -13,7 +13,7 @@ class MetricPluginTestAdapter : public artdaq::MetricPlugin
 {
 public:
 	explicit MetricPluginTestAdapter(fhicl::ParameterSet ps)
-	    : artdaq::MetricPlugin(ps, "MetricPlugin_t")
+	    : artdaq::MetricPlugin(ps, "MetricPlugin_t","plugin_t")
 	    , sendMetric_string_calls(0)
 	    , sendMetric_int_calls(0)
 	    , sendMetric_double_calls(0)

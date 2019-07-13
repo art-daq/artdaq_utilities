@@ -28,8 +28,8 @@ public:
    * \param config ParameterSet used to configure TestMetric
    * \param app_name Name of the application sending metrics
    */
-	explicit TestMetricImpl(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit TestMetricImpl(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	{
 		startMetrics();
 	}

@@ -36,8 +36,8 @@ public:
 		  0: Info, 1: Debug, 2: Warning, 3: Error
 		\endverbatim
 		 */
-	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
 	    , outputLevel_(0)
 	{

@@ -39,8 +39,8 @@ public:
 		 * PeriodicReportMetric accepts no parameters.
 		 * \endverbatim
 		 */
-	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , last_report_time_(std::chrono::steady_clock::now())
 	    , metrics_()
 	{

@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for Graphite
 
+#include "TRACE/tracemf.h"		// order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_file_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -53,8 +56,8 @@ public:
 		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
 		 * \endverbatim
 		 */
-	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , host_(pset.get<std::string>("host", "localhost"))
 	    , port_(pset.get<int>("port", 2003))
 	    , namespace_(pset.get<std::string>("namespace", "artdaq."))
@@ -63,6 +66,7 @@ public:
 	    , stopped_(true)
 	    , errorCount_(0)
 	{
+		METLOG(TLVL_TRACE) << "GraphiteMetric ctor";
 		startMetrics();
 	}
 

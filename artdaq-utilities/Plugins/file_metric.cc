@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for Log Files
 
+#include "TRACE/tracemf.h"		// order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_file_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -57,8 +60,8 @@ public:
    * the end of the filename if %UID% is not present in fileName "time_format" (Default: "%c"): Format to use for time
    * printout "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
    */
-	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name), outputFile_(pset.get<std::string>("fileName", "FileMetric.out")), uniquify_file_name_(pset.get<bool>("uniquify", false)), timeformat_(pset.get<std::string>("time_format", "%c")), stopped_(true)
+	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name), outputFile_(pset.get<std::string>("fileName", "FileMetric.out")), uniquify_file_name_(pset.get<bool>("uniquify", false)), timeformat_(pset.get<std::string>("time_format", "%c")), stopped_(true)
 	{
 		std::string modeString = pset.get<std::string>("fileMode", "append");
 
@@ -67,6 +70,8 @@ public:
 		{
 			mode_ = std::ofstream::out | std::ofstream::trunc;
 		}
+
+		METLOG(TLVL_TRACE) << "FileMetric ctor";
 
 		if (uniquify_file_name_)
 		{

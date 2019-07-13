@@ -1,9 +1,10 @@
 
+#include "TRACE/tracemf.h"		// order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_file_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#define TRACE_NAME "procFile_metric"
-#include "trace.h"
 
 #include <fcntl.h>     // open
 #include <stdlib.h>    // exit
@@ -40,12 +41,13 @@ public:
 		 * "name": Name of the metric to write to pipe
 		 * \endverbatim
 		 */
-	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
 	    , value_map_()
 	    , stopped_(true)
 	{
+		METLOG(TLVL_TRACE) << "ProcFileMetric ctor";
 		auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
 
 		for (auto name : names)

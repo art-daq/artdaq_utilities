@@ -25,9 +25,9 @@ typedef std::unique_ptr<artdaq::MetricPlugin> makeFunc_t(fhicl::ParameterSet con
 #define DEFINE_ARTDAQ_METRIC(klass)                                            \
 	EXTERN_C_FUNC_DECLARE_START                                                \
 	std::unique_ptr<artdaq::MetricPlugin>                                      \
-	make(fhicl::ParameterSet const& ps, std::string const& app_name)           \
+	make(fhicl::ParameterSet const& ps, std::string const& app_name, std::string const& metric_name)           \
 	{                                                                          \
-		return std::unique_ptr<artdaq::MetricPlugin>(new klass(ps, app_name)); \
+		return std::unique_ptr<artdaq::MetricPlugin>(new klass(ps, app_name, metric_name)); \
 	}                                                                          \
 	}
 
