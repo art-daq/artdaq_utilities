@@ -8,18 +8,17 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-#include <iostream>
-#include <ctime>
-#include <string>
 #include <algorithm>
 #include <boost/asio.hpp>
 #include <chrono>
+#include <ctime>
+#include <iostream>
+#include <string>
 
 using boost::asio::ip::tcp;
 
-namespace artdaq
-{
-	/**
+namespace artdaq {
+/**
 	 * \brief Send a metric to Graphite
 	 * 
 	 * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
@@ -29,19 +28,20 @@ namespace artdaq
 	 *     
 	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
 	 */
-	class GraphiteMetric : public MetricPlugin
-	{
-	private:
-		std::string host_;
-		int port_;
-		std::string namespace_;
-		boost::asio::io_service io_service_;
-		tcp::socket socket_;
-		bool stopped_;
-		int errorCount_;
-		std::chrono::steady_clock::time_point waitStart_;
-	public:
-		/**
+class GraphiteMetric : public MetricPlugin
+{
+private:
+	std::string host_;
+	int port_;
+	std::string namespace_;
+	boost::asio::io_service io_service_;
+	tcp::socket socket_;
+	bool stopped_;
+	int errorCount_;
+	std::chrono::steady_clock::time_point waitStart_;
+
+public:
+	/**
 		 * \brief GraphiteMetric Constructor
 		 * \param config ParameterSet used to configure GraphiteMetric
 		 * \param app_name Name of the application sending metrics
@@ -53,148 +53,152 @@ namespace artdaq
 		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
 		 * \endverbatim
 		 */
-		explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
-		                                           , host_(pset.get<std::string>("host", "localhost"))
-		                                           , port_(pset.get<int>("port", 2003))
-		                                           , namespace_(pset.get<std::string>("namespace", "artdaq."))
-		                                           , io_service_()
-		                                           , socket_(io_service_)
-		                                           , stopped_(true)
-		                                           , errorCount_(0)
-		{
-			startMetrics();
-		}
+	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name)
+	    : MetricPlugin(config, app_name)
+	    , host_(pset.get<std::string>("host", "localhost"))
+	    , port_(pset.get<int>("port", 2003))
+	    , namespace_(pset.get<std::string>("namespace", "artdaq."))
+	    , io_service_()
+	    , socket_(io_service_)
+	    , stopped_(true)
+	    , errorCount_(0)
+	{
+		startMetrics();
+	}
 
-		/**
+	/**
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
-		virtual ~GraphiteMetric() { stopMetrics(); }
+	virtual ~GraphiteMetric() { stopMetrics(); }
 
-		/**
+	/**
 		 * \brief Get the library name for the Graphite metric
 		 * \return The library name for the Graphite metric, "graphite"
 		 */
-		std::string getLibName() const override { return "graphite"; }
+	std::string getLibName() const override { return "graphite"; }
 
-		/**
+	/**
 		 * \brief Send a metric to Graphite
 		 * \param name Name of the metric. Will have the namespace prepended
 		 * \param value Value of the metric
 		 */
-		void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
+	{
+		if (!stopped_)
 		{
-			if (!stopped_)
-			{
-				const auto result = std::time(0);
-				boost::asio::streambuf data;
-				auto nameTemp(name);
-				std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
-				std::ostream out(&data);
-				out << namespace_ << nameTemp << " "
-					<< value << " "
-					<< result << std::endl;
+			const auto result = std::time(0);
+			boost::asio::streambuf data;
+			auto nameTemp(name);
+			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
+			std::ostream out(&data);
+			out << namespace_ << nameTemp << " "
+			    << value << " "
+			    << result << std::endl;
 
-				boost::system::error_code error;
-				boost::asio::write(socket_, data, error);
-				if (error)
-				{
-					errorCount_++;
-					reconnect_();
-				}
+			boost::system::error_code error;
+			boost::asio::write(socket_, data, error);
+			if (error)
+			{
+				errorCount_++;
+				reconnect_();
 			}
 		}
+	}
 
-		/**
+	/**
 		* \brief Send a metric to Graphite
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
 		*/
-		void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
-		{
-			sendMetric_(name, std::to_string(value), unit);
-		}
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-		/**
+	/**
 		* \brief Send a metric to Graphite
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
 		*/
-		void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
-		{
-			sendMetric_(name, std::to_string(value), unit);
-		}
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-		/**
+	/**
 		* \brief Send a metric to Graphite
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
 		*/
-		void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
-		{
-			sendMetric_(name, std::to_string(value), unit);
-		}
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-		/**
+	/**
 		* \brief Send a metric to Graphite
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
 		*/
-		void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
-		{
-			sendMetric_(name, std::to_string(value), unit);
-		}
+	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-		/**
+	/**
 		 * \brief Perform startup actions. For Graphite, this means reconnecting the socket.
 		 */
-		void startMetrics_() override
+	void startMetrics_() override
+	{
+		if (stopped_)
 		{
-			if (stopped_)
-			{
-				reconnect_();
-				stopped_ = false;
-			}
+			reconnect_();
+			stopped_ = false;
 		}
+	}
 
-		/**
+	/**
 		 * \brief Perform shutdown actions. This shuts down the socket and closes it.
 		 */
-		void stopMetrics_() override
+	void stopMetrics_() override
+	{
+		if (!stopped_)
 		{
-			if (!stopped_)
-			{
-				socket_.shutdown(boost::asio::socket_base::shutdown_send);
-				socket_.close();
-				stopped_ = true;
-			}
+			socket_.shutdown(boost::asio::socket_base::shutdown_send);
+			socket_.close();
+			stopped_ = true;
 		}
+	}
 
-	private:
-		/**
+private:
+	/**
 		 * \brief Reconnect to Graphite
 		 */
-		void reconnect_()
+	void reconnect_()
+	{
+		if (errorCount_ < 5)
 		{
-			if (errorCount_ < 5)
+			boost::system::error_code error;
+			tcp::resolver resolver(io_service_);
+			tcp::resolver::query query(host_, std::to_string(port_));
+			boost::asio::connect(socket_, resolver.resolve(query), error);
+			if (!error) { errorCount_ = 0; }
+			else
 			{
-				boost::system::error_code error;
-				tcp::resolver resolver(io_service_);
-				tcp::resolver::query query(host_, std::to_string(port_));
-				boost::asio::connect(socket_, resolver.resolve(query), error);
-				if (!error) { errorCount_ = 0; }
-				else { mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_; }
-				waitStart_ = std::chrono::steady_clock::now();
+				mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_;
 			}
-			else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)//Seconds
-			{
-				errorCount_ = 0;
-			}
+			waitStart_ = std::chrono::steady_clock::now();
 		}
-	};
-} //End namespace artdaq
+		else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)  //Seconds
+		{
+			errorCount_ = 0;
+		}
+	}
+};
+}  //End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::GraphiteMetric)
