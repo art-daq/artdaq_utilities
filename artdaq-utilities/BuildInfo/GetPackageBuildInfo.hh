@@ -1,7 +1,7 @@
 #ifndef artdaq_utilities_BuildInfo_GetPackageBuildInfo_hh
 #define artdaq_utilities_BuildInfo_GetPackageBuildInfo_hh
 
-#include "artdaq-core/Data/PackageBuildInfo.hh"
+#include "artdaq-utilities/BuildInfo/PackageBuildInfo.hh"
 
 #include <string>
 
