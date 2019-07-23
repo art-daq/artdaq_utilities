@@ -1,0 +1,19 @@
+#include "artdaq-utilities/BuildInfo/GetPackageBuildInfo.hh"
+
+#include <string>
+
+namespace artdaqutilities {
+
+  artdaq::PackageBuildInfo GetPackageBuildInfo::getPackageBuildInfo() {
+
+    artdaq::PackageBuildInfo pkg;
+
+    pkg.setPackageName("artdaq-utilities");
+    pkg.setPackageVersion("@version_with_git@");
+    pkg.setBuildTimestamp("@utcDateTime@");
+
+    return pkg;
+  }
+
+}
+
