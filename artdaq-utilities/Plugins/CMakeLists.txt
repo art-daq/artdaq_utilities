@@ -1,5 +1,5 @@
 cet_make(
-  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc
+  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc test_metric.cc
   LIBRARIES
   ${FHICLCPP}
   ${CETLIB}
@@ -11,6 +11,16 @@ cet_make(
   )
 
 basic_plugin("file" "metric"
+  ${FHICLCPP}
+  ${CETLIB}
+  ${CETLIB_EXCEPT}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${MESSAGEFACILITY_LIBS}
+)
+
+basic_plugin("test" "metric"
+	artdaq-utilities_Plugins
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}

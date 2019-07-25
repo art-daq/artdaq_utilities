@@ -25,36 +25,62 @@ elif [ "${basequal}" = "c7" ]; then
      clangver=v7_0_0
 fi
 
-do_build gcc ${gccver}
+#do_build gcc ${gccver}
 
-if [[ "x${clangver:-}" != "x" ]];then
-    do_build clang ${clangver}
+#if [[ "x${clangver:-}" != "x" ]];then
+#    do_build clang ${clangver}
+#fi
+
+# as of v1_07_00, artdaq_core is built with canvas and TRACE
+if ! version_greater v3_14_00 v3_14_01; then
+  # TRACE >= v3_14_00 needs buildFW >= 4.00.00 and cetmodules.
+  if (( $(print_version | cut -d' ' -f 2 | cut -d. -f1) < 4)); then
+    echo "ERROR TRACE >= v3_14_00 needs buildFW >= 4.00.00" 1>&2
+    return 1;
+  fi
+  build_cet_null -DWANT_UPS=1 cetmodules v1_02_02
 fi
 
-setup gcc ${gccver}
-build_cet -p trace-git TRACE v3_13_12 -nq-
-unsetup gcc
-do_build xmlrpc_c v1_51_03 ${basequal}
-do_build epics v3_16_2 ${basequal}
-do_build mongodb v4_0_8a ${basequal}
-do_build mpich v3_2_1e ${basequal}
-do_build swig v3_0_12d ${basequal}
-do_build swig v4_0_0 ${basequal}
+build_cet -p trace-git TRACE v3_14_02 -nq-
 
-do_build xdaq v14_12_0 ${basequal}
+#do_build xmlrpc_c v1_51_03 ${basequal}
 
-build_noarch nodejs v4_5_0
-do_build ganglia v3_7_1
+#do_build zmq v4_3_1 ${basequal}
 
-do_build qt v5_12_3 ${basequal}
+#do_build epics v3_16_2 ${basequal}
 
-do_pull -n sqlite v3_20_01_00
-do_pull -n python v2_7_14b
-do_pull -n postgresql v9_6_6a p2714b
-do_build pqxx v6_2_5b ${basequal}:p2714b
+#do_build git v2_20_1
+#setup git v2_20_1
+#do_build mongodb v4_0_8b ${basequal}
+#unsetup git
 
-do_pull -n caencomm v1_2a
-do_pull -n caenvme v2_50
-do_build caendigitizer v2_12_0
+#do_build mpich v3_2_1e ${basequal}
+#do_build swig v3_0_12d ${basequal}
+#do_build swig v4_0_0 ${basequal}
+
+#do_build xdaq v14_12_0 ${basequal}
+
+#build_noarch nodejs v4_5_0
+#do_build ganglia v3_7_1
+
+#do_build qt v5_12_3 ${basequal}
+
+#if [[ "${basequal}" != "e15" ]]; then
+#    do_pull -n sqlite v3_26_00_00
+#    do_pull -n python v2_7_15a
+#    do_pull -n postgresql v9_6_11b p2715a
+#    do_build pqxx v6_2_5c ${basequal}:p2715a
+#fi
+
+#do_pull -n caencomm v1_2a
+#do_pull -n caenvme v2_50
+#do_build caendigitizer v2_12_0
+
+# if [[ "${basequal}" = "e17" ]]; then
+ # build_bundle art-2.12.01 e17
+ # build_cet -p artdaq-core artdaq_core v3_04_11 e17:s79
+ # build_cet -p pcie_linux_kernel_module pcie_linux_kernel_module v2_01_02 e17
+# fi
+
 
 return 0
