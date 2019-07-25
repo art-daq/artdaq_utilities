@@ -8,17 +8,16 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-#include <iostream>
-#include <ctime>
-#include <string>
 #include <algorithm>
 #include <boost/asio.hpp>
 #include <chrono>
+#include <ctime>
+#include <iostream>
+#include <string>
 
 using boost::asio::ip::tcp;
 
-namespace artdaq
-{
+namespace artdaq {
 	/**
 	 * \brief Send a metric to Graphite
 	 * 
@@ -40,6 +39,7 @@ class GraphiteMetric final : public MetricPlugin
 		bool stopped_;
 		int errorCount_;
 		std::chrono::steady_clock::time_point waitStart_;
+
 	public:
 		/**
 		 * \brief GraphiteMetric Constructor
@@ -53,7 +53,8 @@ class GraphiteMetric final : public MetricPlugin
 		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
 		 * \endverbatim
 		 */
-		explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name) : MetricPlugin(config, app_name)
+	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name)
+	    : MetricPlugin(config, app_name)
 		                                           , host_(pset.get<std::string>("host", "localhost"))
 		                                           , port_(pset.get<int>("port", 2003))
 		                                           , namespace_(pset.get<std::string>("namespace", "artdaq."))
@@ -187,7 +188,10 @@ class GraphiteMetric final : public MetricPlugin
 				tcp::resolver::query query(host_, std::to_string(port_));
 				boost::asio::connect(socket_, resolver.resolve(query), error);
 				if (!error) { errorCount_ = 0; }
-				else { mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_; }
+			else
+			{
+				mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_;
+			}
 				waitStart_ = std::chrono::steady_clock::now();
 			}
 			else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)//Seconds
