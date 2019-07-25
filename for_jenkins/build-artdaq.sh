@@ -36,29 +36,24 @@ for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;do
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-		e14)
-			basequal=e14
-			;;
         e15)
             basequal=e15
             ;;
 		e17)
 			basequal=e17
 			;;
+        e19)
+            basequal=e19
+            ;;
         c2)
             basequal=c2
+            ;;
+        c7)
+            basequal=c7
             ;;
 		nu)
 			nu_flag=1
 			;;
-        s64)
-            squal=s64
-            artver=v2_10_02
-            ;;
-        s65)
-            squal=s65
-            artver=v2_10_03
-            ;;
         s67)
             squal=s67
             artver=v2_11_01
@@ -66,6 +61,10 @@ for qual in ${qualarray[@]};do
         s73)
             squal=s73
             artver=v2_11_05
+            ;;
+        s82)
+            squal=s82
+            artver=v3_02_04
             ;;
 		esac
 done
@@ -180,7 +179,7 @@ artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
 artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
 
 cat ${artManifest} >>${artdaqManifest}
-cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.tmp
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 
 echo
