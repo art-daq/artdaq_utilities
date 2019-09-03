@@ -18,32 +18,34 @@ namespace artdaq {
 /**
  * \brief FileMetric writes metric data to a file on disk
  */
-class FileMetric : public MetricPlugin {
- private:
-  std::string outputFile_;
-  bool uniquify_file_name_;
-  std::ofstream outputStream_;
-  std::ios_base::openmode mode_;
-  std::string timeformat_;
-  bool stopped_;
+class FileMetric : public MetricPlugin
+{
+private:
+	std::string outputFile_;
+	bool uniquify_file_name_;
+	std::ofstream outputStream_;
+	std::ios_base::openmode mode_;
+	std::string timeformat_;
+	bool stopped_;
 
-  std::ostream& getTime_(std::ostream & stream) {
-    static std::mutex timeMutex;
-    std::unique_lock<std::mutex> lk(timeMutex);
-    using std::chrono::system_clock;
-    std::time_t tt = system_clock::to_time_t(system_clock::now());
+	std::ostream& getTime_(std::ostream& stream)
+	{
+		static std::mutex timeMutex;
+		std::unique_lock<std::mutex> lk(timeMutex);
+		using std::chrono::system_clock;
+		std::time_t tt = system_clock::to_time_t(system_clock::now());
 
-    struct std::tm* ptm = std::localtime(&tt);
-    if (timeformat_.size()) {
-    
-    return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
+		struct std::tm* ptm = std::localtime(&tt);
+		if (timeformat_.size())
+		{
+			return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
+		}
+
+		return stream;
 	}
 
-	return stream;
-  }
-
- public:
-  /**
+public:
+	/**
    * \brief FileMetric Constructor. Opens the file and starts the metric
    * \param config ParameterSet used to configure FileMetric
    * \param app_name Name of the application sending metrics
@@ -55,127 +57,143 @@ class FileMetric : public MetricPlugin {
    * the end of the filename if %UID% is not present in fileName "time_format" (Default: "%c"): Format to use for time
    * printout "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
    */
-  explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-      : MetricPlugin(config, app_name),
-        outputFile_(pset.get<std::string>("fileName", "FileMetric.out")),
-        uniquify_file_name_(pset.get<bool>("uniquify", false)),
-        timeformat_(pset.get<std::string>("time_format", "%c")),
-        stopped_(true) {
-    std::string modeString = pset.get<std::string>("fileMode", "append");
+	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
+	    : MetricPlugin(config, app_name), outputFile_(pset.get<std::string>("fileName", "FileMetric.out")), uniquify_file_name_(pset.get<bool>("uniquify", false)), timeformat_(pset.get<std::string>("time_format", "%c")), stopped_(true)
+	{
+		std::string modeString = pset.get<std::string>("fileMode", "append");
 
-    mode_ = std::ofstream::out | std::ofstream::app;
-    if (modeString == "Overwrite" || modeString == "Create" || modeString == "Write") {
-      mode_ = std::ofstream::out | std::ofstream::trunc;
-    }
+		mode_ = std::ofstream::out | std::ofstream::app;
+		if (modeString == "Overwrite" || modeString == "Create" || modeString == "Write")
+		{
+			mode_ = std::ofstream::out | std::ofstream::trunc;
+		}
 
-    if (uniquify_file_name_) {
-      std::string unique_id = std::to_string(getpid());
-      if (outputFile_.find("%UID%") != std::string::npos) {
-        outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
-      } else {
-        if (outputFile_.rfind(".") != std::string::npos) {
-          outputFile_ = outputFile_.insert(outputFile_.rfind("."), "_" + unique_id);
-        } else {
-          outputFile_ = outputFile_.append("_" + unique_id);
-        }
-      }
-    }
-    openFile_();
-    startMetrics();
-  }
+		if (uniquify_file_name_)
+		{
+			std::string unique_id = std::to_string(getpid());
+			if (outputFile_.find("%UID%") != std::string::npos)
+			{
+				outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
+			}
+			else
+			{
+				if (outputFile_.rfind(".") != std::string::npos)
+				{
+					outputFile_ = outputFile_.insert(outputFile_.rfind("."), "_" + unique_id);
+				}
+				else
+				{
+					outputFile_ = outputFile_.append("_" + unique_id);
+				}
+			}
+		}
+		openFile_();
+		startMetrics();
+	}
 
-  /**
+	/**
    * \brief FileMetric Destructor. Calls stopMetrics and then closes the file
    */
-  virtual ~FileMetric() {
-    stopMetrics();
-    closeFile_();
-  }
+	virtual ~FileMetric()
+	{
+		stopMetrics();
+		closeFile_();
+	}
 
-  /**
+	/**
    * \brief Get the library name for the File metric
    * \return The library name for the File metric, "file"
    */
-  std::string getLibName() const override { return "file"; }
+	std::string getLibName() const override { return "file"; }
 
-  /**
+	/**
    * \brief Write metric data to a file
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-  void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override {
-    if (!stopped_ && !inhibit_) {
-      getTime_(outputStream_) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
-    }
-  }
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override
+	{
+		if (!stopped_ && !inhibit_)
+		{
+			getTime_(outputStream_) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
+		}
+	}
 
-  /**
+	/**
    * \brief Write metric data to a file
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-  void sendMetric_(const std::string& name, const int& value, const std::string& unit) override {
-    sendMetric_(name, std::to_string(value), unit);
-  }
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-  /**
+	/**
    * \brief Write metric data to a file
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-  void sendMetric_(const std::string& name, const double& value, const std::string& unit) override {
-    sendMetric_(name, std::to_string(value), unit);
-  }
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-  /**
+	/**
    * \brief Write metric data to a file
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-  void sendMetric_(const std::string& name, const float& value, const std::string& unit) override {
-    sendMetric_(name, std::to_string(value), unit);
-  }
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-  /**
+	/**
    * \brief Write metric data to a file
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-  void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override {
-    sendMetric_(name, std::to_string(value), unit);
-  }
+	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	{
+		sendMetric_(name, std::to_string(value), unit);
+	}
 
-  /**
+	/**
    * \brief Perform startup actions. Writes start message to output file.
    */
-  void startMetrics_() override {
-    stopped_ = false;
-    getTime_(outputStream_) << "FileMetric plugin started." << std::endl;
-  }
+	void startMetrics_() override
+	{
+		stopped_ = false;
+		getTime_(outputStream_) << "FileMetric plugin started." << std::endl;
+	}
 
-  /**
+	/**
    * \brief Perform shutdown actions. Writes stop message to output file.
    */
-  void stopMetrics_() override {
-    stopped_ = true;
-    getTime_(outputStream_) << "FileMetric plugin has been stopped!" << std::endl;
-  }
+	void stopMetrics_() override
+	{
+		stopped_ = true;
+		getTime_(outputStream_) << "FileMetric plugin has been stopped!" << std::endl;
+	}
 
- private:
-  void openFile_() {
-    outputStream_.open(outputFile_.c_str(), mode_);
-    getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
-  }
+private:
+	void openFile_()
+	{
+		outputStream_.open(outputFile_.c_str(), mode_);
+		getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+	}
 
-  void closeFile_() {
-    getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
-    outputStream_.close();
-  }
+	void closeFile_()
+	{
+		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
+		outputStream_.close();
+	}
 };
 }  // End namespace artdaq
 
