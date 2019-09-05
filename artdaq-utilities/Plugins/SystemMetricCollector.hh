@@ -5,26 +5,87 @@
 #include "artdaq-utilities/Plugins/MetricData.hh"
 
 namespace artdaq {
+	/// <summary>
+	/// Collects metrics from the system, using proc filesystem or kernel API calls
+	/// </summary>
 class SystemMetricCollector
 {
 public:
+	/// <summary>
+	/// SystemMetricCollector Constructor
+	/// </summary>
+	/// <param name="processMetrics">Whether to collect process-level metrics (i.e. process CPU/RAM)</param>
+	/// <param name="systemMetrics">Whether to collect system-level metrics (i.e. System CPU/RAM/Network)</param>
 	SystemMetricCollector(bool processMetrics, bool systemMetrics);
 
+	/// <summary>
+	/// Return the current overall system CPU usage in %
+	/// </summary>
+	/// <returns>System CPU usage, %</returns>
 	double GetSystemCPUUsagePercent();
+	/// <summary>
+	/// Return the current amount of CPU usage for the current process, %
+	/// </summary>
+	/// <returns>The current amount of CPU usage for the current process, %</returns>
 	double GetProcessCPUUsagePercent();
 
+	/// <summary>
+	/// Get the amount of available RAM in the system
+	/// </summary>
+	/// <returns>The amount of available (free) RAM in bytes</returns>
 	unsigned long GetAvailableRAM();
+	/// <summary>
+	/// Get the amount of RAM currently being used for cache
+	/// </summary>
+	/// <returns>The amount of RAM used in cache in bytes</returns>
 	unsigned long GetBufferedRAM();
+	/// <summary>
+	/// Get the total amount of RAM in the system
+	/// </summary>
+	/// <returns>The total amount of RAM in the system, in bytes</returns>
 	unsigned long GetTotalRAM();
+	/// <summary>
+	/// Get the percentage of available RAM
+	/// </summary>
+	/// <param name="buffers">Whether cache RAM should be counted as available</param>
+	/// <returns>The amount of available RAM, in %</returns>
 	double GetAvailableRAMPercent(bool buffers);
+	/// <summary>
+	/// Get the amount of RAM being used by this process
+	/// </summary>
+	/// <returns>The amount of RAM being used by this process, in bytes</returns>
 	unsigned long GetProcessMemUsage();
+	/// <summary>
+	/// Get the amount of RAM being used by this process
+	/// </summary>
+	/// <returns>The amount of RAM used by this process, as a percentage of the total RAM in the system</returns>
 	double GetProcessMemUsagePercent();
 
+	/// <summary>
+	/// Get the amount of data received from the network in the last network collection interval (1.0 s)
+	/// </summary>
+	/// <returns>The number of bytes recevied from the network in the last second</returns>
 	unsigned long GetNetworkReceiveBytes();
+	/// <summary>
+	/// Get the amount of data sent to the network in the last network collection interval (1.0 s)
+	/// </summary>
+	/// <returns>The number of bytes sent to the network in the last second</returns>
 	unsigned long GetNetworkSendBytes();
+	/// <summary>
+	/// Get the number of network receive errors in the last network collection interval (1.0 s)
+	/// </summary>
+	/// <returns>The number of network receive errors in the last second</returns>
 	unsigned long GetNetworkReceiveErrors();
+	/// <summary>
+	/// Get the number of network send errors in the last network collection interval (1.0 s)
+	/// </summary>
+	/// <returns>The number of network send errors in the last second</returns>
 	unsigned long GetNetworkSendErrors();
 
+	/// <summary>
+	/// Send the configured metrics
+	/// </summary>
+	/// <returns>A list of MetricData pointers for direct injection into MetricManager</returns>
 	std::list<std::unique_ptr<MetricData>> SendMetrics();
 
 private:
