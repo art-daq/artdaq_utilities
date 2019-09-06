@@ -41,7 +41,7 @@ if ! version_greater v3_14_00 v3_14_01; then
   build_cet_null -DWANT_UPS=1 cetmodules v1_02_02
 fi
 
-build_cet -p trace-git TRACE v3_15_00 -nq-
+build_cet -p trace-git TRACE v3_15_01 -nq-
 
 #do_build xmlrpc_c v1_51_03 ${basequal}
 
