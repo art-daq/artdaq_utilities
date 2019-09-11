@@ -69,7 +69,8 @@ class GraphiteMetric final : public MetricPlugin
 		/**
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
-		virtual ~GraphiteMetric() { stopMetrics(); }
+
+	        virtual ~GraphiteMetric() { stopMetrics(); }  
 
 		/**
 		 * \brief Get the library name for the Graphite metric
@@ -166,13 +167,20 @@ class GraphiteMetric final : public MetricPlugin
 		 */
 		void stopMetrics_() override
 		{
-			if (!stopped_)
-			{
-			boost::system::error_code ignored;
-			socket_.shutdown(boost::asio::socket_base::shutdown_send, ignored);
-				socket_.close();
-				stopped_ = true;
-			}
+		  if (!stopped_)
+		    {
+		      try {
+
+			socket_.shutdown(boost::asio::socket_base::shutdown_send);
+			socket_.close();
+			stopped_ = true;
+
+		      } catch( boost::system::system_error err) {
+			mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
+		      } catch( ... ) {
+			mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
+		      }
+		    }
 		}
 
 	private:
