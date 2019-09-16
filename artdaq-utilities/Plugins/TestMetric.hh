@@ -1,4 +1,6 @@
-// TestMetric.hh: Static storage for testing Metric system
+/**
+ * \file TestMetric.hh: Static storage for testing Metric system
+ */
 
 #ifndef __ARTDAQ_UTILITIES_PLUGINS_TESTMETRIC_HH_
 #define __ARTDAQ_UTILITIES_PLUGINS_TESTMETRIC_HH_
@@ -11,17 +13,22 @@
 #include "trace.h"
 
 namespace artdaq {
+	/// <summary>
+	/// Provides in-memory storage of metric data for testing
+	/// </summary>
 class TestMetric
 {
 public:
+	/// <summary>
+	/// Describes a single metric point
+	/// </summary>
 	struct MetricPoint
 	{
-		std::chrono::steady_clock::time_point sent_time;
-		std::string metric;
-		std::string value;
-		std::string unit;
+		std::chrono::steady_clock::time_point sent_time; ///< When the metric was received
+		std::string metric; ///< Name of the metric
+		std::string value; ///< Value of the metric
+		std::string unit; ///< Units for the metric
 	};
-static std::list<MetricPoint> received_metrics;
 
 static void LockReceivedMetricMutex() {
 	TLOG(20) << "Locking TestMetric::received_metrics_mutex";
@@ -34,8 +41,8 @@ static void UnlockReceivedMetricMutex() {
 	received_metrics_mutex.unlock();
 }
 
-private:
-static std::mutex received_metrics_mutex;
+	static std::mutex received_metrics_mutex; ///< Mutex to protect the received_metrics list
+	static std::list<MetricPoint> received_metrics; ///< List of received metric data
 };
 }  // namespace artdaq
 
