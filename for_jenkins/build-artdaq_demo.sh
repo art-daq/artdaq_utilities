@@ -63,6 +63,10 @@ for qual in ${qualarray[@]};do
             squal=s82
             artver=v3_02_04
             ;;
+        s87)
+            squal=s87
+            artver=v3_03_00
+            ;;
         nodb)
             build_db=0
             ;;
