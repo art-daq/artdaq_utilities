@@ -175,7 +175,7 @@ class GraphiteMetric final : public MetricPlugin
 			socket_.close();
 			stopped_ = true;
 
-		      } catch( boost::system::system_error err) {
+		      } catch( boost::system::system_error &err) {
 			mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
 		      } catch( ... ) {
 			mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
