@@ -9,9 +9,9 @@
 #include "trace.h"
 
 namespace artdaqtest {
-	/// <summary>
-	/// Metric plugin which stores metric call counts for testing
-	/// </summary>
+/// <summary>
+/// Metric plugin which stores metric call counts for testing
+/// </summary>
 class MetricPluginTestAdapter : public artdaq::MetricPlugin
 {
 public:
@@ -60,13 +60,13 @@ public:
 	 */
 	virtual void stopMetrics_() override { stopMetrics_calls++; }
 
-	size_t sendMetric_string_calls; ///< The number of string metric calls received
-	size_t sendMetric_int_calls; ///< The number of int metric calls received
-	size_t sendMetric_double_calls; ///< The number of double metric calls received
-	size_t sendMetric_float_calls; ///< The number of float metric calls received
-	size_t sendMetric_unsigned_calls; ///< The numberof unsigned metric calls received
-	size_t startMetrics_calls; ///< The number of startMetrics_ calls received
-	size_t stopMetrics_calls; ///< The number of stopMetrics_ calls received
+	size_t sendMetric_string_calls;    ///< The number of string metric calls received
+	size_t sendMetric_int_calls;       ///< The number of int metric calls received
+	size_t sendMetric_double_calls;    ///< The number of double metric calls received
+	size_t sendMetric_float_calls;     ///< The number of float metric calls received
+	size_t sendMetric_unsigned_calls;  ///< The numberof unsigned metric calls received
+	size_t startMetrics_calls;         ///< The number of startMetrics_ calls received
+	size_t stopMetrics_calls;          ///< The number of stopMetrics_ calls received
 
 	// Getters for protected members
 	/// <summary>
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 	BOOST_REQUIRE_EQUAL(mpta.sendMetric_unsigned_calls, 0);
 
 	mpta.sendMetrics();
-	
+
 	BOOST_REQUIRE_EQUAL(mpta.sendMetric_string_calls, 1);
 	BOOST_REQUIRE_EQUAL(mpta.sendMetric_int_calls, 1);
 	BOOST_REQUIRE_EQUAL(mpta.sendMetric_float_calls, 1);

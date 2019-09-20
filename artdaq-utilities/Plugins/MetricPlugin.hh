@@ -290,44 +290,44 @@ public:
 						{
 							case MetricType::DoubleMetric:
 								average = data.Value.d / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::FloatMetric:
 								average = data.Value.f / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::IntMetric:
 								average = data.Value.i / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::UnsignedMetric:
 								average = data.Value.u / static_cast<double>(data.DataPointCount);
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit);
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
 						double duration = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
 						                      interval_end - interval_start_[metric.first])
-										              .count();
+						                      .count();
 						double rate = 0.0;
 						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
 								rate = data.Value.d / duration;
-										break;
+								break;
 							case MetricType::FloatMetric:
 								rate = data.Value.f / duration;
-										break;
+								break;
 							case MetricType::IntMetric:
 								rate = data.Value.i / duration;
-										break;
+								break;
 							case MetricType::UnsignedMetric:
 								rate = data.Value.u / duration;
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
@@ -337,12 +337,12 @@ public:
 					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 					{
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
-						}
+					}
 
 					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
 					metric.second.clear();
 					TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
-					}
+				}
 				interval_start_[metric.first] = interval_end;
 			}
 		}
@@ -429,55 +429,55 @@ private:
 	void sendZero_(MetricData data)
 	{
 		if (sendZeros_)
-	{
-		std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
-		bool useSuffix = true;
-		if (modeSet.count() <= 1) useSuffix = false;
+		{
+			std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
+			bool useSuffix = true;
+			if (modeSet.count() <= 1) useSuffix = false;
 
-		MetricData::MetricDataValue zero;
-		switch (data.Type)
-		{
-			case MetricType::DoubleMetric:
-				zero.d = 0.0;
-				break;
-			case MetricType::FloatMetric:
-				zero.f = 0.0f;
-				break;
-			case MetricType::IntMetric:
-				zero.i = 0;
-				break;
-			case MetricType::UnsignedMetric:
-				zero.u = 0;
-				break;
-			default:
-				break;
-		}
+			MetricData::MetricDataValue zero;
+			switch (data.Type)
+			{
+				case MetricType::DoubleMetric:
+					zero.d = 0.0;
+					break;
+				case MetricType::FloatMetric:
+					zero.f = 0.0f;
+					break;
+				case MetricType::IntMetric:
+					zero.i = 0;
+					break;
+				case MetricType::UnsignedMetric:
+					zero.u = 0;
+					break;
+				default:
+					break;
+			}
 
-		if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+			if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Average) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
+			}
+			if ((data.Mode & MetricMode::Rate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
+			}
+			if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
+			}
 		}
-		if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Average) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
-		}
-		if ((data.Mode & MetricMode::Rate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
-		}
-		if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
-		}
-	}
 	}
 
 	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type)
