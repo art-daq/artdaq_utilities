@@ -5,9 +5,9 @@
 #include "artdaq-utilities/Plugins/MetricData.hh"
 
 namespace artdaq {
-	/// <summary>
-	/// Collects metrics from the system, using proc filesystem or kernel API calls
-	/// </summary>
+/// <summary>
+/// Collects metrics from the system, using proc filesystem or kernel API calls
+/// </summary>
 class SystemMetricCollector
 {
 public:
