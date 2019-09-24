@@ -16,7 +16,18 @@
 #include <chrono>
 
 artdaq::MetricManager::MetricManager()
-    : metric_plugins_(0), metric_send_interval_ms_(15000), system_metric_collector_(nullptr), initialized_(false), running_(false), active_(false), missed_metric_calls_(0), metric_calls_(0), metric_cache_max_size_(1000), metric_cache_notify_size_(10) {}
+    : metric_plugins_(0)
+    , metric_send_interval_ms_(15000)
+    , metric_holdoff_us_(1000)
+    , system_metric_collector_(nullptr)
+    , initialized_(false)
+    , running_(false)
+    , active_(false)
+    , busy_(false)
+    , missed_metric_calls_(0)
+    , metric_calls_(0)
+    , metric_cache_max_size_(1000)
+    , metric_cache_notify_size_(10) {}
 
 artdaq::MetricManager::~MetricManager() noexcept { shutdown(); }
 
@@ -55,7 +66,13 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		}
 		else if (name == "metric_send_maximum_delay_ms")
 		{
+			TLOG(TLVL_INFO) << "Setting metric_send_interval_ms_ to " << pset.get<int>("metric_send_maximum_delay_ms");
 			metric_send_interval_ms_ = pset.get<int>("metric_send_maximum_delay_ms");
+		}
+		else if (name == "metric_holdoff_us")
+		{
+			TLOG(TLVL_INFO) << "Setting metric_holdoff_us_ to " << pset.get<int>("metric_holdoff_us");
+			metric_holdoff_us_ = pset.get<int>("metric_holdoff_us");
 		}
 		else if (name == "send_system_metrics")
 		{
@@ -200,6 +217,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 		{
 			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
+			last_metric_received_ = std::chrono::steady_clock::now();
 			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
 			{
 				metric_cache_[name] =
@@ -253,6 +271,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 		{
 			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
+			last_metric_received_ = std::chrono::steady_clock::now();
 			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
 			{
 				metric_cache_[name] =
@@ -297,6 +316,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 		{
 			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
+			last_metric_received_ = std::chrono::steady_clock::now();
 			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
 			{
 				metric_cache_[name] =
@@ -341,6 +361,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 		{
 			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
+			last_metric_received_ = std::chrono::steady_clock::now();
 			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
 			{
 				metric_cache_[name] =
@@ -386,6 +407,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 		{
 			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
+			last_metric_received_ = std::chrono::steady_clock::now();
 			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
 			{
 				metric_cache_[name] =
@@ -441,6 +463,23 @@ bool artdaq::MetricManager::metricQueueEmpty()
 	return metric_cache_.size() == 0;
 }
 
+bool artdaq::MetricManager::metricManagerBusy()
+{
+	bool pluginsBusy = false;
+
+	for (auto& p : metric_plugins_)
+	{
+		if (p->metricsPending())
+		{
+			pluginsBusy = true;
+			break;
+		}
+	}
+
+	TLOG(TLVL_TRACE) << "Metric queue empty: " << metricQueueEmpty() << ", busy_: " << busy_ << ", Plugins busy: " << pluginsBusy;
+	return !metricQueueEmpty() || busy_ || pluginsBusy;
+}
+
 size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 {
 	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
@@ -466,6 +505,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
+		TLOG(6) << "sendMetricLoop_: Entering Metric input wait loop";
 		while (metricQueueEmpty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
@@ -474,6 +514,11 @@ void artdaq::MetricManager::sendMetricLoop_()
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() >
 			    metric_send_interval_ms_)
 			{
+				TLOG(6) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
+				if (std::chrono::duration_cast<std::chrono::microseconds>(now - last_metric_received_).count() < metric_holdoff_us_)
+				{
+					usleep(metric_holdoff_us_);
+				}
 				for (auto& metric : metric_plugins_)
 				{
 					if (metric) metric->sendMetrics();
@@ -481,7 +526,13 @@ void artdaq::MetricManager::sendMetricLoop_()
 				last_send_time = now;
 			}
 		}
+		if (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - last_metric_received_).count() < metric_holdoff_us_)
+		{
+			usleep(metric_holdoff_us_);
+		}
 
+		TLOG(6) << "sendMetricLoop_: After Metric input wait loop";
+		busy_ = true;
 		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
 		{
@@ -512,6 +563,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
+		TLOG(6) << "sendMetricLoop_: Before processing temp_list";
 		while (temp_list.size() > 0)
 		{
 			auto data_ = std::move(temp_list.front());
@@ -548,6 +600,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
+		TLOG(6) << "sendMetricLoop_: Before sending metrics";
 		for (auto& metric : metric_plugins_)
 		{
 			if (!metric) continue;
@@ -555,9 +608,12 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 
 		// Limit rate of metrics going to plugins
+		TLOG(6) << "sendMetricLoop_: End of working loop";
+		busy_ = false;
 		usleep(10000);
 	}
 
+	busy_ = true;
 	auto temp_list = std::list<std::unique_ptr<MetricData>>();
 	{
 		std::unique_lock<std::mutex> lk(metric_cache_mutex_);
@@ -630,5 +686,6 @@ void artdaq::MetricManager::sendMetricLoop_()
 			                 << metric->getLibName();
 		}
 	}
+	busy_ = false;
 	TLOG(TLVL_DEBUG) << "MetricManager has been stopped.";
 }
