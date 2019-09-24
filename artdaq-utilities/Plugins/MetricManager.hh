@@ -98,11 +98,11 @@ public:
 	 *
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
-	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue.
-   * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the
-   * queue size to be printed. "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between
-   * metric send calls (will send 0s for metrics which have not reported in this interval) If the queue is above this
+	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue. If the queue is above this
    * size, new metric entries will be dropped until the plugins catch up.
+     * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed. 
+     * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval) 
+     * "metric_holdoff_us": (Default: 1000): Amount of time, in microseconds, to delay sending metrics after each sendMetric call (to ensure that multiple associated calls are in the same metrics interval)
 	 */
 	void initialize(fhicl::ParameterSet const& pset, std::string const& prefix = "");
 
@@ -251,6 +251,12 @@ public:
 	bool metricQueueEmpty();
 
 	/// <summary>
+	/// Determine whether the MetricManager or any of its plugins are currently processing metrics. Used for MetricManager_t
+	/// </summary>
+	/// <returns>True if MetricManager or one of its MetricPlugins are currently processing metrics.</returns>
+	bool metricManagerBusy();
+
+	/// <summary>
 	/// Return the size of the named metric queue
 	/// </summary>
 	/// <param name="name">Name of the metric queue to query. "" returns size of all queues (default)</param>
@@ -267,11 +273,14 @@ private:
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
 	int metric_send_interval_ms_;
+	int metric_holdoff_us_;
+	std::chrono::steady_clock::time_point last_metric_received_;
 	std::unique_ptr<SystemMetricCollector> system_metric_collector_;
 
 	std::atomic<bool> initialized_;
 	std::atomic<bool> running_;
 	std::atomic<bool> active_;
+	std::atomic<bool> busy_;
 	std::string prefix_;
 
 	std::unordered_map<std::string, std::unique_ptr<MetricData>> metric_cache_;
