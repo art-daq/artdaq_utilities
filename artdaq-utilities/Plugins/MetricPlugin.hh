@@ -13,10 +13,10 @@
 #define TRACE_NAME "MetricPlugin" /* a simple const char * */
 #define TRACE_NAME_POP 1
 #endif
-#include "TRACE/trace.h"  // TLOG(x,name)    Note: 
+#include "TRACE/trace.h"  // TLOG(x,name)    Note:
 // MEtricTLOG
-#define METLOG(lvl)  TLOG(lvl) << metric_name_ << ": "
-#define METLOG_P(lvl)   TLOG(lvl,"MetricPlugin") << metric_name_ << ": "
+#define METLOG(lvl) TLOG(lvl) << metric_name_ << ": "
+#define METLOG_P(lvl) TLOG(lvl, "MetricPlugin") << metric_name_ << ": "
 
 #include <chrono>
 #include <string>
@@ -72,7 +72,7 @@ public:
 	explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name, std::string const& metric_name)
 	    : pset(ps)
 	    , app_name_(app_name)
-		, metric_name_(metric_name)
+	    , metric_name_(metric_name)
 	    , inhibit_(false)
 	    , level_mask_(0ULL)
 	    , sendZeros_(pset.get<bool>("send_zeros", true))
@@ -295,44 +295,44 @@ public:
 						{
 							case MetricType::DoubleMetric:
 								average = data.Value.d / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::FloatMetric:
 								average = data.Value.f / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::IntMetric:
 								average = data.Value.i / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::UnsignedMetric:
 								average = data.Value.u / static_cast<double>(data.DataPointCount);
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit);
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
 						double duration = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
 						                      interval_end - interval_start_[metric.first])
-										              .count();
+						                      .count();
 						double rate = 0.0;
 						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
 								rate = data.Value.d / duration;
-										break;
+								break;
 							case MetricType::FloatMetric:
 								rate = data.Value.f / duration;
-										break;
+								break;
 							case MetricType::IntMetric:
 								rate = data.Value.i / duration;
-										break;
+								break;
 							case MetricType::UnsignedMetric:
 								rate = data.Value.u / duration;
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
@@ -342,12 +342,12 @@ public:
 					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 					{
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
-						}
+					}
 
 					METLOG_P(24) << "Clearing metric data list sz=" << metric.second.size();
 					metric.second.clear();
 					METLOG_P(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
-					}
+				}
 				interval_start_[metric.first] = interval_end;
 			}
 		}
@@ -406,10 +406,10 @@ public:
 	}
 
 protected:
-	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
-	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
-	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
-	std::string metric_name_;   
+	fhicl::ParameterSet pset;  ///< The ParameterSet used to configure the MetricPlugin
+	double accumulationTime_;  ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
+	std::string app_name_;     ///< Name of the application which is sending metrics to this plugin
+	std::string metric_name_;
 	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
 	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
 	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run
@@ -435,55 +435,55 @@ private:
 	void sendZero_(MetricData data)
 	{
 		if (sendZeros_)
-	{
-		std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
-		bool useSuffix = true;
-		if (modeSet.count() <= 1) useSuffix = false;
+		{
+			std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
+			bool useSuffix = true;
+			if (modeSet.count() <= 1) useSuffix = false;
 
-		MetricData::MetricDataValue zero;
-		switch (data.Type)
-		{
-			case MetricType::DoubleMetric:
-				zero.d = 0.0;
-				break;
-			case MetricType::FloatMetric:
-				zero.f = 0.0f;
-				break;
-			case MetricType::IntMetric:
-				zero.i = 0;
-				break;
-			case MetricType::UnsignedMetric:
-				zero.u = 0;
-				break;
-			default:
-				break;
-		}
+			MetricData::MetricDataValue zero;
+			switch (data.Type)
+			{
+				case MetricType::DoubleMetric:
+					zero.d = 0.0;
+					break;
+				case MetricType::FloatMetric:
+					zero.f = 0.0f;
+					break;
+				case MetricType::IntMetric:
+					zero.i = 0;
+					break;
+				case MetricType::UnsignedMetric:
+					zero.u = 0;
+					break;
+				default:
+					break;
+			}
 
-		if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+			if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Average) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
+			}
+			if ((data.Mode & MetricMode::Rate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
+			}
+			if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
+			}
 		}
-		if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Average) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
-		}
-		if ((data.Mode & MetricMode::Rate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
-		}
-		if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
-		}
-	}
 	}
 
 	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type)
