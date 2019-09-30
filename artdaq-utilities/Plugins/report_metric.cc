@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for creating "Periodic Report" messages
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_report_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -157,10 +160,10 @@ private:
 				count++;
 			}
 			if (live_metrics > 0)
-				TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
-				                     << str.str();
+				METLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
+				                       << str.str();
 			else
-				TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+				METLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
 		}
 	}
 };

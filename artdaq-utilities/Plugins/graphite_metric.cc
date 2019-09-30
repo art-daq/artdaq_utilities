@@ -4,8 +4,8 @@
 //
 // An implementation of the MetricPlugin for Graphite
 
-#include "TRACE/tracemf.h"		// order matters -- trace.h (no "mf") is nested from MetricMacros.hh
-#define TRACE_NAME (app_name_ + "_file_metric").c_str()
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_graphite_metric").c_str()
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -181,11 +181,11 @@ public:
 			}
 			catch (boost::system::system_error& err)
 			{
-				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
+				METLOG(TLVL_WARNING) << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
 			}
 			catch (...)
 			{
-				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
+				METLOG(TLVL_WARNING) << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
 			}
 		}
 	}
@@ -205,7 +205,7 @@ private:
 			if (!error) { errorCount_ = 0; }
 			else
 			{
-				mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_;
+				METLOG(TLVL_WARNING) << "Error reconnecting socket, attempt #" << errorCount_;
 			}
 			waitStart_ = std::chrono::steady_clock::now();
 		}

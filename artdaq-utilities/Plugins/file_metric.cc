@@ -4,7 +4,7 @@
 //
 // An implementation of the MetricPlugin for Log Files
 
-#include "TRACE/tracemf.h"		// order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
 #define TRACE_NAME (app_name_ + "_file_metric").c_str()
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
@@ -201,7 +201,7 @@ private:
 	{
 		if (!file_name_is_absolute_path_)
 		{
-			TLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
+			METLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
 			std::string logPathProblem = "";
 			std::string logfileName = "";
 			char* logRootString = getenv(relative_env_var_.c_str());
@@ -211,9 +211,9 @@ private:
 			{
 				if (!BFS::exists(logRootString))
 				{
-					TLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " points to a non-existant directory! Using /tmp/!";
+					METLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " points to a non-existant directory! Using /tmp/!";
 					outputFile_ = "/tmp/" + outputFile_;
-					TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+					METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 					outputStream_.open(outputFile_, mode_);
 				}
 				else
@@ -223,44 +223,44 @@ private:
 
 					while (outputFile_.find('/') != std::string::npos)
 					{
-						TLOG(TLVL_DEBUG) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
+						METLOG(TLVL_DEBUG) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
 						logfileDir.append(outputFile_.substr(0, outputFile_.find('/') + 1));
 						outputFile_.erase(0, outputFile_.find('/') + 1);
 					}
 
 					// As long as the top-level directory exists, I don't think we
 					// really care if we have to create application directories...
-					TLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
+					METLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
 					if (!BFS::exists(logfileDir))
 						BFS::create_directories(logfileDir);
 
 					logfileName.append(logfileDir);
 					logfileName.append(outputFile_);
 
-					TLOG(TLVL_INFO) << "FileMetric Opening file " << logfileName;
+					METLOG(TLVL_INFO) << "FileMetric Opening file " << logfileName;
 					outputStream_.open(logfileName, mode_);
 				}
 			}
 			else
 			{
-				TLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " is null! Using /tmp/!";
+				METLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " is null! Using /tmp/!";
 				outputFile_ = "/tmp/" + outputFile_;
-				TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+				METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 				outputStream_.open(outputFile_, mode_);
 			}
 		}
 		else
 		{
-			TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+			METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 			outputStream_.open(outputFile_, mode_);
 		}
 		if (outputStream_.is_open())
 		{
-		getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
-	}
+			getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+		}
 		else
 		{
-			TLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
+			METLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
 		}
 	}
 
