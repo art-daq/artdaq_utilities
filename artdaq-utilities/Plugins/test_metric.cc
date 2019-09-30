@@ -5,7 +5,7 @@
 // An implementation of the MetricPlugin that writes to the TestMetric static storage
 
 #include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
-#define TRACE_NAME (app_name_ + "_test_metric").c_str()
+#define TRACE_NAME "test_metric"
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"

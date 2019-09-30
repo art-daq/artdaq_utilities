@@ -160,10 +160,10 @@ private:
 				count++;
 			}
 			if (live_metrics > 0)
-				METLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
+				METLOG(TLVL_INFO) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
 				                       << str.str();
 			else
-				METLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+				METLOG(TLVL_INFO) << "Periodic report: No active metrics in last reporting interval!";
 		}
 	}
 };
