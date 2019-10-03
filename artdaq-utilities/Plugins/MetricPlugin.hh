@@ -274,44 +274,44 @@ public:
 						{
 							case MetricType::DoubleMetric:
 								average = data.Value.d / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::FloatMetric:
 								average = data.Value.f / static_cast<double>(data.DataPointCount);
-										break;
+								break;
 							case MetricType::IntMetric:
 								average = data.Value.i / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::UnsignedMetric:
 								average = data.Value.u / static_cast<double>(data.DataPointCount);
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit);
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
 						double duration = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-										              interval_end - interval_start_[*metricName])
-										              .count();
+						                      interval_end - interval_start_[*metricName])
+						                      .count();
 						double rate = 0.0;
 						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
 								rate = data.Value.d / duration;
-										break;
+								break;
 							case MetricType::FloatMetric:
 								rate = data.Value.f / duration;
-										break;
+								break;
 							case MetricType::IntMetric:
 								rate = data.Value.i / duration;
-										break;
+								break;
 							case MetricType::UnsignedMetric:
 								rate = data.Value.u / duration;
-										break;
-									default:
-										break;
-								}
+								break;
+							default:
+								break;
+						}
 						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
@@ -321,10 +321,10 @@ public:
 					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 					{
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
-						}
-
-						metricData_[*metricName].clear();
 					}
+
+					metricData_[*metricName].clear();
+				}
 				interval_start_[*metricName] = interval_end;
 			}
 		}

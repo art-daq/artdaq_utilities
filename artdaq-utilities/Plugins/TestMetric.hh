@@ -11,9 +11,9 @@
 #include <string>
 
 namespace artdaq {
-	/// <summary>
-	/// Provides in-memory storage of metric data for testing
-	/// </summary>
+/// <summary>
+/// Provides in-memory storage of metric data for testing
+/// </summary>
 class TestMetric
 {
 public:
@@ -22,14 +22,14 @@ public:
 	/// </summary>
 	struct MetricPoint
 	{
-		std::chrono::steady_clock::time_point sent_time; ///< When the metric was received
-		std::string metric; ///< Name of the metric
-		std::string value; ///< Value of the metric
-		std::string unit; ///< Units for the metric
+		std::chrono::steady_clock::time_point sent_time;  ///< When the metric was received
+		std::string metric;                               ///< Name of the metric
+		std::string value;                                ///< Value of the metric
+		std::string unit;                                 ///< Units for the metric
 	};
 
-	static std::mutex received_metrics_mutex; ///< Mutex to protect the received_metrics list
-	static std::list<MetricPoint> received_metrics; ///< List of received metric data
+	static std::mutex received_metrics_mutex;        ///< Mutex to protect the received_metrics list
+	static std::list<MetricPoint> received_metrics;  ///< List of received metric data
 };
 }  // namespace artdaq
 

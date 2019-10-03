@@ -143,9 +143,9 @@ struct MetricData
 	/// Accumulated value of this MetricData
 	/// </summary>
 	MetricDataValue Value;
-	MetricDataValue Last; ///< Last value of this MetricData
-	MetricDataValue Min; ///< Minimum recorded value of this MetricData
-	MetricDataValue Max; ///< Maximum recorded vaule of this MetricData
+	MetricDataValue Last;  ///< Last value of this MetricData
+	MetricDataValue Min;   ///< Minimum recorded value of this MetricData
+	MetricDataValue Max;   ///< Maximum recorded vaule of this MetricData
 
 	/// <summary>
 	/// Type of the metric
