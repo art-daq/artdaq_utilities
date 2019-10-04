@@ -7,6 +7,14 @@
 #ifndef __METRIC_INTERFACE__
 #define __METRIC_INTERFACE__
 
+#ifdef TRACE_NAME
+#pragma push_macro("TRACE_NAME")
+#undef TRACE_NAME
+#define TRACE_NAME "MetricPlugin" /* a simple const char * */
+#define TRACE_NAME_POP 1
+#endif
+#include "TRACE/trace.h"  // TLOG(x,name)
+
 #include <chrono>
 #include <string>
 #include <unordered_map>
@@ -44,6 +52,8 @@ public:
 		fhicl::Atom<std::string> level_string{fhicl::Name{"level_string"}, fhicl::Comment{"A string containing a comma-separated list of levels to enable. Ranges are supported. Example: \"1,2,4-10,11\" OPTIONAL"}, ""};
 		/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
 		fhicl::Atom<double> reporting_interval{fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0};
+		// "send_zeros" (Default: true): Whether zeros should be sent to the metric back-end when metrics are not reported in an interval and during shutdown
+		fhicl::Atom<bool> send_zeros{fhicl::Name{"send_zeros"}, fhicl::Comment{"Whether zeros should be sent to the metric back-end when metrics are not reported in an interval and during shutdown"}, true};
 	};
 	/// Used for ParameterSet validation (if desired)
 	using Parameters = fhicl::WrappedTable<Config>;
@@ -61,6 +71,7 @@ public:
 	    , app_name_(app_name)
 	    , inhibit_(false)
 	    , level_mask_(0ULL)
+	    , sendZeros_(pset.get<bool>("send_zeros", true))
 	{
 		if (pset.has_key("level"))
 		{
@@ -210,6 +221,7 @@ public:
 		*/
 	void addMetricData(std::unique_ptr<MetricData> const& data)
 	{
+		TLOG(22) << "Adding metric data for name " << data->Name;
 		if (data->Type == MetricType::StringMetric)
 		{
 			sendMetric_(data->Name, data->StringValue, data->Unit);
@@ -221,6 +233,7 @@ public:
 				metricRegistry_[data->Name] = *data;
 			}
 			metricData_[data->Name].push_back(*data);
+			TLOG(22) << "Current list size: " << metricData_[data->Name].size();
 			//sendMetrics();
 		}
 	}
@@ -236,23 +249,26 @@ public:
 	void sendMetrics(bool forceSend = false,
 	                 std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 	{
-		for (auto metric : metricData_)
+		TLOG(23) << "sendMetrics called" << std::endl;
+		for (auto& metric : metricData_)
 		{
-			auto* metricName = &metric.first;
-			if (readyToSend_(*metricName) || forceSend)
+			if (readyToSend_(metric.first) || forceSend)
 			{
-				if (metricData_[*metricName].size() == 0 && metricRegistry_.count(*metricName))
+				TLOG(24) << "Sending metric " << metric.first;
+				if (metric.second.size() == 0 && metricRegistry_.count(metric.first))
 				{
-					sendZero_(metricRegistry_[*metricName]);
+					TLOG(24) << "Sending zero";
+					sendZero_(metricRegistry_[metric.first]);
 				}
-				else if (metricData_[*metricName].size() > 0)
+				else if (metric.second.size() > 0)
 				{
-					MetricData& data = metricData_[*metricName].front();
-					auto it = ++(metricData_[*metricName].begin());
-					while (it != metricData_[*metricName].end())
+					TLOG(24) << "Aggregating " << metric.second.size() << " MetricData points";
+					MetricData& data = metric.second.front();
+					auto it = ++(metric.second.begin());
+					while (it != metric.second.end())
 					{
 						data.Add(*it);
-						it = metricData_[*metricName].erase(it);
+						it = metric.second.erase(it);
 					}
 
 					std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
@@ -292,7 +308,7 @@ public:
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
 						double duration = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(
-						                      interval_end - interval_start_[*metricName])
+						                      interval_end - interval_start_[metric.first])
 						                      .count();
 						double rate = 0.0;
 						switch (data.Type)
@@ -323,11 +339,14 @@ public:
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
 					}
 
-					metricData_[*metricName].clear();
+					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
+					metric.second.clear();
+					TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
 				}
-				interval_start_[*metricName] = interval_end;
+				interval_start_[metric.first] = interval_end;
 			}
 		}
+		TLOG(23) << "sendMetrics done" << std::endl;
 	}
 
 	/**
@@ -363,12 +382,31 @@ public:
 		return level_mask_[level];
 	}
 
+	/**
+	 * \brief Determine if metrics are waiting to be sent.
+	 * \return True if metrics have been queued for sending by this MetricPlugin instance
+	 */
+	bool metricsPending()
+	{
+		for (auto& metric : metricData_)
+		{
+			if (metric.second.size() > 0)
+			{
+				TLOG(TLVL_TRACE) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 protected:
 	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
 	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
 	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
 	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
 	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
+	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run
 
 private:
 	std::unordered_map<std::string, std::list<MetricData>> metricData_;
@@ -379,8 +417,7 @@ private:
 	bool readyToSend_(std::string name)
 	{
 		auto now = std::chrono::steady_clock::now();
-		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(now - lastSendTime_[name]).count() >=
-		    accumulationTime_)
+		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(now - lastSendTime_[name]).count() >= accumulationTime_)
 		{
 			lastSendTime_[name] = now;
 			return true;
@@ -391,52 +428,55 @@ private:
 
 	void sendZero_(MetricData data)
 	{
-		std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
-		bool useSuffix = true;
-		if (modeSet.count() <= 1) useSuffix = false;
+		if (sendZeros_)
+		{
+			std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
+			bool useSuffix = true;
+			if (modeSet.count() <= 1) useSuffix = false;
 
-		MetricData::MetricDataValue zero;
-		switch (data.Type)
-		{
-			case MetricType::DoubleMetric:
-				zero.d = 0.0;
-				break;
-			case MetricType::FloatMetric:
-				zero.f = 0.0f;
-				break;
-			case MetricType::IntMetric:
-				zero.i = 0;
-				break;
-			case MetricType::UnsignedMetric:
-				zero.u = 0;
-				break;
-			default:
-				break;
-		}
+			MetricData::MetricDataValue zero;
+			switch (data.Type)
+			{
+				case MetricType::DoubleMetric:
+					zero.d = 0.0;
+					break;
+				case MetricType::FloatMetric:
+					zero.f = 0.0f;
+					break;
+				case MetricType::IntMetric:
+					zero.i = 0;
+					break;
+				case MetricType::UnsignedMetric:
+					zero.u = 0;
+					break;
+				default:
+					break;
+			}
 
-		if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Average) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
-		}
-		if ((data.Mode & MetricMode::Rate) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
-		}
-		if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
-		}
-		if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
-		{
-			sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
+			if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Average) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
+			}
+			if ((data.Mode & MetricMode::Rate) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
+			}
+			if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
+			}
+			if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
+			{
+				sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
+			}
 		}
 	}
 
@@ -463,4 +503,8 @@ private:
 };
 }  //End namespace artdaq
 
+#ifdef TRACE_NAME_POP
+#pragma pop_macro("TRACE_NAME")
+#undef TRACE_NAME_POP
+#endif
 #endif  //End ifndef __METRIC_INTERFACE__

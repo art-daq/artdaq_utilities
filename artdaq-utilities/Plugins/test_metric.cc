@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin that writes to the TestMetric static storage
 
+#define TRACE_NAME "TestMetric"
+#include "trace.h"
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -55,8 +58,10 @@ public:
 	{
 		if (!inhibit_)
 		{
-			std::lock_guard<std::mutex> lk(TestMetric::received_metrics_mutex);
+			TestMetric::LockReceivedMetricMutex();
+			TLOG(TLVL_TRACE) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
 			TestMetric::received_metrics.emplace_back(TestMetric::MetricPoint{std::chrono::steady_clock::now(), name, value, unit});
+			TestMetric::UnlockReceivedMetricMutex();
 		}
 	}
 

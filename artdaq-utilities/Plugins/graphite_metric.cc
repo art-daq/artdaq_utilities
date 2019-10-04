@@ -28,7 +28,7 @@ namespace artdaq {
 	 *     
 	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
 	 */
-class GraphiteMetric : public MetricPlugin
+class GraphiteMetric final : public MetricPlugin
 {
 private:
 	std::string host_;
@@ -69,6 +69,7 @@ public:
 	/**
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
+
 	virtual ~GraphiteMetric() { stopMetrics(); }
 
 	/**
@@ -168,9 +169,20 @@ public:
 	{
 		if (!stopped_)
 		{
-			socket_.shutdown(boost::asio::socket_base::shutdown_send);
-			socket_.close();
-			stopped_ = true;
+			try
+			{
+				socket_.shutdown(boost::asio::socket_base::shutdown_send);
+				socket_.close();
+				stopped_ = true;
+			}
+			catch (boost::system::system_error& err)
+			{
+				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
+			}
+			catch (...)
+			{
+				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
+			}
 		}
 	}
 
