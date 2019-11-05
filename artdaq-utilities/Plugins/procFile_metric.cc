@@ -149,6 +149,7 @@ public:
 			}
 			catch (boost::exception const& e)
 			{
+				TLOG(TLVL_ERROR) << "Creating ProcFile Metric thread failed! e: " << boost::diagnostic_information(e);
 				std::cerr << "Creating ProcFile Metric thread failed! e: " << boost::diagnostic_information(e) << std::endl;
 				exit(4);
 			}
