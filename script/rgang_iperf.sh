@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.51 $$Date: 2019/02/27 17:57:59 $'
+ # rev='$Revision: 1.54 $$Date: 2019/11/04 22:36:29 $'
 
 
 USAGE="\
@@ -290,7 +290,7 @@ else
 fi
 if [ -n "$Mb" -a "$Mb" != 0 ];then
     MB=`expr $Mb / 8`
-    BWdly_B=`awk "BEGIN{print $MB*$min_ms*1000/2;exit}"`   # 1/2 rtt
+    BWdly_B=`awk "BEGIN{print $MB*$min_ms*1000;exit}"`  # min send window to achive BW (full RTT to get ack from BWdly_B's ago).
     vecho 0 "BW:${Mb}Mb minRTT:${min_ms}ms linkBW*delay: $BWdly_B Bytes"
 else
     vecho 0 "\
