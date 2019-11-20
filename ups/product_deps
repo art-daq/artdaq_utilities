@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent artdaq_utilities  v1_05_02
+parent artdaq_utilities  v1_05_02a
 defaultqual e15:s67
 
 # These optional lines define the installed directories where
@@ -18,13 +18,14 @@ fcldir      product_dir fcl
 
 #
 product		version		optional
+messagefacility v2_04_03        s92
 messagefacility v2_05_00        s87
 messagefacility v2_02_06        s85
 messagefacility v2_04_03        s83
 messagefacility v2_04_03        s82
 messagefacility v2_02_04        s73
 messagefacility v2_02_01        s67
-TRACE		v3_15_03
+TRACE		v3_15_02
 cetbuildtools	v7_13_02	-	only_for_build
 end_product_list
 
@@ -32,6 +33,10 @@ end_product_list
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
 qualifier     messagefacility	TRACE   notes
+c2:s92:debug c2:debug		-nq-	-std=c++17
+c2:s92:prof  c2:prof		-nq-	-std=c++17
+e17:s92:debug e17:debug		-nq-	-std=c++17
+e17:s92:prof  e17:prof		-nq-	-std=c++17
 c7:s87:debug c7:debug		-nq-	-std=c++17
 c7:s87:prof  c7:prof		-nq-	-std=c++17
 c2:s87:debug c2:debug		-nq-	-std=c++17
