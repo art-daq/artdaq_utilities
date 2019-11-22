@@ -258,8 +258,8 @@ private:
 		}
 		if (outputStream_.is_open())
 		{
-		getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
-	}
+			getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+		}
 		else
 		{
 			TLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
