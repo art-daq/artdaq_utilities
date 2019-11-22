@@ -90,7 +90,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 				TLOG(TLVL_DEBUG) << "Constructing metric plugin with name " << name;
 				fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
 				metric_plugins_.push_back(
-										  makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_, name));
+				    makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_, name));
 			}
 			catch (const cet::exception& e)
 			{

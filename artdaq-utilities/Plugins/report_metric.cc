@@ -161,7 +161,7 @@ private:
 			}
 			if (live_metrics > 0)
 				METLOG(TLVL_INFO) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
-				                       << str.str();
+				                  << str.str();
 			else
 				METLOG(TLVL_INFO) << "Periodic report: No active metrics in last reporting interval!";
 		}
