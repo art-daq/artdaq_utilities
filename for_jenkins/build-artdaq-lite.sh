@@ -80,9 +80,6 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 fi
 
 basequal_dash=$basequal
-if [ $nu_flag -eq 1 ];then
-    basequal_dash=$basequal-nu
-fi
 
 case ${build_type} in
     debug) ;;
@@ -147,7 +144,7 @@ export CTEST_OUTPUT_ON_FAILURE=1
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
- if [ ${demo_build} -ne 0 ]; then
+ if [[ "${demo_build}" != "0" ]]; then
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
