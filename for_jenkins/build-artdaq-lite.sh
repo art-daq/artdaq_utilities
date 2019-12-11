@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+demo_build=${DEMO_BUILD:-0}
 
 IFS_save=$IFS
 IFS=":"
@@ -137,17 +138,6 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
-# remove any artdaq entities that were pulled so it will always be rebuilt
-if [ -d ${blddir}/artdaq_utilities ]; then
-  echo "Removing ${blddir}/artdaq_utilities"
-  rm -rf ${blddir}/artdaq_utilities
-  if [ `ls -l ${blddir}/artdaq_utilities*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_utilities*.tar.bz2; fi
-fi
-if [ -d ${blddir}/artdaq ]; then
-  echo "Removing ${blddir}/artdaq"
-  rm -rf ${blddir}/artdaq
-  if [ `ls -l ${blddir}/artdaq*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq*.tar.bz2; fi
-fi
 
 echo
 echo "begin build"
@@ -157,16 +147,29 @@ export CTEST_OUTPUT_ON_FAILURE=1
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
+ if [ ${demo_build} -ne 0 ]; then
+./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
+ { mv ${blddir}/*.log  $WORKSPACE/copyBack/
+   exit 1 
+ }
+ fi
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
 
 artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
 artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
+demoManifest=`ls ${blddir}/artdaq_demo-*_MANIFEST.txt|tail -1`
 
 cat ${artManifest} >>${artdaqManifest}
 cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.tmp
 mv ${artdaqManifest}.tmp ${artdaqManifest}
+
+if [ -f ${demoManifest} ];then
+   cat ${artdaqManifest} >>${demoManifest}
+   cat ${demoManifest}|grep -v source|sort|uniq >>${demoManifest}.tmp
+   mv ${demoManifest}.tmp ${demoManifest}
+fi
 
 echo
 echo "move files"
