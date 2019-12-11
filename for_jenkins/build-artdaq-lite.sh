@@ -67,6 +67,7 @@ for qual in ${qualarray[@]};do
         s87)
             squal=s87
             ;;
+        s89) squal=s89;;
         s92) squal=s92;;
 		esac
 done
