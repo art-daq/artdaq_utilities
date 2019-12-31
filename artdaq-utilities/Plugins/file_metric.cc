@@ -35,9 +35,9 @@ private:
 	std::string timeformat_;
 	bool stopped_;
 
-	std::ostream& getTime_(std::ostream& stream)
+	std::ostream& getTime_(std::ostream& stream, const std::chrono::system_clock::time_point& time)
 	{
-		std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		std::time_t tt = std::chrono::system_clock::to_time_t(time);
 
 		struct std::tm* ptm = std::localtime(&tt);
 		if (timeformat_.size())
@@ -123,12 +123,13 @@ public:
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
+   * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
-			getTime_(outputStream_) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
+			getTime_(outputStream_, time) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
 		}
 	}
 
@@ -137,10 +138,11 @@ public:
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
+   * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -148,10 +150,11 @@ public:
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
+   * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -159,10 +162,11 @@ public:
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
+   * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -170,10 +174,11 @@ public:
    * \param name Name of the metric
    * \param value Value of the metric
    * \param unit Units of the metric
+   * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -182,7 +187,7 @@ public:
 	void startMetrics_() override
 	{
 		stopped_ = false;
-		getTime_(outputStream_) << "FileMetric plugin started." << std::endl;
+		getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric plugin started." << std::endl;
 	}
 
 	/**
@@ -191,7 +196,7 @@ public:
 	void stopMetrics_() override
 	{
 		stopped_ = true;
-		getTime_(outputStream_) << "FileMetric plugin has been stopped!" << std::endl;
+		getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric plugin has been stopped!" << std::endl;
 	}
 
 private:
@@ -254,7 +259,7 @@ private:
 		}
 		if (outputStream_.is_open())
 		{
-			getTime_(outputStream_) << "FileMetric plugin file opened." << std::endl;
+			getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric plugin file opened." << std::endl;
 		}
 		else
 		{
@@ -264,7 +269,7 @@ private:
 
 	void closeFile_()
 	{
-		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
+		getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric closing file stream." << std::endl;
 		outputStream_.close();
 	}
 };

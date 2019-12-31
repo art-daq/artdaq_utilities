@@ -150,50 +150,55 @@ protected:
 		 * \param name Name of the metric
 		 * \param value Value of the metric
 		 * \param unit Units for the metric
+		 * \param interval_end End point of the aggregation interval
 		 *
 		 * Note this is a pure virtual function, it should be overridden by implementation plugins
 		 */
-	virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) = 0;
+	virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units for the metric
+		 * \param interval_end End point of the aggregation interval
 		*
 		* Note this is a pure virtual function, it should be overridden by implementation plugins
 		*/
-	virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit) = 0;
+	virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units for the metric
+		 * \param interval_end End point of the aggregation interval
 		*
 		* Note this is a pure virtual function, it should be overridden by implementation plugins
 		*/
-	virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit) = 0;
+	virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units for the metric
+		 * \param interval_end End point of the aggregation interval
 		*
 		* Note this is a pure virtual function, it should be overridden by implementation plugins
 		*/
-	virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit) = 0;
+	virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units for the metric
+		 * \param interval_end End point of the aggregation interval
 		*
 		* Note this is a pure virtual function, it should be overridden by implementation plugins
 		*/
-	virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit) = 0;
+	virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		 * \brief Perform any start-up actions necessary for the metric plugin
@@ -224,7 +229,7 @@ public:
 		TLOG(22) << "Adding metric data for name " << data->Name;
 		if (data->Type == MetricType::StringMetric)
 		{
-			sendMetric_(data->Name, data->StringValue, data->Unit);
+			sendMetric_(data->Name, data->StringValue, data->Unit, std::chrono::system_clock::now());
 		}
 		else
 		{
@@ -277,11 +282,11 @@ public:
 
 					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
-						sendMetric_(data.Name + (useSuffix ? " - Last" : ""), data.Last, data.Unit, data.Type);
+						sendMetric_(data.Name + (useSuffix ? " - Last" : ""), data.Last, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
 					{
-						sendMetric_(data.Name + (useSuffix ? " - Total" : ""), data.Value, data.Unit, data.Type);
+						sendMetric_(data.Name + (useSuffix ? " - Total" : ""), data.Value, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Average) != MetricMode::None)
 					{
@@ -303,7 +308,7 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit);
+						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit,to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
@@ -328,15 +333,15 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s");
+						sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), rate, data.Unit + "/s", to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
 					{
-						sendMetric_(data.Name + (useSuffix ? " - Min" : ""), data.Min, data.Unit, data.Type);
+						sendMetric_(data.Name + (useSuffix ? " - Min" : ""), data.Min, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 					{
-						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
+						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 
 					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
@@ -414,6 +419,11 @@ private:
 	std::unordered_map<std::string, std::chrono::steady_clock::time_point> lastSendTime_;
 	std::unordered_map<std::string, std::chrono::steady_clock::time_point> interval_start_;
 
+	std::chrono::system_clock::time_point to_system_clock(std::chrono::steady_clock::time_point t)
+	{
+		return std::chrono::system_clock::now() + (t - std::chrono::steady_clock::now());
+	}
+
 	bool readyToSend_(std::string name)
 	{
 		auto now = std::chrono::steady_clock::now();
@@ -455,46 +465,46 @@ private:
 
 			if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type);
+				sendMetric_(data.Name + (useSuffix ? " - Last" : ""), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type);
+				sendMetric_(data.Name + (useSuffix ? " - Total" : ""), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Average) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit);
+				sendMetric_(data.Name + (useSuffix ? " - Average" : ""), 0.0, data.Unit, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s");
+				sendMetric_(data.Name + (useSuffix ? " - Rate" : ""), 0.0, data.Unit + "/s", std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type);
+				sendMetric_(data.Name + (useSuffix ? " - Min" : ""), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 			{
-				sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type);
+				sendMetric_(data.Name + (useSuffix ? " - Max" : ""), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 		}
 	}
 
-	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type)
+	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type, std::chrono::system_clock::time_point interval_end)
 	{
 		switch (type)
 		{
 			case MetricType::DoubleMetric:
-				sendMetric_(name, data.d, unit);
+				sendMetric_(name, data.d, unit, interval_end);
 				break;
 			case MetricType::FloatMetric:
-				sendMetric_(name, data.f, unit);
+				sendMetric_(name, data.f, unit, interval_end);
 				break;
 			case MetricType::IntMetric:
-				sendMetric_(name, data.i, unit);
+				sendMetric_(name, data.i, unit, interval_end);
 				break;
 			case MetricType::UnsignedMetric:
-				sendMetric_(name, data.u, unit);
+				sendMetric_(name, data.u, unit, interval_end);
 				break;
 			default:
 				break;

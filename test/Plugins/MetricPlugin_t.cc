@@ -33,23 +33,23 @@ public:
 	/**
 	 * \brief Send a String metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const std::string&, const std::string&) override { sendMetric_string_calls++; }
+	virtual void sendMetric_(const std::string&, const std::string&, const std::string&, const std::chrono::system_clock ::time_point&) override { sendMetric_string_calls++; }
 	/**
 	 * \brief Send an int metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const int&, const std::string&) override { sendMetric_int_calls++; }
+	virtual void sendMetric_(const std::string&, const int&, const std::string&, const std::chrono::system_clock ::time_point&) override { sendMetric_int_calls++; }
 	/**
 	 * \brief Send a double metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const double&, const std::string&) override { sendMetric_double_calls++; }
+	virtual void sendMetric_(const std::string&, const double&, const std::string&, const std::chrono::system_clock ::time_point&) override { sendMetric_double_calls++; }
 	/**
 	 * \brief Send a float metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const float&, const std::string&) override { sendMetric_float_calls++; }
+	virtual void sendMetric_(const std::string&, const float&, const std::string&, const std::chrono::system_clock ::time_point&) override { sendMetric_float_calls++; }
 	/**
 	 * \brief Send an unsigned metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const long unsigned int&, const std::string&) override { sendMetric_unsigned_calls++; }
+	virtual void sendMetric_(const std::string&, const long unsigned int&, const std::string&, const std::chrono::system_clock ::time_point&) override { sendMetric_unsigned_calls++; }
 
 	/**
 	 * \brief Record that a startMetrics call was received
