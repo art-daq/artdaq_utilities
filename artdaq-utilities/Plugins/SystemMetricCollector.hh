@@ -19,10 +19,9 @@ public:
 	SystemMetricCollector(bool processMetrics, bool systemMetrics);
 
 	/// <summary>
-	/// Return the current overall system CPU usage in %
+	/// Calculate the system CPU usage percentages
 	/// </summary>
-	/// <returns>System CPU usage, %</returns>
-	double GetSystemCPUUsagePercent();
+	void GetSystemCPUUsage();
 	/// <summary>
 	/// Return the current amount of CPU usage for the current process, %
 	/// </summary>
@@ -97,6 +96,12 @@ private:
 		    : user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), totalUsage(0), total(0) {}
 	};
 	cpustat ReadProcStat_();
+	double nonIdleCPUPercent_; // user + nice + system + iowait + irq + softirq
+	double userCPUPercent_; // Includes nice
+	double systemCPUPercent_;
+	double idleCPUPercent_;
+	double iowaitCPUPercent_;
+	double irqCPUPercent_; // includes softirq
 
 	struct netstat
 	{

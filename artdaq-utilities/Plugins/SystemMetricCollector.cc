@@ -20,13 +20,19 @@ artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool s
 	lastNetStat_ = thisNetStat_;
 }
 
-double artdaq::SystemMetricCollector::GetSystemCPUUsagePercent()
+void artdaq::SystemMetricCollector::GetSystemCPUUsage()
 {
 	auto thisCPU = ReadProcStat_();
-	auto totalUsage = thisCPU.totalUsage - lastCPU_.totalUsage;
-	auto total = thisCPU.total - lastCPU_.total;
+	auto total = static_cast<double>(thisCPU.total - lastCPU_.total);
+	
+	nonIdleCPUPercent_ = (thisCPU.totalUsage - lastCPU_.totalUsage) * 100.0 / total;
+	userCPUPercent_ = (thisCPU.user + thisCPU.nice - lastCPU_.user - lastCPU_.nice) * 100.0 / total;
+	systemCPUPercent_ = (thisCPU.system - lastCPU_.system) * 100.0 / total;
+	idleCPUPercent_ = (thisCPU.idle - lastCPU_.idle) * 100.0 / total;
+	iowaitCPUPercent_ = (thisCPU.iowait - lastCPU_.iowait) * 100.0 / total;
+	irqCPUPercent_ = (thisCPU.irq + thisCPU.softirq - lastCPU_.irq - lastCPU_.softirq) * 100.0 / total;
+
 	lastCPU_ = thisCPU;
-	return totalUsage * 100.0 / static_cast<double>(total);
 }
 
 double artdaq::SystemMetricCollector::GetProcessCPUUsagePercent()
@@ -144,7 +150,13 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 	}
 	if (sendSystemMetrics_)
 	{
-		output.emplace_back(new MetricData("System CPU Usage", GetSystemCPUUsagePercent(), "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		GetSystemCPUUsage();
+		output.emplace_back(new MetricData("System CPU Usage", nonIdleCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("System CPU User", userCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("System CPU System", systemCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("System CPU Idle", idleCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("System CPU IOWait", iowaitCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
+		output.emplace_back(new MetricData("System CPU IRQ", irqCPUPercent_, "%", MLEVEL_CPU, MetricMode::Average, "", false));
 
 		output.emplace_back(new MetricData("Free RAM", GetAvailableRAM(), "B", MLEVEL_RAM, MetricMode::LastPoint, "", false));
 		output.emplace_back(new MetricData("Total RAM", GetTotalRAM(), "B", MLEVEL_RAM, MetricMode::LastPoint, "", false));
