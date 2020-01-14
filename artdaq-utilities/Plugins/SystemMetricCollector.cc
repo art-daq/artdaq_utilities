@@ -184,6 +184,14 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	       &this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
 	fclose(filp);
 
+	// Reset iowait if it decreases
+	if (this_cpu.iowait < lastCPU_.iowait) {
+		auto diff = lastCPU_.iowait - this_cpu.iowait;
+		lastCPU_.iowait = this_cpu.iowait; 
+		lastCPU_.total -= diff;
+		lastCPU_.totalUsage -= diff;
+	}
+
 	this_cpu.totalUsage =
 	    this_cpu.user + this_cpu.nice + this_cpu.system + this_cpu.iowait + this_cpu.irq + this_cpu.softirq;
 	this_cpu.total = this_cpu.totalUsage + this_cpu.idle;
