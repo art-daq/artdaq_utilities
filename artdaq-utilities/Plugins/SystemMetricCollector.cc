@@ -1,6 +1,7 @@
 #include "trace.h"
 
 #include <chrono>
+#include <fstream>
 #include "SystemMetricCollector.hh"
 #include "sys/sysinfo.h"
 #include "sys/types.h"
@@ -12,7 +13,18 @@
 #define MLEVEL_NETWORK 9
 
 artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
-    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
+    : cpuCount_(GetCPUCount_())
+    , nonIdleCPUPercent_(0)
+    , userCPUPercent_(0)
+    , systemCPUPercent_(0)
+    , idleCPUPercent_(0)
+    , iowaitCPUPercent_(0)
+    , irqCPUPercent_(0)
+    , lastCPU_()
+    , lastProcessCPUTimes_()
+    , lastProcessCPUTime_(0)
+    , sendProcessMetrics_(processMetrics)
+    , sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -24,13 +36,24 @@ void artdaq::SystemMetricCollector::GetSystemCPUUsage()
 {
 	auto thisCPU = ReadProcStat_();
 	auto total = static_cast<double>(thisCPU.total - lastCPU_.total);
-	
-	nonIdleCPUPercent_ = (thisCPU.totalUsage - lastCPU_.totalUsage) * 100.0 / total;
-	userCPUPercent_ = (thisCPU.user + thisCPU.nice - lastCPU_.user - lastCPU_.nice) * 100.0 / total;
-	systemCPUPercent_ = (thisCPU.system - lastCPU_.system) * 100.0 / total;
-	idleCPUPercent_ = (thisCPU.idle - lastCPU_.idle) * 100.0 / total;
-	iowaitCPUPercent_ = (thisCPU.iowait - lastCPU_.iowait) * 100.0 / total;
-	irqCPUPercent_ = (thisCPU.irq + thisCPU.softirq - lastCPU_.irq - lastCPU_.softirq) * 100.0 / total;
+
+	if (total == 0)
+	{
+		nonIdleCPUPercent_ = 0;
+		userCPUPercent_ = 0;
+		systemCPUPercent_ = 0;
+		idleCPUPercent_ = 0;
+		iowaitCPUPercent_ = 0;
+		irqCPUPercent_ = 0;
+		return;
+	}
+
+	nonIdleCPUPercent_ = (thisCPU.totalUsage - lastCPU_.totalUsage) * 100.0 * cpuCount_ / total;
+	userCPUPercent_ = (thisCPU.user + thisCPU.nice - lastCPU_.user - lastCPU_.nice) * 100.0 * cpuCount_ / total;
+	systemCPUPercent_ = (thisCPU.system - lastCPU_.system) * 100.0 * cpuCount_ / total;
+	idleCPUPercent_ = (thisCPU.idle - lastCPU_.idle) * 100.0 * cpuCount_ / total;
+	iowaitCPUPercent_ = (thisCPU.iowait - lastCPU_.iowait) * 100.0 * cpuCount_ / total;
+	irqCPUPercent_ = (thisCPU.irq + thisCPU.softirq - lastCPU_.irq - lastCPU_.softirq) * 100.0 * cpuCount_ / total;
 
 	lastCPU_ = thisCPU;
 }
@@ -45,13 +68,15 @@ double artdaq::SystemMetricCollector::GetProcessCPUUsagePercent()
 		return 0.0;
 	}
 	auto delta_t = now - lastProcessCPUTime_;
+	if (delta_t == 0) return 0;
+
 	auto utime = this_times.tms_utime - lastProcessCPUTimes_.tms_utime;
 	auto stime = this_times.tms_stime - lastProcessCPUTimes_.tms_stime;
 
 	lastProcessCPUTime_ = now;
 	lastProcessCPUTimes_ = this_times;
 
-	return utime + stime * 100.0 / static_cast<double>(delta_t);
+	return (utime + stime) * 100.0 / static_cast<double>(delta_t);
 }
 
 unsigned long artdaq::SystemMetricCollector::GetAvailableRAM()
@@ -91,7 +116,7 @@ double artdaq::SystemMetricCollector::GetAvailableRAMPercent(bool buffers)
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
-	if (err == 0)
+	if (err == 0 && meminfo.totalram > 0)
 	{
 		auto available = meminfo.freeram + (buffers ? meminfo.bufferram : 0);
 		return available * 100.0 / static_cast<double>(meminfo.totalram);
@@ -112,6 +137,7 @@ double artdaq::SystemMetricCollector::GetProcessMemUsagePercent()
 {
 	auto proc = GetProcessMemUsage();
 	auto total = GetTotalRAM();
+	if (total == 0) return 0;
 	return proc * 100.0 / static_cast<double>(total);
 }
 
@@ -185,9 +211,10 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	fclose(filp);
 
 	// Reset iowait if it decreases
-	if (this_cpu.iowait < lastCPU_.iowait) {
+	if (this_cpu.iowait < lastCPU_.iowait)
+	{
 		auto diff = lastCPU_.iowait - this_cpu.iowait;
-		lastCPU_.iowait = this_cpu.iowait; 
+		lastCPU_.iowait = this_cpu.iowait;
 		lastCPU_.total -= diff;
 		lastCPU_.totalUsage -= diff;
 	}
@@ -197,6 +224,31 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	this_cpu.total = this_cpu.totalUsage + this_cpu.idle;
 
 	return this_cpu;
+}
+
+size_t artdaq::SystemMetricCollector::GetCPUCount_()
+{
+	size_t count = 0;
+	std::ifstream file("/proc/stat");
+	std::string line;
+	bool first = true;
+	while (std::getline(file, line))
+	{
+		if (first)
+		{
+			first = false;
+			continue;
+		}
+		if (line.find("cpu") == 0)
+		{
+			count++;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return count;
 }
 
 artdaq::SystemMetricCollector::netstat artdaq::SystemMetricCollector::ReadProcNetDev_()

@@ -96,6 +96,8 @@ private:
 		    : user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), totalUsage(0), total(0) {}
 	};
 	cpustat ReadProcStat_();
+	static size_t GetCPUCount_(); // Read /proc/stat, count lines beyond the first that start with "cpu"
+	size_t cpuCount_;
 	double nonIdleCPUPercent_; // user + nice + system + iowait + irq + softirq
 	double userCPUPercent_; // Includes nice
 	double systemCPUPercent_;
