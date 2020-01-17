@@ -13,18 +13,18 @@
 #define MLEVEL_NETWORK 9
 
 artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
-    : cpuCount_(GetCPUCount_())
-    , nonIdleCPUPercent_(0)
-    , userCPUPercent_(0)
-    , systemCPUPercent_(0)
-    , idleCPUPercent_(0)
-    , iowaitCPUPercent_(0)
-    , irqCPUPercent_(0)
-    , lastCPU_()
-    , lastProcessCPUTimes_()
-    , lastProcessCPUTime_(0)
-    , sendProcessMetrics_(processMetrics)
-    , sendSystemMetrics_(systemMetrics)
+	: cpuCount_(GetCPUCount_())
+	, nonIdleCPUPercent_(0)
+	, userCPUPercent_(0)
+	, systemCPUPercent_(0)
+	, idleCPUPercent_(0)
+	, iowaitCPUPercent_(0)
+	, irqCPUPercent_(0)
+	, lastCPU_()
+	, lastProcessCPUTimes_()
+	, lastProcessCPUTime_(0)
+	, sendProcessMetrics_(processMetrics)
+	, sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -141,28 +141,37 @@ double artdaq::SystemMetricCollector::GetProcessMemUsagePercent()
 	return proc * 100.0 / static_cast<double>(total);
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveBytes()
+unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveBytes(std::string ifname)
 {
 	UpdateNetstat_();
-	return thisNetStat_.recv_bytes - lastNetStat_.recv_bytes;
+	return thisNetStat_.stats[ifname].recv_bytes - lastNetStat_.stats[ifname].recv_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendBytes()
+unsigned long artdaq::SystemMetricCollector::GetNetworkSendBytes(std::string ifname)
 {
 	UpdateNetstat_();
-	return thisNetStat_.send_bytes - lastNetStat_.send_bytes;
+	return thisNetStat_.stats[ifname].send_bytes - lastNetStat_.stats[ifname].send_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveErrors()
+unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveErrors(std::string ifname)
 {
 	UpdateNetstat_();
-	return thisNetStat_.recv_errs - lastNetStat_.recv_errs;
+	return thisNetStat_.stats[ifname].recv_errs - lastNetStat_.stats[ifname].recv_errs;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendErrors()
+unsigned long artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string ifname)
 {
 	UpdateNetstat_();
-	return thisNetStat_.send_errs - lastNetStat_.send_errs;
+	return thisNetStat_.stats[ifname].send_errs - lastNetStat_.stats[ifname].send_errs;
+}
+
+std::list<std::string> artdaq::SystemMetricCollector::GetNetworkInterfaceNames()
+{
+	std::list<std::string> output;
+	for (auto& i : thisNetStat_.stats) {
+		output.push_back(i.first);
+	}
+	return output;
 }
 
 std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::SendMetrics()
@@ -188,16 +197,19 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 		output.emplace_back(new MetricData("Total RAM", GetTotalRAM(), "B", MLEVEL_RAM, MetricMode::LastPoint, "", false));
 		output.emplace_back(new MetricData("Available RAM", GetAvailableRAMPercent(true), "%", MLEVEL_RAM, MetricMode::LastPoint, "", false));
 
-		output.emplace_back(new MetricData("Network Receive Rate", GetNetworkReceiveBytes(), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
-		output.emplace_back(new MetricData("Network Send Rate", GetNetworkSendBytes(), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
-		output.emplace_back(new MetricData("Network Send Errors", GetNetworkSendErrors(), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
-		output.emplace_back(new MetricData("Network Receive Errors", GetNetworkReceiveErrors(), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
+		for (auto& ifname : GetNetworkInterfaceNames())
+		{
+			output.emplace_back(new MetricData(ifname + " Network Receive Rate", GetNetworkReceiveBytes(ifname), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
+			output.emplace_back(new MetricData(ifname + " Network Send Rate", GetNetworkSendBytes(ifname), "B", MLEVEL_NETWORK, MetricMode::Rate, "", false));
+			output.emplace_back(new MetricData(ifname + " Network Send Errors", GetNetworkSendErrors(ifname), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
+			output.emplace_back(new MetricData(ifname + " Network Receive Errors", GetNetworkReceiveErrors(ifname), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
+		}
 	}
 
 	TLOG(TLVL_DEBUG)
-	    << "Time to collect system metrics: "
-	    << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
-	    << " us.";
+		<< "Time to collect system metrics: "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
+		<< " us.";
 	return output;
 }
 
@@ -207,7 +219,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	cpustat this_cpu;
 
 	fscanf(filp, "cpu %llu %llu %llu %llu %llu %llu %llu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,
-	       &this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
+		&this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
 	fclose(filp);
 
 	// Reset iowait if it decreases
@@ -220,7 +232,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	}
 
 	this_cpu.totalUsage =
-	    this_cpu.user + this_cpu.nice + this_cpu.system + this_cpu.iowait + this_cpu.irq + this_cpu.softirq;
+		this_cpu.user + this_cpu.nice + this_cpu.system + this_cpu.iowait + this_cpu.irq + this_cpu.softirq;
 	this_cpu.total = this_cpu.totalUsage + this_cpu.idle;
 
 	return this_cpu;
@@ -251,12 +263,12 @@ size_t artdaq::SystemMetricCollector::GetCPUCount_()
 	return count;
 }
 
-artdaq::SystemMetricCollector::netstat artdaq::SystemMetricCollector::ReadProcNetDev_()
+artdaq::SystemMetricCollector::netstats artdaq::SystemMetricCollector::ReadProcNetDev_()
 {
 	auto filp = fopen("/proc/net/dev", "r");
-	char buf[200], ifname[20];
-	netstat output;
+	char buf[200], ifname_c[20];
 	auto start_time = std::chrono::steady_clock::now();
+	netstats output;
 
 	// skip first two lines
 	for (int i = 0; i < 2; i++)
@@ -268,18 +280,20 @@ artdaq::SystemMetricCollector::netstat artdaq::SystemMetricCollector::ReadProcNe
 
 	while (fgets(buf, 200, filp))
 	{
-		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,
-		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
+		sscanf(buf, " %[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,
+			&rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
-		if (ifname[0] == 'e')
-		{
-			auto total_rerrs = rerrs + rdrop + rfifo + rframe;
-			auto total_terrs = terrs + tdrop + tfifo + tcolls + tcarrier;
-			output.recv_bytes += rbytes;
-			output.send_bytes += tbytes;
-			output.send_errs += total_terrs;
-			output.recv_errs += total_rerrs;
-		}
+		std::string ifname(ifname_c);
+		netstat stat;
+
+		auto total_rerrs = rerrs + rdrop + rfifo + rframe;
+		auto total_terrs = terrs + tdrop + tfifo + tcolls + tcarrier;
+		stat.recv_bytes = rbytes;
+		stat.send_bytes = tbytes;
+		stat.send_errs = total_terrs;
+		stat.recv_errs = total_rerrs;
+
+		output.stats[ifname] = stat;
 	}
 	output.collectionTime = start_time;
 	fclose(filp);
@@ -292,7 +306,7 @@ void artdaq::SystemMetricCollector::UpdateNetstat_()
 	auto start_time = std::chrono::steady_clock::now();
 	// Only collect network stats once per second
 	if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(start_time - thisNetStat_.collectionTime)
-	        .count() > 1.0)
+		.count() > 1.0)
 	{
 		auto output = ReadProcNetDev_();
 		lastNetStat_ = thisNetStat_;

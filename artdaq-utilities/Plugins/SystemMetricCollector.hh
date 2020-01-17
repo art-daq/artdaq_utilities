@@ -2,6 +2,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "artdaq-utilities/Plugins/MetricData.hh"
 
 namespace artdaq {
@@ -63,24 +64,29 @@ public:
 	/// <summary>
 	/// Get the amount of data received from the network in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes recevied from the network in the last second</returns>
-	unsigned long GetNetworkReceiveBytes();
+	unsigned long GetNetworkReceiveBytes(std::string ifname);
 	/// <summary>
 	/// Get the amount of data sent to the network in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes sent to the network in the last second</returns>
-	unsigned long GetNetworkSendBytes();
+	unsigned long GetNetworkSendBytes(std::string ifname);
 	/// <summary>
 	/// Get the number of network receive errors in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network receive errors in the last second</returns>
-	unsigned long GetNetworkReceiveErrors();
+	unsigned long GetNetworkReceiveErrors(std::string ifname);
 	/// <summary>
 	/// Get the number of network send errors in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network send errors in the last second</returns>
-	unsigned long GetNetworkSendErrors();
+	unsigned long GetNetworkSendErrors(std::string ifname);
 
+	std::list<std::string> GetNetworkInterfaceNames();
 	/// <summary>
 	/// Send the configured metrics
 	/// </summary>
@@ -108,18 +114,21 @@ private:
 	struct netstat
 	{
 		unsigned long long send_bytes, recv_bytes, send_errs, recv_errs;
-		std::chrono::steady_clock::time_point collectionTime;
 		netstat()
 		    : send_bytes(0), recv_bytes(0), send_errs(0), recv_errs(0) {}
 	};
-	netstat ReadProcNetDev_();
+	struct netstats {
+		std::unordered_map<std::string, netstat> stats;
+		std::chrono::steady_clock::time_point collectionTime;
+	};
+	netstats ReadProcNetDev_();
 	void UpdateNetstat_();
 
 	cpustat lastCPU_;
 	struct tms lastProcessCPUTimes_;
 	clock_t lastProcessCPUTime_;
-	netstat thisNetStat_;
-	netstat lastNetStat_;
+	netstats thisNetStat_;
+	netstats lastNetStat_;
 	bool sendProcessMetrics_;
 	bool sendSystemMetrics_;
 };
