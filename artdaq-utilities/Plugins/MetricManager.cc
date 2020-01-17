@@ -460,7 +460,11 @@ void artdaq::MetricManager::startMetricLoop_()
 bool artdaq::MetricManager::metricQueueEmpty()
 {
 	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
-	return metric_cache_.size() == 0;
+	for (auto& cache_entry : metric_cache_) {
+		if (cache_entry.second->DataPointCount > 0) return false;
+	}
+
+	return true;
 }
 
 bool artdaq::MetricManager::metricManagerBusy()
