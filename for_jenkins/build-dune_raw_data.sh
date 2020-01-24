@@ -7,7 +7,6 @@
 
 echo "dune-raw-data version: $DRD_VERSION"
 echo "target qualifier: $QUAL"
-echo "s-qualifier (art) $SQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
@@ -88,7 +87,8 @@ cd $WORKSPACE/temp2 || exit 1
 git clone http://cdcvs.fnal.gov/projects/dune-raw-data || exit 1
 cd dune-raw-data || exit 1
 git checkout $DRD_VERSION
-FQUAL=`grep $BUILDTYPE ups/product_deps | grep ${QUAL}: | grep ${SQUAL} | awk '{print $1}'`
+#FQUAL=`grep $BUILDTYPE ups/product_deps | grep ${QUAL}: | grep ${SQUAL} | awk '{print $1}'`
+FQUAL=${QUAL}:${BUILDTYPE}
 echo "Full qualifier: $FQUAL"
 
 #dla set -x
