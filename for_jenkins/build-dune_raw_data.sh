@@ -13,7 +13,7 @@ echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
 
 QUAL=${CQUAL}:${AQUAL}
-if [[ x${PQUAL} != x ]]; then
+if [[ ${PQUAL} != none ]]; then
   QUAL=${QUAL}:${PQUAL}
 fi
 
