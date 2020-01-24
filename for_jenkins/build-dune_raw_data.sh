@@ -6,9 +6,16 @@
 # this is a proof of concept script
 
 echo "dune-raw-data version: $DRD_VERSION"
-echo "target qualifier: $QUAL"
+echo "compiler qualifier: $CQUAL"
+echo "Python qualifier: $PQUAL"
+echo "additional qualifiers: $AQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
+
+QUAL=${CQUAL}:${AQUAL}
+if [[ x${PQUAL} != x ]]; then
+  QUAL=${QUAL}:${PQUAL}
+fi
 
 # Don't do ifdh build on macos.
 

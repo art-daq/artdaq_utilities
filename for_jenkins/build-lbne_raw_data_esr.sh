@@ -8,9 +8,16 @@
 # buildtype is debug or prof
 
 echo "lbne-raw-data version: $LRD_VERSION"
-echo "target qualifier: $QUAL"
+echo "compiler qualifier: $CQUAL"
+echo "Python qualifier: $PQUAL"
+echo "additional qualifiers: $AQUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
+
+QUAL=${CQUAL}:${AQUAL}
+if [[ x${PQUAL} != x ]]; then
+  QUAL=${QUAL}:${PQUAL}
+fi
 
 # Don't do ifdh build on macos.
 
