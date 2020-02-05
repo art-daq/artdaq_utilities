@@ -124,7 +124,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 void artdaq::MetricManager::do_start()
 {
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (!running_)
 	{
 		TLOG(TLVL_DEBUG) << "Starting MetricManager";
@@ -150,7 +150,7 @@ void artdaq::MetricManager::do_start()
 
 void artdaq::MetricManager::do_stop()
 {
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::unique_lock<std::mutex> lk(metric_mutex_);
 	TLOG(TLVL_DEBUG) << "Stopping Metrics";
 	running_ = false;
 	metric_cv_.notify_all();
@@ -178,9 +178,10 @@ void artdaq::MetricManager::shutdown()
 	TLOG(TLVL_DEBUG) << "MetricManager is shutting down...";
 	do_stop();
 
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (initialized_)
 	{
+		initialized_ = false;
 		for (auto& i : metric_plugins_)
 		{
 			try
@@ -196,7 +197,6 @@ void artdaq::MetricManager::shutdown()
 			}
 		}
 		metric_plugins_.clear();
-		initialized_ = false;
 	}
 }
 
@@ -215,7 +215,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
 			auto& cached = metric_cache_[name];
@@ -269,7 +269,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
 			auto& cached = metric_cache_[name];
@@ -314,7 +314,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
 			auto& cached = metric_cache_[name];
@@ -359,7 +359,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
 			auto& cached = metric_cache_[name];
@@ -405,7 +405,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
 			auto& cached = metric_cache_[name];
@@ -459,8 +459,9 @@ void artdaq::MetricManager::startMetricLoop_()
 
 bool artdaq::MetricManager::metricQueueEmpty()
 {
-	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
-	for (auto& cache_entry : metric_cache_) {
+	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
+	for (auto& cache_entry : metric_cache_)
+	{
 		if (cache_entry.second->DataPointCount > 0) return false;
 	}
 
@@ -486,7 +487,7 @@ bool artdaq::MetricManager::metricManagerBusy()
 
 size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 {
-	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 	size_t size = 0;
 	if (name == "")
 	{
@@ -540,7 +541,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 
 			for (auto& q : metric_cache_)
 			{
@@ -620,7 +621,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	busy_ = true;
 	auto temp_list = std::list<std::unique_ptr<MetricData>>();
 	{
-		std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+		std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 
 		for (auto& q : metric_cache_)
 		{
