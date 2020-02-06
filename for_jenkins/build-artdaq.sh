@@ -24,7 +24,6 @@ IFS_save=$IFS
 IFS=":"
 read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
-nu_flag=0
 basequal=
 squal=
 artver=
@@ -52,9 +51,6 @@ for qual in ${qualarray[@]};do
         c7)
             basequal=c7
             ;;
-		nu)
-			nu_flag=1
-			;;
         py2)
             pyflag=py2
             ;;
@@ -107,9 +103,6 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 fi
 
 basequal_dash=$basequal${pyflag:+-${pyflag}}
-if [ $nu_flag -eq 1 ];then
-    basequal_dash=$basequal-nu
-fi
 
 case ${build_type} in
     debug) ;;
@@ -166,7 +159,6 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-if [ $nu_flag -eq 1 ] && [[ "x$nuver" != "x" ]];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_utilities ]; then
@@ -189,18 +181,11 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-if [ $nu_flag -eq 0 ];then
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+
+./buildFW -t -b ${basequal} ${pyqual:+-l ${pyqual}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
-else
- # Build the nu version
-./buildFW -t -b ${basequal} -l nu -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
- { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
- }
-fi
 
 source ${blddir}/setups
 upsflavor=`ups flavor`
