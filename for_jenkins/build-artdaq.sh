@@ -182,7 +182,7 @@ echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
 
-./buildFW -t -b ${basequal} ${pyqual:+-l ${pyqual}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
