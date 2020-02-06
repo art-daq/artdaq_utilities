@@ -28,6 +28,7 @@ nu_flag=0
 basequal=
 squal=
 artver=
+pyflag=
 
 # Remove shared memory segments which have 0 nattach
 killall art && sleep 5 && killall -9 art
@@ -54,6 +55,12 @@ for qual in ${qualarray[@]};do
 		nu)
 			nu_flag=1
 			;;
+        py2)
+            pyflag=py2
+            ;;
+        py3)
+            pyflag=py3
+            ;;
         s67)
             squal=s67
             artver=v2_11_01
@@ -99,7 +106,7 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-basequal_dash=$basequal
+basequal_dash=$basequal${pyflag:+-${pyflag}}
 if [ $nu_flag -eq 1 ];then
     basequal_dash=$basequal-nu
 fi
