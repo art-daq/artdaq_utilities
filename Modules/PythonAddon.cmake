@@ -41,9 +41,9 @@ macro (create_python_addon)
 		
 		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
 		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
-		        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter")
+            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter -Wno-register")
 		else()
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter")
+            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter -Wno-register")
 		endif()
 
     file(GLOB PIA_SOURCES  *_python.i)
