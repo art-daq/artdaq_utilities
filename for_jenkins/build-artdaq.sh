@@ -24,10 +24,10 @@ IFS_save=$IFS
 IFS=":"
 read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
-nu_flag=0
 basequal=
 squal=
 artver=
+pyflag=
 
 # Remove shared memory segments which have 0 nattach
 killall art && sleep 5 && killall -9 art
@@ -51,9 +51,12 @@ for qual in ${qualarray[@]};do
         c7)
             basequal=c7
             ;;
-		nu)
-			nu_flag=1
-			;;
+        py2)
+            pyflag=py2
+            ;;
+        py3)
+            pyflag=py3
+            ;;
         s67)
             squal=s67
             artver=v2_11_01
@@ -99,10 +102,7 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-basequal_dash=$basequal
-if [ $nu_flag -eq 1 ];then
-    basequal_dash=$basequal-nu
-fi
+basequal_dash=$basequal${pyflag:+-${pyflag}}
 
 case ${build_type} in
     debug) ;;
@@ -159,7 +159,6 @@ cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
 ./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-if [ $nu_flag -eq 1 ] && [[ "x$nuver" != "x" ]];then ./pullProducts ${blddir} ${flvr} nu-${nuver} ${squal}-${basequal} ${build_type}; fi
 ./pullProducts ${blddir} ${flvr} artdaq-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_utilities ]; then
@@ -182,18 +181,11 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-if [ $nu_flag -eq 0 ];then
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
-else
- # Build the nu version
-./buildFW -t -b ${basequal} -l nu -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
- { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
- }
-fi
 
 source ${blddir}/setups
 upsflavor=`ups flavor`

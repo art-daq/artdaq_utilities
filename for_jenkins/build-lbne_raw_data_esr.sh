@@ -8,9 +8,11 @@
 # buildtype is debug or prof
 
 echo "lbne-raw-data version: $LRD_VERSION"
-echo "target qualifier: $QUAL"
+echo "target qualifiers: $QUAL"
 echo "build type: $BUILDTYPE"
 echo "workspace: $WORKSPACE"
+
+QUAL=`echo ${QUAL} | sed -e "s/-/:/g"`
 
 # Don't do ifdh build on macos.
 
