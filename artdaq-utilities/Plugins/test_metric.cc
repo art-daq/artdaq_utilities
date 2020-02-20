@@ -111,7 +111,7 @@ public:
    */
 	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit,time);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**

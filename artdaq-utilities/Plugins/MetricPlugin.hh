@@ -308,7 +308,7 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit,to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + (useSuffix ? " - Average" : ""), average, data.Unit, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
