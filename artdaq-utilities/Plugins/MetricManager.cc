@@ -125,7 +125,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 void artdaq::MetricManager::do_start()
 {
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (!running_)
 	{
 		TLOG(TLVL_DEBUG) << "Starting MetricManager";
@@ -151,7 +151,7 @@ void artdaq::MetricManager::do_start()
 
 void artdaq::MetricManager::do_stop()
 {
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::unique_lock<std::mutex> lk(metric_mutex_);
 	TLOG(TLVL_DEBUG) << "Stopping Metrics";
 	running_ = false;
 	metric_cv_.notify_all();
@@ -179,9 +179,10 @@ void artdaq::MetricManager::shutdown()
 	TLOG(TLVL_DEBUG) << "MetricManager is shutting down...";
 	do_stop();
 
-	auto lk = std::unique_lock<std::mutex>(metric_mutex_);
+	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (initialized_)
 	{
+		initialized_ = false;
 		for (auto& i : metric_plugins_)
 		{
 			try
@@ -197,7 +198,6 @@ void artdaq::MetricManager::shutdown()
 			}
 		}
 		metric_plugins_.clear();
-		initialized_ = false;
 	}
 }
 
@@ -216,17 +216,17 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
-			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
+			auto& cached = metric_cache_[name];
+			if (cached == nullptr)
 			{
-				metric_cache_[name] =
-				    std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
+				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			}
 			else
 			{
-				auto size = metric_cache_[name]->DataPointCount;
+				auto size = cached->DataPointCount;
 				if (size < metric_cache_max_size_)
 				{
 					if (size >= metric_cache_notify_size_)
@@ -236,13 +236,13 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 					}
 					if (mode == MetricMode::LastPoint)
 					{
-						metric_cache_[name]->StringValue = value;
-						metric_cache_[name]->DataPointCount = 1;
+						cached->StringValue = value;
+						cached->DataPointCount = 1;
 					}
 					else
 					{
-						metric_cache_[name]->StringValue += " " + value;
-						metric_cache_[name]->DataPointCount++;
+						cached->StringValue += " " + value;
+						cached->DataPointCount++;
 					}
 				}
 				else
@@ -270,17 +270,17 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
-			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
+			auto& cached = metric_cache_[name];
+			if (cached == nullptr)
 			{
-				metric_cache_[name] =
-				    std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
+				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			}
 			else
 			{
-				auto size = metric_cache_[name]->DataPointCount;
+				auto size = cached->DataPointCount;
 				if (size < metric_cache_max_size_)
 				{
 					if (size >= metric_cache_notify_size_)
@@ -288,7 +288,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					metric_cache_[name]->AddPoint(value);
+					cached->AddPoint(value);
 				}
 				else
 				{
@@ -315,17 +315,17 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
-			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
+			auto& cached = metric_cache_[name];
+			if (cached == nullptr)
 			{
-				metric_cache_[name] =
-				    std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
+				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			}
 			else
 			{
-				auto size = metric_cache_[name]->DataPointCount;
+				auto size = cached->DataPointCount;
 				if (size < metric_cache_max_size_)
 				{
 					if (size >= metric_cache_notify_size_)
@@ -333,7 +333,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					metric_cache_[name]->AddPoint(value);
+					cached->AddPoint(value);
 				}
 				else
 				{
@@ -360,17 +360,17 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
-			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
+			auto& cached = metric_cache_[name];
+			if (cached == nullptr)
 			{
-				metric_cache_[name] =
-				    std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
+				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			}
 			else
 			{
-				auto size = metric_cache_[name]->DataPointCount;
+				auto size = cached->DataPointCount;
 				if (size < metric_cache_max_size_)
 				{
 					if (size >= metric_cache_notify_size_)
@@ -378,7 +378,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					metric_cache_[name]->AddPoint(value);
+					cached->AddPoint(value);
 				}
 				else
 				{
@@ -406,17 +406,17 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 	else if (active_)
 	{
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 			metric_calls_++;
 			last_metric_received_ = std::chrono::steady_clock::now();
-			if (!metric_cache_.count(name) || metric_cache_[name] == nullptr)
+			auto& cached = metric_cache_[name];
+			if (cached == nullptr)
 			{
-				metric_cache_[name] =
-				    std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
+				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
 			}
 			else
 			{
-				auto size = metric_cache_[name]->DataPointCount;
+				auto size = cached->DataPointCount;
 				if (size < metric_cache_max_size_)
 				{
 					if (size >= metric_cache_notify_size_)
@@ -424,7 +424,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
-					metric_cache_[name]->AddPoint(value);
+					cached->AddPoint(value);
 				}
 				else
 				{
@@ -460,8 +460,13 @@ void artdaq::MetricManager::startMetricLoop_()
 
 bool artdaq::MetricManager::metricQueueEmpty()
 {
-	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
-	return metric_cache_.size() == 0;
+	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
+	for (auto& cache_entry : metric_cache_)
+	{
+		if (cache_entry.second->DataPointCount > 0) return false;
+	}
+
+	return true;
 }
 
 bool artdaq::MetricManager::metricManagerBusy()
@@ -483,7 +488,7 @@ bool artdaq::MetricManager::metricManagerBusy()
 
 size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 {
-	std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 	size_t size = 0;
 	if (name == "")
 	{
@@ -537,31 +542,31 @@ void artdaq::MetricManager::sendMetricLoop_()
 		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
 		{
-			std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+			std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 
 			for (auto& q : metric_cache_)
 			{
-				temp_list.emplace_back(std::move(q.second));
+				temp_list.emplace_back(new MetricData(*q.second));
+				q.second->Reset();
 			}
-			metric_cache_.clear();
+		}
 
-			auto calls = metric_calls_.exchange(0);
-			temp_list.emplace_back(
-			    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
+		auto calls = metric_calls_.exchange(0);
+		temp_list.emplace_back(
+		    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
-			auto missed = missed_metric_calls_.exchange(0);
-			temp_list.emplace_back(
-			    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
+		auto missed = missed_metric_calls_.exchange(0);
+		temp_list.emplace_back(
+		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
-			TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-			                 << " missed)";
+		TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
+		                 << " missed)";
 
-			if (system_metric_collector_ != nullptr)
-			{
-				TLOG(TLVL_TRACE) << "Collecting System metrics (CPU, RAM, Network)";
-				auto systemMetrics = system_metric_collector_->SendMetrics();
-				for (auto& m : systemMetrics) { temp_list.emplace_back(std::move(m)); }
-			}
+		if (system_metric_collector_ != nullptr)
+		{
+			TLOG(TLVL_TRACE) << "Collecting System metrics (CPU, RAM, Network)";
+			auto systemMetrics = system_metric_collector_->SendMetrics();
+			for (auto& m : systemMetrics) { temp_list.emplace_back(std::move(m)); }
 		}
 
 		TLOG(6) << "sendMetricLoop_: Before processing temp_list";
@@ -617,25 +622,29 @@ void artdaq::MetricManager::sendMetricLoop_()
 	busy_ = true;
 	auto temp_list = std::list<std::unique_ptr<MetricData>>();
 	{
-		std::unique_lock<std::mutex> lk(metric_cache_mutex_);
+		std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 
 		for (auto& q : metric_cache_)
 		{
-			temp_list.emplace_back(std::move(q.second));
+			if (q.second != nullptr && q.second->DataPointCount > 0)
+			{
+				temp_list.emplace_back(new MetricData(*q.second));
+				q.second->Reset();
+			}
 		}
-		metric_cache_.clear();
-
-		auto calls = metric_calls_.exchange(0);
-		temp_list.emplace_back(
-		    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
-
-		auto missed = missed_metric_calls_.exchange(0);
-		temp_list.emplace_back(
-		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
-
-		TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-		                 << " missed)";
+		//metric_cache_.clear();
 	}
+
+	auto calls = metric_calls_.exchange(0);
+	temp_list.emplace_back(
+	    new MetricData("Metric Calls", calls, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
+
+	auto missed = missed_metric_calls_.exchange(0);
+	temp_list.emplace_back(
+	    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
+
+	TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
+	                 << " missed)";
 
 	while (temp_list.size() > 0)
 	{
