@@ -102,14 +102,14 @@ private:
 		    : user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), totalUsage(0), total(0) {}
 	};
 	cpustat ReadProcStat_();
-	static size_t GetCPUCount_(); // Read /proc/stat, count lines beyond the first that start with "cpu"
+	static size_t GetCPUCount_();  // Read /proc/stat, count lines beyond the first that start with "cpu"
 	size_t cpuCount_;
-	double nonIdleCPUPercent_; // user + nice + system + iowait + irq + softirq
-	double userCPUPercent_; // Includes nice
+	double nonIdleCPUPercent_;  // user + nice + system + iowait + irq + softirq
+	double userCPUPercent_;     // Includes nice
 	double systemCPUPercent_;
 	double idleCPUPercent_;
 	double iowaitCPUPercent_;
-	double irqCPUPercent_; // includes softirq
+	double irqCPUPercent_;  // includes softirq
 
 	struct netstat
 	{
@@ -117,7 +117,8 @@ private:
 		netstat()
 		    : send_bytes(0), recv_bytes(0), send_errs(0), recv_errs(0) {}
 	};
-	struct netstats {
+	struct netstats
+	{
 		std::unordered_map<std::string, netstat> stats;
 		std::chrono::steady_clock::time_point collectionTime;
 	};

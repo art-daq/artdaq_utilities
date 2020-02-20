@@ -13,18 +13,18 @@
 #define MLEVEL_NETWORK 9
 
 artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
-	: cpuCount_(GetCPUCount_())
-	, nonIdleCPUPercent_(0)
-	, userCPUPercent_(0)
-	, systemCPUPercent_(0)
-	, idleCPUPercent_(0)
-	, iowaitCPUPercent_(0)
-	, irqCPUPercent_(0)
-	, lastCPU_()
-	, lastProcessCPUTimes_()
-	, lastProcessCPUTime_(0)
-	, sendProcessMetrics_(processMetrics)
-	, sendSystemMetrics_(systemMetrics)
+    : cpuCount_(GetCPUCount_())
+    , nonIdleCPUPercent_(0)
+    , userCPUPercent_(0)
+    , systemCPUPercent_(0)
+    , idleCPUPercent_(0)
+    , iowaitCPUPercent_(0)
+    , irqCPUPercent_(0)
+    , lastCPU_()
+    , lastProcessCPUTimes_()
+    , lastProcessCPUTime_(0)
+    , sendProcessMetrics_(processMetrics)
+    , sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -168,7 +168,8 @@ unsigned long artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string if
 std::list<std::string> artdaq::SystemMetricCollector::GetNetworkInterfaceNames()
 {
 	std::list<std::string> output;
-	for (auto& i : thisNetStat_.stats) {
+	for (auto& i : thisNetStat_.stats)
+	{
 		output.push_back(i.first);
 	}
 	return output;
@@ -207,9 +208,9 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 	}
 
 	TLOG(TLVL_DEBUG)
-		<< "Time to collect system metrics: "
-		<< std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
-		<< " us.";
+	    << "Time to collect system metrics: "
+	    << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
+	    << " us.";
 	return output;
 }
 
@@ -219,7 +220,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	cpustat this_cpu;
 
 	fscanf(filp, "cpu %llu %llu %llu %llu %llu %llu %llu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,
-		&this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
+	       &this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
 	fclose(filp);
 
 	// Reset iowait if it decreases
@@ -232,7 +233,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	}
 
 	this_cpu.totalUsage =
-		this_cpu.user + this_cpu.nice + this_cpu.system + this_cpu.iowait + this_cpu.irq + this_cpu.softirq;
+	    this_cpu.user + this_cpu.nice + this_cpu.system + this_cpu.iowait + this_cpu.irq + this_cpu.softirq;
 	this_cpu.total = this_cpu.totalUsage + this_cpu.idle;
 
 	return this_cpu;
@@ -281,7 +282,7 @@ artdaq::SystemMetricCollector::netstats artdaq::SystemMetricCollector::ReadProcN
 	while (fgets(buf, 200, filp))
 	{
 		sscanf(buf, " %[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,
-			&rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
+		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
 		std::string ifname(ifname_c);
 		netstat stat;
@@ -306,7 +307,7 @@ void artdaq::SystemMetricCollector::UpdateNetstat_()
 	auto start_time = std::chrono::steady_clock::now();
 	// Only collect network stats once per second
 	if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(start_time - thisNetStat_.collectionTime)
-		.count() > 1.0)
+	        .count() > 1.0)
 	{
 		auto output = ReadProcNetDev_();
 		lastNetStat_ = thisNetStat_;
