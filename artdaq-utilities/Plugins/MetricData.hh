@@ -33,9 +33,9 @@ enum class MetricMode : uint32_t
 	Accumulate = 0x2,  ///< Report the sum of all values. Use for counters to report accurate results.
 	Average = 0x4,     ///< Report the average of all values. Use for rates to report accurate results.
 	Rate = 0x8,        ///< Reports the sum of all values, divided by the length of the time interval they were accumulated
-	                   ///< over. Use to create rates from counters.
-	Minimum = 0x10,    ///< Reports the minimum value recorded.
-	Maximum = 0x20,    ///< Repots the maximum value recorded.
+	///< over. Use to create rates from counters.
+	Minimum = 0x10,  ///< Reports the minimum value recorded.
+	Maximum = 0x20,  ///< Repots the maximum value recorded.
 };
 /// <summary>
 /// Bitwise OR operator for MetricMode
@@ -261,40 +261,81 @@ struct MetricData
 	{
 		if (other.Name == Name && other.Type == Type && other.Unit == Unit && other.Level == Level)
 		{
-			switch (Type)
+			if (other.DataPointCount == 0) return true;
+			if (DataPointCount == 0)
 			{
-				case MetricType::StringMetric:
-					StringValue += " " + other.StringValue;
-					break;
-				case MetricType::IntMetric:
-					Value.i += other.Value.i;
-					Last.i = other.Last.i;
-					if (other.Min.i < Min.i) Min.i = other.Min.i;
-					if (other.Max.i > Max.i) Max.i = other.Max.i;
-					break;
-				case MetricType::DoubleMetric:
-					Value.d += other.Value.d;
-					Last.d = other.Last.d;
-					if (other.Min.d < Min.d) Min.d = other.Min.d;
-					if (other.Max.d > Max.d) Max.d = other.Max.d;
-					break;
-				case MetricType::FloatMetric:
-					Value.f += other.Value.f;
-					Last.f = other.Last.f;
-					if (other.Min.f < Min.f) Min.f = other.Min.f;
-					if (other.Max.f > Max.f) Max.f = other.Max.f;
-					break;
-				case MetricType::UnsignedMetric:
-					Value.u += other.Value.u;
-					Last.u = other.Last.u;
-					if (other.Min.u < Min.u) Min.u = other.Min.u;
-					if (other.Max.u > Max.u) Max.u = other.Max.u;
-					break;
-				case MetricType::InvalidMetric:
-					break;
+				switch (Type)
+				{
+					case MetricType::StringMetric:
+						StringValue = other.StringValue;
+						break;
+					case MetricType::IntMetric:
+						Value.i = other.Value.i;
+						Last.i = other.Last.i;
+						Min.i = other.Min.i;
+						Max.i = other.Max.i;
+						break;
+					case MetricType::DoubleMetric:
+						Value.d = other.Value.d;
+						Last.d = other.Last.d;
+						Min.d = other.Min.d;
+						Max.d = other.Max.d;
+						break;
+					case MetricType::FloatMetric:
+						Value.f = other.Value.f;
+						Last.f = other.Last.f;
+						Min.f = other.Min.f;
+						Max.f = other.Max.f;
+						break;
+					case MetricType::UnsignedMetric:
+						Value.u = other.Value.u;
+						Last.u = other.Last.u;
+						Min.u = other.Min.u;
+						Max.u = other.Max.u;
+						break;
+					case MetricType::InvalidMetric:
+						break;
+				}
+				DataPointCount = other.DataPointCount;
+				return true;
 			}
-			DataPointCount += other.DataPointCount;
-			return true;
+			else
+			{
+				switch (Type)
+				{
+					case MetricType::StringMetric:
+						StringValue += " " + other.StringValue;
+						break;
+					case MetricType::IntMetric:
+						Value.i += other.Value.i;
+						Last.i = other.Last.i;
+						if (other.Min.i < Min.i) Min.i = other.Min.i;
+						if (other.Max.i > Max.i) Max.i = other.Max.i;
+						break;
+					case MetricType::DoubleMetric:
+						Value.d += other.Value.d;
+						Last.d = other.Last.d;
+						if (other.Min.d < Min.d) Min.d = other.Min.d;
+						if (other.Max.d > Max.d) Max.d = other.Max.d;
+						break;
+					case MetricType::FloatMetric:
+						Value.f += other.Value.f;
+						Last.f = other.Last.f;
+						if (other.Min.f < Min.f) Min.f = other.Min.f;
+						if (other.Max.f > Max.f) Max.f = other.Max.f;
+						break;
+					case MetricType::UnsignedMetric:
+						Value.u += other.Value.u;
+						Last.u = other.Last.u;
+						if (other.Min.u < Min.u) Min.u = other.Min.u;
+						if (other.Max.u > Max.u) Max.u = other.Max.u;
+						break;
+					case MetricType::InvalidMetric:
+						break;
+				}
+				DataPointCount += other.DataPointCount;
+				return true;
+			}
 		}
 		return false;
 	}
@@ -346,6 +387,43 @@ struct MetricData
 		DataPointCount++;
 		if (point > Max.u) Max.u = point;
 		if (point < Min.u) Min.u = point;
+	}
+
+	void Reset()
+	{
+		switch (Type)
+		{
+			case MetricType::StringMetric:
+				StringValue = "";
+				break;
+			case MetricType::IntMetric:
+				Value.i = 0;
+				Last.i = 0;
+				Min.i = std::numeric_limits<int>::max();
+				Max.i = std::numeric_limits<int>::min();
+				break;
+			case MetricType::DoubleMetric:
+				Value.d = 0;
+				Last.d = 0;
+				Min.d = std::numeric_limits<double>::max();
+				Max.d = std::numeric_limits<double>::min();
+				break;
+			case MetricType::FloatMetric:
+				Value.f = 0;
+				Last.f = 0;
+				Min.f = std::numeric_limits<float>::max();
+				Max.f = std::numeric_limits<float>::min();
+				break;
+			case MetricType::UnsignedMetric:
+				Value.u = 0;
+				Last.u = 0;
+				Min.u = std::numeric_limits<unsigned>::max();
+				Max.u = std::numeric_limits<unsigned>::min();
+				break;
+			case MetricType::InvalidMetric:
+				break;
+		}
+		DataPointCount = 0;
 	}
 };
 }  // namespace artdaq
