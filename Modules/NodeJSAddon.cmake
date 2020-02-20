@@ -40,7 +40,7 @@ macro (create_nodejs_addon)
      		message(FATAL_ERROR  " undefined arguments ${CNA_DEFAULT_ARGS} \n ${create_nodejs_addon_usage}")
     	endif()
 
-        set (NODE_INCLUDE_DIRS $ENV{NODEJS_INC})
+        set (NODE_INCLUDE_DIRS $ENV{NODEJS_INC}/node)
 
         execute_process(COMMAND node -e "var arr = process.versions.v8.split('.');arr.push('EXTRA');console.log(arr.join(';'));" OUTPUT_VARIABLE V8_STRING)
         list(GET V8_STRING 0 V8_STRING_MAJOR)
@@ -51,9 +51,9 @@ macro (create_nodejs_addon)
 		
 		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
 		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
-		        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter")
+            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter -Wno-unused-result")
 		else()
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter")
+            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter -Wno-unused-result")
 		endif()
 
         file(GLOB NODEJS_ADDON_SOURCES  *_node.i)
@@ -71,7 +71,7 @@ macro (create_nodejs_addon)
 
         swig_link_libraries (${CNA_ADDON_NAME} ${CNA_LIBRARIES})
 
-        target_include_directories ( ${CNA_ADDON_NAME} PUBLIC ${CNA_INCLUDES})
+        target_include_directories ( ${CNA_ADDON_NAME} BEFORE PUBLIC ${CNA_INCLUDES} ${NODE_INCLUDE_DIRS})
         #include_directories(${CNA_INCLUDES})
         set_target_properties (${CNA_ADDON_NAME} PROPERTIES
 		SWIG_FLAGS "-node"
