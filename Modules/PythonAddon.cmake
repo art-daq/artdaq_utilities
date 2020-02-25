@@ -70,7 +70,7 @@ macro (create_python_addon)
 
     install (FILES ${this_build_path}/lib/${PIA_ADDON_LIBNAME}.so ${this_build_path}/lib/${PIA_ADDON_NAME}.py
       PERMISSIONS OWNER_EXECUTE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE
-      DESTINATION ${flavorqual_dir}/python/)
+      DESTINATION ${flavorqual_dir}/lib/)
       
        add_custom_command(TARGET ${PIA_ADDON_LIBNAME} POST_BUILD 
      # COMMAND echo "**** Exports for ${this_build_path}/lib/${PIA_ADDON_LIBNAME}.so"
