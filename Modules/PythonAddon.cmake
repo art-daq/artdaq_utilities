@@ -1,4 +1,7 @@
 cmake_policy(VERSION 3.0.1) # We've made this work for 3.0.1.
+cmake_policy(SET CMP0078 OLD)
+cmake_policy(SET CMP0086 OLD)
+
 include(CetParseArgs)
 
 set(CAN_BUILD true)
