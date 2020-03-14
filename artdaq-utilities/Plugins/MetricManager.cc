@@ -13,6 +13,7 @@
 #include "tracemf.h"
 
 #include <boost/exception/all.hpp>
+#include <boost/stacktrace.hpp>
 #include <chrono>
 
 artdaq::MetricManager::MetricManager()
@@ -176,6 +177,9 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 void artdaq::MetricManager::shutdown()
 {
 	TLOG(TLVL_DEBUG) << "MetricManager is shutting down...";
+	TLOG(TLVL_DEBUG) << boost::stacktrace::stacktrace();
+
+
 	do_stop();
 
 	std::lock_guard<std::mutex> lk(metric_mutex_);
