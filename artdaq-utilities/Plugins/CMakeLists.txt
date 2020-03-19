@@ -8,6 +8,7 @@ cet_make(
   pthread
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
+  dl
   )
 
 basic_plugin("file" "metric"

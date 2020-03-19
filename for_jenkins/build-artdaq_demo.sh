@@ -27,6 +27,7 @@ IFS=$IFS_save
 basequal=
 squal=
 artver=
+pyflag=
 build_db=1
 
 # Remove shared memory segments which have 0 nattach
@@ -50,6 +51,12 @@ for qual in ${qualarray[@]};do
             ;;
         c7)
             basequal=c7
+            ;;
+        py2)
+            pyflag=py2
+            ;;
+        py3)
+            pyflag=py3
             ;;
         s67)
             squal=s67
@@ -106,6 +113,8 @@ $(echo "Unexpected version ${version}" && usage && exit 1)
 rm product_deps
 echo "Building against artdaq version ${artdaq_ver}"
 
+basequal_dash=$basequal${pyflag:+-${pyflag}}
+
 case ${build_type} in
     debug) ;;
     prof) ;;
@@ -161,9 +170,9 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal} ${build_type}
+./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
+./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
@@ -204,7 +213,7 @@ fi
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
@@ -223,11 +232,6 @@ cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.t
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
-
-cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/artdaq_demo-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
