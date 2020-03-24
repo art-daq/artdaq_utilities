@@ -389,6 +389,11 @@ struct MetricData
 		if (point < Min.u) Min.u = point;
 	}
 
+	/// <summary>
+	/// Reset this MetricData instance to the initial state
+	///
+	/// Sets the value, last and count fields to 0, the min to the maximum for the datatype and the max to the minimum for the datatype
+	/// </summary>
 	void Reset()
 	{
 		switch (Type)
