@@ -94,6 +94,10 @@ for qual in ${qualarray[@]};do
 			squal=s94
 			artver=v3_04_00
 			;;
+        s96)
+            squal=s96
+            artver=v3_05_00
+            ;;
         nodb)
             build_db=0
             ;;
@@ -208,6 +212,16 @@ if [ -d ${blddir}/artdaq_node_server ]; then
   echo "Removing ${blddir}/artdaq_node_server"
   rm -rf ${blddir}/artdaq_node_server
   if [ `ls -l ${blddir}/artdaq_node_server*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_node_server*.tar.bz2; fi
+fi
+if [ -d ${blddir}/artdaq_mpich_plugin ]; then
+  echo "Removing ${blddir}/artdaq_mpich_plugin"
+  rm -rf ${blddir}/artdaq_mpich_plugin
+  if [ `ls -l ${blddir}/artdaq_mpich_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_mpich_plugin*.tar.bz2; fi
+fi
+if [ -d ${blddir}/artdaq_demo_hdf5 ]; then
+  echo "Removing ${blddir}/artdaq_demo_hdf5"
+  rm -rf ${blddir}/artdaq_demo_hdf5
+  if [ `ls -l ${blddir}/artdaq_demo_hdf5*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_demo_hdf5*.tar.bz2; fi
 fi
 
 echo
