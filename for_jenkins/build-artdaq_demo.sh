@@ -174,9 +174,9 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
