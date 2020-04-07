@@ -25,11 +25,11 @@ elif [ "${basequal}" = "c7" ]; then
      clangver=v7_0_0
 fi
 
-#do_build gcc ${gccver}
+do_build gcc ${gccver}
 
-#if [[ "x${clangver:-}" != "x" ]];then
-#    do_build clang ${clangver}
-#fi
+if [[ "x${clangver:-}" != "x" ]];then
+    do_build clang ${clangver}
+fi
 
 # as of v1_07_00, artdaq_core is built with canvas and TRACE
 if ! version_greater v3_14_00 v3_14_01; then
