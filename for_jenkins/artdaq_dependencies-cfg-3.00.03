@@ -58,7 +58,7 @@ build_cet -p trace-git TRACE v3_15_08 -nq-
 #do_build swig v3_0_12d ${basequal}
 #do_build swig v4_0_0 ${basequal}
 
-#do_build xdaq v14_12_0 ${basequal}
+do_build xdaq v14_12_0 ${basequal}
 
 #build_noarch nodejs v4_5_0
 #do_build ganglia v3_7_1
