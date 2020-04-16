@@ -265,6 +265,7 @@ private:
 	void closeFile_()
 	{
 		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
+		outputStream_.flush();
 		outputStream_.close();
 	}
 };

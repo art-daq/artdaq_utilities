@@ -36,6 +36,7 @@ enum class MetricMode : uint32_t
 	///< over. Use to create rates from counters.
 	Minimum = 0x10,  ///< Reports the minimum value recorded.
 	Maximum = 0x20,  ///< Repots the maximum value recorded.
+	Persist = 0x40, ///< Keep previous metric value in memory
 };
 /// <summary>
 /// Bitwise OR operator for MetricMode

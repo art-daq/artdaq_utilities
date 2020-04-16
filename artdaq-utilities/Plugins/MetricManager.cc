@@ -206,7 +206,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -260,7 +260,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -305,7 +305,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -350,7 +350,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -396,7 +396,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " <<  name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -545,8 +545,11 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 			for (auto& q : metric_cache_)
 			{
-				temp_list.emplace_back(new MetricData(*q.second));
-				q.second->Reset();
+				if (q.second != nullptr && q.second->DataPointCount > 0)
+				{
+					temp_list.emplace_back(new MetricData(*q.second));
+					q.second->Reset();
+				}
 			}
 		}
 

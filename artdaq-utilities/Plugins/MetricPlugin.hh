@@ -263,7 +263,15 @@ public:
 				else if (metric.second.size() > 0)
 				{
 					TLOG(24) << "Aggregating " << metric.second.size() << " MetricData points";
+
+					if ((metric.second.front().Mode & MetricMode::Persist) != MetricMode::None && metric.second.size() > 1)
+					{
+						TLOG(24) << "Metric is in Persist mode and multiple instances are present. Removing the first entry.";
+						metric.second.erase(metric.second.begin());
+					}
+
 					MetricData& data = metric.second.front();
+
 					auto it = ++(metric.second.begin());
 					while (it != metric.second.end())
 					{
@@ -339,9 +347,16 @@ public:
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type);
 					}
 
-					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
-					metric.second.clear();
-					TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
+					{
+						TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
+						metric.second.clear();
+						TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+					}
+					else
+					{
+						TLOG(24) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";
+					}
 				}
 				interval_start_[metric.first] = interval_end;
 			}
