@@ -281,7 +281,7 @@ public:
 
 					std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
 					bool useSuffix = true;
-					if (modeSet.count() <= 1) useSuffix = false;
+					if (modeSet.count() <= 1 || (modeSet.count() <= 2 && (data.Mode & MetricMode::Persist) != MetricMode::None)) useSuffix = false;
 
 					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
