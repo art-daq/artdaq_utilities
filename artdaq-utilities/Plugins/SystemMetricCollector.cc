@@ -12,7 +12,7 @@
 #define MLEVEL_NETWORK 9
 
 artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
-    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
+    :  lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -194,7 +194,7 @@ artdaq::SystemMetricCollector::netstat artdaq::SystemMetricCollector::ReadProcNe
 
 	unsigned long rbytes, rerrs, rdrop, rfifo, rframe, tbytes, terrs, tdrop, tfifo, tcolls, tcarrier;
 
-	while (fgets(buf, 200, filp))
+	while (fgets(buf, 200, filp) != nullptr)
 	{
 		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,
 		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);

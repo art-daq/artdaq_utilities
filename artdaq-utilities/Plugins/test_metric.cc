@@ -20,7 +20,7 @@ namespace artdaq {
 /**
  * \brief TestMetric writes metric data to a statically-allocated memory block
  */
-class TestMetricImpl : public MetricPlugin
+class TestMetricImpl final : public MetricPlugin
 {
 public:
 	/**
@@ -37,7 +37,7 @@ public:
 	/**
    * \brief TestMetricImpl Destructor. Calls stopMetrics
    */
-	virtual ~TestMetricImpl()
+	~TestMetricImpl() override
 	{
 		stopMetrics();
 	}

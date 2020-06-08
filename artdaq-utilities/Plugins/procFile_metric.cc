@@ -5,13 +5,13 @@
 #define TRACE_NAME "procFile_metric"
 #include "trace.h"
 
-#include <fcntl.h>     // open
-#include <stdlib.h>    // exit
-#include <sys/stat.h>  // mkfifo
 #include <boost/thread.hpp>
+#include <cstdlib>    // exit
 #include <ctime>
+#include <fcntl.h>     // open
 #include <map>
 #include <string>
+#include <sys/stat.h>  // mkfifo
 
 namespace artdaq {
 /**
@@ -20,7 +20,7 @@ namespace artdaq {
 	 * This MetricPlugin emulates the function of the /proc file system, where the kernel provides
 	 * access to various counters and parameters.
 	 */
-class ProcFileMetric : public MetricPlugin
+class ProcFileMetric final : public MetricPlugin
 {
 private:
 	std::string pipe_;
@@ -43,12 +43,12 @@ public:
 	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
 	    : MetricPlugin(config, app_name)
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
-	    , value_map_()
-	    , stopped_(true)
+	    , 
+	     stopped_(true)
 	{
 		auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
 
-		for (auto name : names)
+		for (const auto& name : names)
 		{
 			value_map_[name] = "";
 		}
@@ -62,7 +62,7 @@ public:
 	/**
 		 * \brief ProcFileMetric Destructor
 		 */
-	~ProcFileMetric()
+	~ProcFileMetric() override
 	{
 		TLOG(11) << "~ProcFileMetric";
 		stopMetrics();
@@ -79,9 +79,9 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
 	{
-		if (value_map_.count(name))
+		if (value_map_.count(name) != 0u)
 		{
 			TLOG(12) << "sendMetric_ setting value=" << value;
 			value_map_[name] = value;
@@ -181,7 +181,8 @@ public:
 			usleep(10000);
 			close(fd);
 			TLOG(11) << "stopMetrics_ after close " << pipe_;
-			if (thread_.joinable()) thread_.join();
+			if (thread_.joinable()) { thread_.join();
+}
 		}
 	}
 
@@ -195,7 +196,7 @@ public:
 			TLOG(11) << "writePipe before open";
 			int fd = open(pipe_.c_str(), O_WRONLY);
 			std::string str;
-			for (auto value : value_map_)
+			for (const auto& value : value_map_)
 			{
 				TLOG(10) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
 				str += value.first + ": " + value.second + "\n";

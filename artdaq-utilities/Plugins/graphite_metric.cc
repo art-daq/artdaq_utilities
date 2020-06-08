@@ -70,7 +70,7 @@ public:
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
 
-	virtual ~GraphiteMetric() { stopMetrics(); }
+	~GraphiteMetric() override { stopMetrics(); }
 
 	/**
 		 * \brief Get the library name for the Graphite metric
@@ -83,11 +83,11 @@ public:
 		 * \param name Name of the metric. Will have the namespace prepended
 		 * \param value Value of the metric
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
 	{
 		if (!stopped_)
 		{
-			const auto result = std::time(0);
+			const auto result = std::time(nullptr);
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
