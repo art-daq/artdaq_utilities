@@ -91,6 +91,9 @@ public:
 	 */
 	MetricManager& operator=(MetricManager const&) = delete;
 
+	MetricManager(MetricManager&&) = delete;
+	MetricManager& operator=(MetricManager&&) = delete;
+
 	/**
 	 * \brief Initialize the MetricPlugin instances
 	 * \param pset The ParameterSet used to configure the MetricPlugin instances
@@ -217,7 +220,7 @@ public:
 	* \param metricPrefix An additional prefix to prepend to the metric name
 	* \param useNameOverride Whether to use name verbatim and not apply prefixes
 	*/
-	void sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit, int level,
+	void sendMetric(std::string const& name, uint64_t const& value, std::string const& unit, int level,
 	                MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
@@ -272,8 +275,8 @@ private:
 	boost::thread metric_sending_thread_;
 	std::mutex metric_mutex_;
 	std::condition_variable metric_cv_;
-	int metric_send_interval_ms_;
-	int metric_holdoff_us_;
+	int metric_send_interval_ms_{15000};
+	int metric_holdoff_us_{1000};
 	std::chrono::steady_clock::time_point last_metric_received_;
 	std::unique_ptr<SystemMetricCollector> system_metric_collector_;
 
@@ -287,8 +290,8 @@ private:
 	std::mutex metric_cache_mutex_;
 	std::atomic<size_t> missed_metric_calls_;
 	std::atomic<size_t> metric_calls_;
-	size_t metric_cache_max_size_;
-	size_t metric_cache_notify_size_;
+	size_t metric_cache_max_size_{1000};
+	size_t metric_cache_notify_size_{10};
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */

@@ -49,7 +49,7 @@ public:
 	/**
 	 * \brief Send an unsigned metric, record the call and discard the metric's data
 	 */
-	void sendMetric_(const std::string& /*name*/, const long unsigned int& /*value*/, const std::string& /*units*/) override { sendMetric_unsigned_calls++; }
+	void sendMetric_(const std::string& /*name*/, const uint64_t& /*value*/, const std::string& /*units*/) override { sendMetric_unsigned_calls++; }
 
 	/**
 	 * \brief Record that a startMetrics call was received

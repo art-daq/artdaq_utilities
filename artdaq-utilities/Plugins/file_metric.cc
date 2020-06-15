@@ -48,6 +48,11 @@ private:
 		return stream;
 	}
 
+	FileMetric(const FileMetric&) = delete;
+	FileMetric(FileMetric&&) = delete;
+	FileMetric& operator=(const FileMetric&) = delete;
+	FileMetric& operator=(FileMetric&&) = delete;
+
 public:
 	/**
    * \brief FileMetric Constructor. Opens the file and starts the metric
@@ -171,7 +176,7 @@ public:
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}
@@ -267,8 +272,15 @@ private:
 	void closeFile_()
 	{
 		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
-		outputStream_.flush();
-		outputStream_.close();
+		try
+		{
+			outputStream_.flush();
+			outputStream_.close();
+		}
+		catch (...)
+		{
+			// IGNORED
+		}
 	}
 };
 }  // End namespace artdaq

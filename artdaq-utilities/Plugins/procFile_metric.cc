@@ -5,13 +5,13 @@
 #define TRACE_NAME "procFile_metric"
 #include "trace.h"
 
-#include <boost/thread.hpp>
-#include <cstdlib>    // exit
-#include <ctime>
 #include <fcntl.h>     // open
+#include <sys/stat.h>  // mkfifo
+#include <boost/thread.hpp>
+#include <cstdlib>  // exit
+#include <ctime>
 #include <map>
 #include <string>
-#include <sys/stat.h>  // mkfifo
 
 namespace artdaq {
 /**
@@ -28,6 +28,11 @@ private:
 	bool stopped_;
 	boost::thread thread_;
 
+	ProcFileMetric(const ProcFileMetric&) = delete;
+	ProcFileMetric(ProcFileMetric&&) = delete;
+	ProcFileMetric& operator=(const ProcFileMetric&) = delete;
+	ProcFileMetric& operator=(ProcFileMetric&&) = delete;
+
 public:
 	/**
 		 * \brief ProcFileMetric Constructor
@@ -43,8 +48,7 @@ public:
 	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
 	    : MetricPlugin(config, app_name)
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
-	    , 
-	     stopped_(true)
+	    , stopped_(true)
 	{
 		auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
 
@@ -127,7 +131,7 @@ public:
 		 * \param value Value of the metric.
 		 * \param unit Units of the metric.
 		 */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}
@@ -181,8 +185,10 @@ public:
 			usleep(10000);
 			close(fd);
 			TLOG(11) << "stopMetrics_ after close " << pipe_;
-			if (thread_.joinable()) { thread_.join();
-}
+			if (thread_.joinable())
+			{
+				thread_.join();
+			}
 		}
 	}
 
