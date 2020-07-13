@@ -14,20 +14,17 @@
 
 #include <boost/exception/all.hpp>
 #include <chrono>
+#include <memory>
 
 artdaq::MetricManager::MetricManager()
     : metric_plugins_(0)
-    , metric_send_interval_ms_(15000)
-    , metric_holdoff_us_(1000)
     , system_metric_collector_(nullptr)
     , initialized_(false)
     , running_(false)
     , active_(false)
     , busy_(false)
     , missed_metric_calls_(0)
-    , metric_calls_(0)
-    , metric_cache_max_size_(1000)
-    , metric_cache_notify_size_(10) {}
+    , metric_calls_(0) {}
 
 artdaq::MetricManager::~MetricManager() noexcept { shutdown(); }
 
@@ -46,7 +43,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 	bool send_system_metrics = false;
 	bool send_process_metrics = false;
 
-	for (auto name : names)
+	for (const auto& name : names)
 	{
 		if (name == "metric_queue_size")
 		{
@@ -87,7 +84,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 			try
 			{
 				TLOG(TLVL_DEBUG) << "Constructing metric plugin with name " << name;
-				fhicl::ParameterSet plugin_pset = pset.get<fhicl::ParameterSet>(name);
+				auto plugin_pset = pset.get<fhicl::ParameterSet>(name);
 				metric_plugins_.push_back(
 				    makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_));
 			}
@@ -116,7 +113,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 
 	if (send_system_metrics || send_process_metrics)
 	{
-		system_metric_collector_.reset(new SystemMetricCollector(send_process_metrics, send_system_metrics));
+		system_metric_collector_ = std::make_unique<SystemMetricCollector>(send_process_metrics, send_system_metrics);
 	}
 
 	initialized_ = true;
@@ -130,7 +127,10 @@ void artdaq::MetricManager::do_start()
 		TLOG(TLVL_DEBUG) << "Starting MetricManager";
 		for (auto& metric : metric_plugins_)
 		{
-			if (!metric) continue;
+			if (!metric)
+			{
+				continue;
+			}
 			try
 			{
 				metric->startMetrics();
@@ -156,7 +156,17 @@ void artdaq::MetricManager::do_stop()
 	metric_cv_.notify_all();
 	TLOG(TLVL_DEBUG) << "Joining Metric-Sending thread";
 	lk.unlock();
-	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
+	try
+	{
+		if (metric_sending_thread_.joinable())
+		{
+			metric_sending_thread_.join();
+		}
+	}
+	catch (...)
+	{
+		// IGNORED
+	}
 	TLOG(TLVL_DEBUG) << "do_stop Complete";
 }
 
@@ -221,7 +231,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 			auto& cached = metric_cache_[name];
 			if (cached == nullptr)
 			{
-				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+				metric_cache_[name] = std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
 			}
 			else
 			{
@@ -275,7 +285,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 			auto& cached = metric_cache_[name];
 			if (cached == nullptr)
 			{
-				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+				metric_cache_[name] = std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
 			}
 			else
 			{
@@ -320,7 +330,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 			auto& cached = metric_cache_[name];
 			if (cached == nullptr)
 			{
-				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+				metric_cache_[name] = std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
 			}
 			else
 			{
@@ -365,7 +375,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 			auto& cached = metric_cache_[name];
 			if (cached == nullptr)
 			{
-				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+				metric_cache_[name] = std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
 			}
 			else
 			{
@@ -390,13 +400,13 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	}
 }
 
-void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned int const& value, std::string const& unit,
+void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& value, std::string const& unit,
                                        int level, MetricMode mode, std::string const& metricPrefix,
                                        bool useNameOverride)
 {
 	if (!initialized_)
 	{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " <<  name << " when MetricManager has not yet been initialized!";
+		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 	}
 	else if (!running_)
 	{
@@ -411,7 +421,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 			auto& cached = metric_cache_[name];
 			if (cached == nullptr)
 			{
-				metric_cache_[name].reset(new MetricData(name, value, unit, level, mode, metricPrefix, useNameOverride));
+				metric_cache_[name] = std::make_unique<MetricData>(name, value, unit, level, mode, metricPrefix, useNameOverride);
 			}
 			else
 			{
@@ -438,7 +448,10 @@ void artdaq::MetricManager::sendMetric(std::string const& name, long unsigned in
 
 void artdaq::MetricManager::startMetricLoop_()
 {
-	if (metric_sending_thread_.joinable()) metric_sending_thread_.join();
+	if (metric_sending_thread_.joinable())
+	{
+		metric_sending_thread_.join();
+	}
 	boost::thread::attributes attrs;
 	attrs.set_stack_size(4096 * 2000);  // 8000 KB
 	TLOG(TLVL_INFO) << "Starting Metric Sending Thread";
@@ -462,7 +475,10 @@ bool artdaq::MetricManager::metricQueueEmpty()
 	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 	for (auto& cache_entry : metric_cache_)
 	{
-		if (cache_entry.second->DataPointCount > 0) return false;
+		if (cache_entry.second->DataPointCount > 0)
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -489,7 +505,7 @@ size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 {
 	std::lock_guard<std::mutex> lk(metric_cache_mutex_);
 	size_t size = 0;
-	if (name == "")
+	if (name.empty())
 	{
 		for (auto& q : metric_cache_)
 		{
@@ -498,7 +514,10 @@ size_t artdaq::MetricManager::metricQueueSize(std::string const& name)
 	}
 	else
 	{
-		if (metric_cache_.count(name)) size = metric_cache_[name]->DataPointCount;
+		if (metric_cache_.count(name) != 0u)
+		{
+			size = metric_cache_[name]->DataPointCount;
+		}
 	}
 
 	return size;
@@ -526,7 +545,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 				}
 				for (auto& metric : metric_plugins_)
 				{
-					if (metric) metric->sendMetrics();
+					if (metric)
+					{
+						metric->sendMetrics();
+					}
 				}
 				last_send_time = now;
 			}
@@ -572,14 +594,17 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 
 		TLOG(6) << "sendMetricLoop_: Before processing temp_list";
-		while (temp_list.size() > 0)
+		while (!temp_list.empty())
 		{
 			auto data_ = std::move(temp_list.front());
 			temp_list.pop_front();
-			if (data_->Type == MetricType::InvalidMetric) continue;
+			if (data_->Type == MetricType::InvalidMetric)
+			{
+				continue;
+			}
 			if (!data_->UseNameOverride)
 			{
-				if (data_->MetricPrefix.size() > 0)
+				if (!data_->MetricPrefix.empty())
 				{
 					data_->Name = prefix_ + "." + data_->MetricPrefix + "." + data_->Name;
 				}
@@ -591,7 +616,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 			for (auto& metric : metric_plugins_)
 			{
-				if (!metric) continue;
+				if (!metric)
+				{
+					continue;
+				}
 				if (metric->IsLevelEnabled(data_->Level))
 				{
 					try
@@ -611,7 +639,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 		TLOG(6) << "sendMetricLoop_: Before sending metrics";
 		for (auto& metric : metric_plugins_)
 		{
-			if (!metric) continue;
+			if (!metric)
+			{
+				continue;
+			}
 			metric->sendMetrics(false, processing_start);
 		}
 
@@ -648,14 +679,17 @@ void artdaq::MetricManager::sendMetricLoop_()
 	TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 	                 << " missed)";
 
-	while (temp_list.size() > 0)
+	while (!temp_list.empty())
 	{
 		auto data_ = std::move(temp_list.front());
 		temp_list.pop_front();
-		if (data_->Type == MetricType::InvalidMetric) continue;
+		if (data_->Type == MetricType::InvalidMetric)
+		{
+			continue;
+		}
 		if (!data_->UseNameOverride)
 		{
-			if (data_->MetricPrefix.size() > 0)
+			if (!data_->MetricPrefix.empty())
 			{
 				data_->Name = prefix_ + "." + data_->MetricPrefix + "." + data_->Name;
 			}
@@ -667,7 +701,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 		for (auto& metric : metric_plugins_)
 		{
-			if (!metric) continue;
+			if (!metric)
+			{
+				continue;
+			}
 			if (metric->IsLevelEnabled(data_->Level))
 			{
 				try
@@ -686,7 +723,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 
 	for (auto& metric : metric_plugins_)
 	{
-		if (!metric) continue;
+		if (!metric)
+		{
+			continue;
+		}
 		try
 		{
 			metric->stopMetrics();
