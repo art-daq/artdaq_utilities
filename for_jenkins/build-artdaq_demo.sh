@@ -250,8 +250,23 @@ mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
 
 if [ $copyback_deps == "false" ]; then
   echo "Removing art bundle products"
-  for file in `egrep '[^ ]*\.bz2' ${blddir}/art-*_MANIFEST.txt`;do
-	rm -f $file
+  for file in ${blddir}/*.bz2;do
+    if [[ "${file}" =~ "artdaq" ]]; then
+        echo "Not deleting ${file}"
+    elif [[ "${file}" =~ "nodejs" ]]; then
+        echo "Not deleting ${file}"
+    elif [[ "${file}" =~ "smc_compiler" ]]; then
+        echo "Not deleting ${file}"
+    elif [[ "${file}" =~ "swig" ]]; then
+        echo "Not deleting ${file}"
+    elif [[ "${file}" =~ "TRACE" ]]; then
+        echo "Not deleting ${file}"
+    elif [[ "${file}" =~ "xmlrpc" ]]; then
+        echo "Not deleting ${file}"
+    else
+        echo "Deleting ${file}"
+	    rm -f $file
+    fi
   done
   rm -f ${blddir}/art-*_MANIFEST.txt
 fi
