@@ -251,20 +251,21 @@ mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
 if [ $copyback_deps == "false" ]; then
   echo "Removing art bundle products"
   for file in ${blddir}/*.bz2;do
-    if [[ "${file}" =~ "artdaq" ]]; then
-        echo "Not deleting ${file}"
-    elif [[ "${file}" =~ "nodejs" ]]; then
-        echo "Not deleting ${file}"
-    elif [[ "${file}" =~ "smc_compiler" ]]; then
-        echo "Not deleting ${file}"
-    elif [[ "${file}" =~ "swig" ]]; then
-        echo "Not deleting ${file}"
-    elif [[ "${file}" =~ "TRACE" ]]; then
-        echo "Not deleting ${file}"
-    elif [[ "${file}" =~ "xmlrpc" ]]; then
-        echo "Not deleting ${file}"
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "artdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "nodejs" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "smc_compiler" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "swig" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "xmlrpc" ]]; then
+        echo "Not deleting ${filebase}"
     else
-        echo "Deleting ${file}"
+        echo "Deleting ${filebase}"
 	    rm -f $file
     fi
   done
