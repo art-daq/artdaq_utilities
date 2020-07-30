@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
 IFS=":"
@@ -246,6 +247,14 @@ cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.t
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing art bundle products"
+  for file in `egrep [^ ]*\.bz2 ${blddir}/art-*_MANIFEST.txt`;do
+	rm -f $file
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
+fi
 
 echo
 echo "move files"
