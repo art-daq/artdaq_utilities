@@ -204,7 +204,7 @@ mv ${artdaqManifest}.tmp ${artdaqManifest}
 
 if [ $copyback_deps == "false" ]; then
   echo "Removing art bundle products"
-  for file in `egrep [^ ]*\.bz2 ${blddir}/art-*_MANIFEST.txt`;do
+  for file in `egrep '[^ ]*\.bz2' ${blddir}/art-*_MANIFEST.txt`;do
 	rm -f $file
   done
   rm -f ${blddir}/art-*_MANIFEST.txt
