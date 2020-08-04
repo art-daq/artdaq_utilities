@@ -17,6 +17,8 @@ elif [ "${basequal}" = "e17" ]; then
 	 gccver=v7_3_0
 elif [ "${basequal}" = "e19" ]; then
      gccver=v8_2_0
+elif [ "${basequal}" = "e20" ]; then
+     gccver=v9_3_0
 elif [ "${basequal}" = "c2" ]; then
 	 gccver=v6_4_0
 	 clangver=v5_0_1
@@ -41,29 +43,31 @@ if ! version_greater v3_14_00 v3_14_01; then
   build_cet_null -DWANT_UPS=1 cetmodules v1_02_02
 fi
 
+########## ARTDAQ Dependencies ############
+
 build_cet -p trace-git TRACE v3_15_09 -nq-
+do_build xmlrpc_c v1_51_06 ${basequal}
+do_build swig v4_0_2 ${basequal}
 
-#do_build xmlrpc_c v1_51_03 ${basequal}
+########## ARTDAQ_DEMO Dependencies #######
 
-#do_build zmq v4_3_1 ${basequal}
-
-#do_build epics v3_16_2 ${basequal}
+do_build epics v3_15_8 ${basequal}
+do_build qt v5_12_3a ${basequal}
+do_build hdf5 v1_12_0 ${basequal}
 
 #do_build git v2_20_1
 #setup git v2_20_1
 #do_build mongodb v4_0_8b ${basequal}
 #unsetup git
 
-#do_build mpich v3_2_1e ${basequal}
-#do_build swig v3_0_12d ${basequal}
-#do_build swig v4_0_0 ${basequal}
-
-#do_build xdaq v14_12_0 ${basequal}
-
 #build_noarch nodejs v4_5_0
-#do_build ganglia v3_7_1
 
-#do_build qt v5_12_3 ${basequal}
+################## Others #################
+#do_build zmq v4_3_1 ${basequal}
+#do_build xdaq v14_12_0 ${basequal}
+#do_build ganglia v3_7_1
+do_build mpich v3_3_2a ${basequal}
+
 
 #if [[ "${basequal}" != "e15" ]]; then
 #    do_pull -n sqlite v3_26_00_00
