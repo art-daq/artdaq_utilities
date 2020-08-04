@@ -55,7 +55,7 @@ build_cet -p trace-git TRACE v3_15_09 -nq-
 do_build sqlite v3_26_00_00
 do_build python v2_7_15a
 do_build qt v5_12_3a ${basequal}
-do_build hdf5 v1_12_0a ${basequal}
+do_build hdf5 v1_12_0a ${basequal}:${build_type}
 
 #do_build git v2_20_1
 #setup git v2_20_1
