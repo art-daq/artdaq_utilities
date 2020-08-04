@@ -52,6 +52,7 @@ do_build swig v4_0_2 ${basequal}
 ########## ARTDAQ_DEMO Dependencies #######
 
 do_build epics v3_15_8 ${basequal}
+do_build python v3_8_3b ${basequal}
 do_build qt v5_12_3a ${basequal}
 do_build hdf5 v1_12_0 ${basequal}
 
