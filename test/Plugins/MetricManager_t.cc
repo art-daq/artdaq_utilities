@@ -12,21 +12,21 @@
 
 BOOST_AUTO_TEST_SUITE(MetricManager_test)
 
-#define TRACE_REQUIRE_EQUAL(l, r)                                                                                                \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		if (l == r)                                                                                                              \
-		{                                                                                                                        \
-			TLOG(TLVL_DEBUG) << __LINE__ << ": Checking if " << #l << " (" << l << ") equals " << #r << " (" << r << ")...YES!"; \
-		}                                                                                                                        \
-		else                                                                                                                     \
-		{                                                                                                                        \
-			TLOG(TLVL_ERROR) << __LINE__ << ": Checking if " << #l << " (" << l << ") equals " << #r << " (" << r << ")...NO!";  \
-		}                                                                                                                        \
-		BOOST_REQUIRE_EQUAL(l, r);                                                                                               \
+#define TRACE_REQUIRE_EQUAL(l, r)                                                                                                    \
+	do                                                                                                                               \
+	{                                                                                                                                \
+		if ((l) == (r))                                                                                                              \
+		{                                                                                                                            \
+			TLOG(TLVL_DEBUG) << __LINE__ << ": Checking if " << #l << " (" << (l) << ") equals " << #r << " (" << (r) << ")...YES!"; \
+		}                                                                                                                            \
+		else                                                                                                                         \
+		{                                                                                                                            \
+			TLOG(TLVL_ERROR) << __LINE__ << ": Checking if " << #l << " (" << (l) << ") equals " << #r << " (" << (r) << ")...NO!";  \
+		}                                                                                                                            \
+		BOOST_REQUIRE_EQUAL((l), (r));                                                                                               \
 	} while (0)
 
-typedef std::chrono::duration<double, std::ratio<1>> seconds;
+using seconds = std::chrono::duration<double, std::ratio<1>>;
 
 constexpr double GetElapsedTime(std::chrono::steady_clock::time_point then,
                                 std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now())
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(SendMetric_String)
 	TLOG_DEBUG("MetricManager_t") << "END TEST SendMetric_String" << TLOG_ENDL;
 }
 
-BOOST_AUTO_TEST_CASE(SendMetrics)
+BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 {
 	TLOG_DEBUG("MetricManager_t") << "BEGIN TEST SendMetrics" << TLOG_ENDL;
 	artdaq::MetricManager mm;
@@ -186,7 +186,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 	mm.sendMetric("Test Metric LastPoint", 1, "Units", 2, artdaq::MetricMode::LastPoint, "", true);
 	mm.sendMetric("Test Metric LastPoint", 5, "Units", 2, artdaq::MetricMode::LastPoint, "", true);
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -208,7 +211,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 	mm.sendMetric("Test Metric Accumulate", 4, "Units", 2, artdaq::MetricMode::Accumulate, "", true);
 	mm.sendMetric("Test Metric Accumulate", 5, "Units", 2, artdaq::MetricMode::Accumulate, "", true);
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -229,7 +235,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 	mm.sendMetric("Test Metric Average", 1, "Units", 2, artdaq::MetricMode::Average, "", true);
 	mm.sendMetric("Test Metric Average", 3, "Units", 2, artdaq::MetricMode::Average, "", true);
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -250,7 +259,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 	mm.sendMetric("Test Metric Rate", 4, "Units", 2, artdaq::MetricMode::Rate, "", true);
 	mm.sendMetric("Test Metric Rate", 5, "Units", 2, artdaq::MetricMode::Rate, "", true);
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -270,7 +282,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 
 	mm.sendMetric("Test Metric AccumulateAndRate", 4, "Units", 2, artdaq::MetricMode::Accumulate | artdaq::MetricMode::Rate, "", true);
 	mm.sendMetric("Test Metric AccumulateAndRate", 5, "Units", 2, artdaq::MetricMode::Accumulate | artdaq::MetricMode::Rate, "", true);
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -303,7 +318,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 	TLOG_DEBUG("MetricManager_t") << "END TEST SendMetrics" << TLOG_ENDL;
 }
 
-BOOST_AUTO_TEST_CASE(SendMetrics_Levels)
+BOOST_AUTO_TEST_CASE(SendMetrics_Levels)  // NOLINT(readability-function-size)
 {
 	TLOG_DEBUG("MetricManager_t") << "BEGIN TEST SendMetrics_Levels" << TLOG_ENDL;
 	artdaq::MetricManager mm;
@@ -339,7 +354,10 @@ BOOST_AUTO_TEST_CASE(SendMetrics_Levels)
 	mm.sendMetric("Test Metric 10", 10, "Units", 10, artdaq::MetricMode::LastPoint, "", true);
 	std::bitset<11> received_metrics_;
 
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	{
 		artdaq::TestMetric::LockReceivedMetricMutex();
@@ -423,7 +441,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics_Levels)
 	TLOG_DEBUG("MetricManager_t") << "END TEST SendMetrics_Levels" << TLOG_ENDL;
 }
 
-BOOST_AUTO_TEST_CASE(MetricFlood)
+BOOST_AUTO_TEST_CASE(MetricFlood)  // NOLINT(readability-function-size)
 {
 	TLOG_DEBUG("MetricManager_t") << "BEGIN TEST MetricFlood" << TLOG_ENDL;
 	artdaq::MetricManager mm;
@@ -450,7 +468,10 @@ BOOST_AUTO_TEST_CASE(MetricFlood)
 	mm.sendMetric("Test Metric 1", 1, "Units", 2, artdaq::MetricMode::Accumulate, "", true);
 	auto afterOne = std::chrono::steady_clock::now();
 
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	auto beforeTen = std::chrono::steady_clock::now();
 	for (auto ii = 1; ii <= 10; ++ii)
@@ -459,7 +480,10 @@ BOOST_AUTO_TEST_CASE(MetricFlood)
 	}
 	auto afterTen = std::chrono::steady_clock::now();
 
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	auto beforeOneHundred = std::chrono::steady_clock::now();
 	for (auto ii = 1; ii <= 100; ++ii)
@@ -468,7 +492,10 @@ BOOST_AUTO_TEST_CASE(MetricFlood)
 	}
 	auto afterOneHundred = std::chrono::steady_clock::now();
 
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	auto beforeOneThousand = std::chrono::steady_clock::now();
 	for (auto ii = 1; ii <= 1000; ++ii)
@@ -477,7 +504,10 @@ BOOST_AUTO_TEST_CASE(MetricFlood)
 	}
 	auto afterOneThousand = std::chrono::steady_clock::now();
 
-	while (mm.metricManagerBusy()) usleep(1000);
+	while (mm.metricManagerBusy())
+	{
+		usleep(1000);
+	}
 
 	auto beforeTenThousand = std::chrono::steady_clock::now();
 	for (auto ii = 1; ii <= 10000; ++ii)
