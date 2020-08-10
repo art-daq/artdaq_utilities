@@ -5,7 +5,7 @@ build_tag=${build_tag:-""}
 
 ignorequals="nu|s50|s53|s54|s56|s57|s58|s60|s61|s62|s63|s66|s68|s69|ib"
 TOP_DIR=$PWD
-MASTER_PRODUCTS=/home/eflumerf/products
+BASE_PRODUCTS=/home/eflumerf/products
 
 ulimit -c unlimited
 
@@ -32,7 +32,7 @@ function do_build_impl() {
 		quals=$3
 		qualdash=`echo $quals|sed 's/:/-/g'`
 		shift;shift;shift
-		source $MASTER_PRODUCTS/setup
+		source $BASE_PRODUCTS/setup
 		source $TOP_DIR/products/setup
 		buildname=${builddir}_${btype}-${qualdash}
 		mkdir -p $TOP_DIR/${buildname}
