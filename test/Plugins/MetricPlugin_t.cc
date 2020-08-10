@@ -6,7 +6,7 @@
 #include "cetlib_except/exception.h"
 #include "fhiclcpp/make_ParameterSet.h"
 
-#include "trace.h"
+#include "TRACE/trace.h"
 
 namespace artdaqtest {
 /// <summary>
@@ -19,7 +19,7 @@ public:
 	/// Constructor
 	/// </summary>
 	/// <param name="ps">fhicl::ParameterSet used to configure MetricPLugin</param>
-	explicit MetricPluginTestAdapter(fhicl::ParameterSet ps)
+	explicit MetricPluginTestAdapter(const fhicl::ParameterSet& ps)
 	    : artdaq::MetricPlugin(ps, "MetricPlugin_t")
 	    , sendMetric_string_calls(0)
 	    , sendMetric_int_calls(0)
@@ -33,32 +33,32 @@ public:
 	/**
 	 * \brief Send a String metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const std::string&, const std::string&) override { sendMetric_string_calls++; }
+	void sendMetric_(const std::string& /*name*/, const std::string& /*value*/, const std::string& /*units*/) override { sendMetric_string_calls++; }
 	/**
 	 * \brief Send an int metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const int&, const std::string&) override { sendMetric_int_calls++; }
+	void sendMetric_(const std::string& /*name*/, const int& /*value*/, const std::string& /*units*/) override { sendMetric_int_calls++; }
 	/**
 	 * \brief Send a double metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const double&, const std::string&) override { sendMetric_double_calls++; }
+	void sendMetric_(const std::string& /*name*/, const double& /*value*/, const std::string& /*units*/) override { sendMetric_double_calls++; }
 	/**
 	 * \brief Send a float metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const float&, const std::string&) override { sendMetric_float_calls++; }
+	void sendMetric_(const std::string& /*name*/, const float& /*value*/, const std::string& /*units*/) override { sendMetric_float_calls++; }
 	/**
 	 * \brief Send an unsigned metric, record the call and discard the metric's data
 	 */
-	virtual void sendMetric_(const std::string&, const long unsigned int&, const std::string&) override { sendMetric_unsigned_calls++; }
+	void sendMetric_(const std::string& /*name*/, const uint64_t& /*value*/, const std::string& /*units*/) override { sendMetric_unsigned_calls++; }
 
 	/**
 	 * \brief Record that a startMetrics call was received
 	 */
-	virtual void startMetrics_() override { startMetrics_calls++; }
+	void startMetrics_() override { startMetrics_calls++; }
 	/**
 	 * \brief Record that a stopMetrics call was received
 	 */
-	virtual void stopMetrics_() override { stopMetrics_calls++; }
+	void stopMetrics_() override { stopMetrics_calls++; }
 
 	size_t sendMetric_string_calls;    ///< The number of string metric calls received
 	size_t sendMetric_int_calls;       ///< The number of int metric calls received
