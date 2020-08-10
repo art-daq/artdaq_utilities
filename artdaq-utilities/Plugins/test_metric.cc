@@ -20,7 +20,7 @@ namespace artdaq {
 /**
  * \brief TestMetric writes metric data to a statically-allocated memory block
  */
-class TestMetricImpl : public MetricPlugin
+class TestMetricImpl final : public MetricPlugin
 {
 public:
 	/**
@@ -37,7 +37,7 @@ public:
 	/**
    * \brief TestMetricImpl Destructor. Calls stopMetrics
    */
-	virtual ~TestMetricImpl()
+	~TestMetricImpl() override
 	{
 		stopMetrics();
 	}
@@ -104,7 +104,7 @@ public:
    * \param value Value of the metric
    * \param unit Units of the metric
    */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}
@@ -122,6 +122,12 @@ public:
 	void stopMetrics_() override
 	{
 	}
+
+private:
+	TestMetricImpl(const TestMetricImpl&) = delete;
+	TestMetricImpl(TestMetricImpl&&) = delete;
+	TestMetricImpl& operator=(const TestMetricImpl&) = delete;
+	TestMetricImpl& operator=(TestMetricImpl&&) = delete;
 };
 
 }  // End namespace artdaq

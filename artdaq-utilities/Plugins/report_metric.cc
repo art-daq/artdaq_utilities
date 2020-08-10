@@ -23,7 +23,7 @@ namespace artdaq {
 /**
 	 * \brief PeriodicReportMetric writes metric data to a file on disk
 	 */
-class PeriodicReportMetric : public MetricPlugin
+class PeriodicReportMetric final : public MetricPlugin
 {
 private:
 	std::chrono::steady_clock::time_point last_report_time_;
@@ -45,7 +45,7 @@ public:
 	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
 	    : MetricPlugin(config, app_name, metric_name)
 	    , last_report_time_(std::chrono::steady_clock::now())
-	    , metrics_()
+
 	{
 		startMetrics();
 	}
@@ -53,7 +53,7 @@ public:
 	/**
 		 * \brief PeriodicReportMetric Destructor. Calls stopMetrics and then closes the file
 		 */
-	virtual ~PeriodicReportMetric()
+	~PeriodicReportMetric() override
 	{
 		stopMetrics();
 	}
@@ -118,7 +118,7 @@ public:
 		 * \param value Value of the metric
 		 * \param unit Units of the metric
 		 */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}
@@ -140,12 +140,20 @@ public:
 	}
 
 private:
+	PeriodicReportMetric(const PeriodicReportMetric&) = delete;
+	PeriodicReportMetric(PeriodicReportMetric&&) = delete;
+	PeriodicReportMetric& operator=(const PeriodicReportMetric&) = delete;
+	PeriodicReportMetric& operator=(PeriodicReportMetric&&) = delete;
+
 	void writeReportMessage_(bool force)
 	{
 		std::unique_lock<std::mutex> lk(report_mutex_);
 		if (force || std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - last_report_time_).count() >= accumulationTime_)
 		{
-			if (metrics_.size() == 0) return;
+			if (metrics_.empty())
+			{
+				return;
+			}
 			last_report_time_ = std::chrono::steady_clock::now();
 			std::ostringstream str;
 
@@ -153,17 +161,28 @@ private:
 			int live_metrics = 0;
 			for (auto& metric : metrics_)
 			{
-				if (count != 0) str << "," << std::endl;
+				if (count != 0)
+				{
+					str << "," << std::endl;
+				}
 				str << "\t" << metric.first << ": " << metric.second;
-				if (metric.second != "NOT REPORTED") live_metrics++;
+				if (metric.second != "NOT REPORTED")
+				{
+					live_metrics++;
+				}
 				metric.second = "NOT REPORTED";
 				count++;
 			}
 			if (live_metrics > 0)
+			{
 				METLOG(TLVL_INFO) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
 				                  << str.str();
+			}
 			else
+			{
+				TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
 				METLOG(TLVL_INFO) << "Periodic report: No active metrics in last reporting interval!";
+			}
 		}
 	}
 };

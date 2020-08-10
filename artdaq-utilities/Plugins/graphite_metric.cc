@@ -74,7 +74,7 @@ public:
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
 
-	virtual ~GraphiteMetric() { stopMetrics(); }
+	~GraphiteMetric() override { stopMetrics(); }
 
 	/**
 		 * \brief Get the library name for the Graphite metric
@@ -87,11 +87,11 @@ public:
 		 * \param name Name of the metric. Will have the namespace prepended
 		 * \param value Value of the metric
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string&) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
 	{
 		if (!stopped_)
 		{
-			const auto result = std::time(0);
+			const auto result = std::time(nullptr);
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
@@ -149,7 +149,7 @@ public:
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
 		*/
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}
@@ -191,6 +191,11 @@ public:
 	}
 
 private:
+	GraphiteMetric(const GraphiteMetric&) = delete;
+	GraphiteMetric(GraphiteMetric&&) = delete;
+	GraphiteMetric& operator=(const GraphiteMetric&) = delete;
+	GraphiteMetric& operator=(GraphiteMetric&&) = delete;
+
 	/**
 		 * \brief Reconnect to Graphite
 		 */

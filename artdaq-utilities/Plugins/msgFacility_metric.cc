@@ -19,11 +19,16 @@ namespace artdaq {
 /**
 	 * \brief A MetricPlugin class which sends metric data to MessageFacility
 	 */
-class MsgFacilityMetric : public MetricPlugin
+class MsgFacilityMetric final : public MetricPlugin
 {
 private:
 	std::string facility_;
 	int outputLevel_;
+
+	MsgFacilityMetric(const MsgFacilityMetric&) = delete;
+	MsgFacilityMetric(MsgFacilityMetric&&) = delete;
+	MsgFacilityMetric& operator=(const MsgFacilityMetric&) = delete;
+	MsgFacilityMetric& operator=(MsgFacilityMetric&&) = delete;
 
 public:
 	/**
@@ -50,7 +55,7 @@ public:
 		}
 		catch (const cet::exception&)
 		{
-			std::string levelString = config.get<std::string>("output_message_severity", "Info");
+			auto levelString = config.get<std::string>("output_message_severity", "Info");
 			if (levelString == "Info" || levelString == "info" || levelString == "LogInfo")
 			{
 				outputLevel_ = 0;
@@ -74,7 +79,7 @@ public:
 	/**
 		 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
 		 */
-	virtual ~MsgFacilityMetric() { stopMetrics(); }
+	~MsgFacilityMetric() override { stopMetrics(); }
 	/**
 		 * \brief Return the library name of the MetricPlugin
 		 * \return The library name of MsgFacilityMetric: "msgFacility"
@@ -148,7 +153,7 @@ public:
 		 * \param value Value of the metric
 		 * \param unit Units of the metric
 		 */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
 	{
 		sendMetric_(name, std::to_string(value), unit);
 	}

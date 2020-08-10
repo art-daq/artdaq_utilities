@@ -12,7 +12,7 @@
 #define MLEVEL_NETWORK 9
 
 artdaq::SystemMetricCollector::SystemMetricCollector(bool processMetrics, bool systemMetrics)
-    : lastCPU_(), lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
+    : lastProcessCPUTimes_(), lastProcessCPUTime_(0), sendProcessMetrics_(processMetrics), sendSystemMetrics_(systemMetrics)
 {
 	lastCPU_ = ReadProcStat_();
 	lastProcessCPUTime_ = times(&lastProcessCPUTimes_);
@@ -48,7 +48,7 @@ double artdaq::SystemMetricCollector::GetProcessCPUUsagePercent()
 	return utime + stime * 100.0 / static_cast<double>(delta_t);
 }
 
-unsigned long artdaq::SystemMetricCollector::GetAvailableRAM()
+uint64_t artdaq::SystemMetricCollector::GetAvailableRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -59,7 +59,7 @@ unsigned long artdaq::SystemMetricCollector::GetAvailableRAM()
 	return 0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetBufferedRAM()
+uint64_t artdaq::SystemMetricCollector::GetBufferedRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -70,7 +70,7 @@ unsigned long artdaq::SystemMetricCollector::GetBufferedRAM()
 	return 0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetTotalRAM()
+uint64_t artdaq::SystemMetricCollector::GetTotalRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -93,11 +93,11 @@ double artdaq::SystemMetricCollector::GetAvailableRAMPercent(bool buffers)
 	return 0.0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetProcessMemUsage()
+uint64_t artdaq::SystemMetricCollector::GetProcessMemUsage()
 {
 	auto filp = fopen("/proc/self/statm", "r");
-	unsigned long mem;
-	fscanf(filp, "%*u %lu", &mem);
+	uint64_t mem;
+	fscanf(filp, "%*u %lu", &mem);  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 	fclose(filp);
 	return mem * sysconf(_SC_PAGESIZE);
 }
@@ -109,25 +109,25 @@ double artdaq::SystemMetricCollector::GetProcessMemUsagePercent()
 	return proc * 100.0 / static_cast<double>(total);
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveBytes()
+uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveBytes()
 {
 	UpdateNetstat_();
 	return thisNetStat_.recv_bytes - lastNetStat_.recv_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendBytes()
+uint64_t artdaq::SystemMetricCollector::GetNetworkSendBytes()
 {
 	UpdateNetstat_();
 	return thisNetStat_.send_bytes - lastNetStat_.send_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveErrors()
+uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveErrors()
 {
 	UpdateNetstat_();
 	return thisNetStat_.recv_errs - lastNetStat_.recv_errs;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendErrors()
+uint64_t artdaq::SystemMetricCollector::GetNetworkSendErrors()
 {
 	UpdateNetstat_();
 	return thisNetStat_.send_errs - lastNetStat_.send_errs;
@@ -168,7 +168,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	auto filp = fopen("/proc/stat", "r");
 	cpustat this_cpu;
 
-	fscanf(filp, "cpu %llu %llu %llu %llu %llu %llu %llu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,
+	fscanf(filp, "cpu %lu %lu %lu %lu %lu %lu %lu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 	       &this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
 	fclose(filp);
 
@@ -192,11 +192,11 @@ artdaq::SystemMetricCollector::netstat artdaq::SystemMetricCollector::ReadProcNe
 		fgets(buf, 200, filp);
 	}
 
-	unsigned long rbytes, rerrs, rdrop, rfifo, rframe, tbytes, terrs, tdrop, tfifo, tcolls, tcarrier;
+	uint64_t rbytes, rerrs, rdrop, rfifo, rframe, tbytes, terrs, tdrop, tfifo, tcolls, tcarrier;
 
-	while (fgets(buf, 200, filp))
+	while (fgets(buf, 200, filp) != nullptr)
 	{
-		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,
+		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
 		if (ifname[0] == 'e')
