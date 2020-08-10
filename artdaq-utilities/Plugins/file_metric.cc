@@ -23,7 +23,7 @@ namespace artdaq {
 /**
  * \brief FileMetric writes metric data to a file on disk
  */
-class FileMetric : public MetricPlugin
+class FileMetric final : public MetricPlugin
 {
 private:
 	std::string outputFile_;
@@ -40,13 +40,18 @@ private:
 		std::time_t tt = std::chrono::system_clock::to_time_t(time);
 
 		struct std::tm* ptm = std::localtime(&tt);
-		if (timeformat_.size())
+		if (!timeformat_.empty())
 		{
 			return stream << std::put_time(ptm, timeformat_.c_str()) << ": ";
 		}
 
 		return stream;
 	}
+
+	FileMetric(const FileMetric&) = delete;
+	FileMetric(FileMetric&&) = delete;
+	FileMetric& operator=(const FileMetric&) = delete;
+	FileMetric& operator=(FileMetric&&) = delete;
 
 public:
 	/**
@@ -72,7 +77,7 @@ public:
 	    , timeformat_(pset.get<std::string>("time_format", "%c"))
 	    , stopped_(true)
 	{
-		std::string modeString = pset.get<std::string>("fileMode", "append");
+		auto modeString = pset.get<std::string>("fileMode", "append");
 
 		mode_ = std::ofstream::out | std::ofstream::app;
 		if (modeString == "Overwrite" || modeString == "Create" || modeString == "Write")
@@ -89,9 +94,9 @@ public:
 			}
 			else
 			{
-				if (outputFile_.rfind(".") != std::string::npos)
+				if (outputFile_.rfind('.') != std::string::npos)
 				{
-					outputFile_ = outputFile_.insert(outputFile_.rfind("."), "_" + unique_id);
+					outputFile_ = outputFile_.insert(outputFile_.rfind('.'), "_" + unique_id);
 				}
 				else
 				{
@@ -106,7 +111,7 @@ public:
 	/**
    * \brief FileMetric Destructor. Calls stopMetrics and then closes the file
    */
-	virtual ~FileMetric()
+	~FileMetric() override
 	{
 		stopMetrics();
 		closeFile_();
@@ -176,7 +181,7 @@ public:
    * \param unit Units of the metric
    * \param time Time the metric was sent
    */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
@@ -205,11 +210,11 @@ private:
 		if (!file_name_is_absolute_path_)
 		{
 			TLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
-			std::string logPathProblem = "";
-			std::string logfileName = "";
+			std::string logPathProblem;
+			std::string logfileName;
 			char* logRootString = getenv(relative_env_var_.c_str());
 
-			std::string logfileDir = "";
+			std::string logfileDir;
 			if (logRootString != nullptr)
 			{
 				if (!BFS::exists(logRootString))
@@ -235,7 +240,9 @@ private:
 					// really care if we have to create application directories...
 					TLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
 					if (!BFS::exists(logfileDir))
+					{
 						BFS::create_directories(logfileDir);
+					}
 
 					logfileName.append(logfileDir);
 					logfileName.append(outputFile_);
@@ -269,8 +276,20 @@ private:
 
 	void closeFile_()
 	{
+<<<<<<< HEAD
 		getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric closing file stream." << std::endl;
+=======
+		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
+		try
+		{
+			outputStream_.flush();
+>>>>>>> develop
 		outputStream_.close();
+	}
+		catch (...)
+		{
+			// IGNORED
+		}
 	}
 };
 }  // End namespace artdaq

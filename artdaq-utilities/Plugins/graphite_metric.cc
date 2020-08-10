@@ -70,7 +70,7 @@ public:
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
 
-	virtual ~GraphiteMetric() { stopMetrics(); }
+	~GraphiteMetric() override { stopMetrics(); }
 
 	/**
 		 * \brief Get the library name for the Graphite metric
@@ -84,10 +84,18 @@ public:
 		 * \param value Value of the metric
    * \param time Time the metric was sent
 		 */
+<<<<<<< HEAD
 	void sendMetric_(const std::string& name, const std::string& value, const std::string&, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_)
 		{
+=======
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
+	{
+		if (!stopped_)
+		{
+			const auto result = std::time(nullptr);
+>>>>>>> develop
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
@@ -149,7 +157,7 @@ public:
 		 * \param unit Units of the metric (Not used)
    * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
@@ -191,6 +199,11 @@ public:
 	}
 
 private:
+	GraphiteMetric(const GraphiteMetric&) = delete;
+	GraphiteMetric(GraphiteMetric&&) = delete;
+	GraphiteMetric& operator=(const GraphiteMetric&) = delete;
+	GraphiteMetric& operator=(GraphiteMetric&&) = delete;
+
 	/**
 		 * \brief Reconnect to Graphite
 		 */

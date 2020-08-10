@@ -123,7 +123,8 @@ public:
 		}
 		if (level_mask_.to_ullong() == 0)
 		{
-			throw cet::exception("Configuration Error") << "No levels were enabled for this plugin! Please specify at least one of the following Parameters: \"level\", \"metric_levels\", or \"level_string\"!";
+			throw cet::exception("Configuration Error")  // NOLINT(cert-err60-cpp)
+			    << "No levels were enabled for this plugin! Please specify at least one of the following Parameters: \"level\", \"metric_levels\", or \"level_string\"!";
 		}
 		accumulationTime_ = pset.get<double>("reporting_interval", 15.0);
 	}
@@ -198,7 +199,7 @@ protected:
 		*
 		* Note this is a pure virtual function, it should be overridden by implementation plugins
 		*/
-	virtual void sendMetric_(const std::string& name, const long unsigned int& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
+	virtual void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
 		 * \brief Perform any start-up actions necessary for the metric plugin
@@ -233,7 +234,7 @@ public:
 		}
 		else
 		{
-			if (!metricRegistry_.count(data->Name))
+			if (metricRegistry_.count(data->Name) == 0)
 			{
 				metricRegistry_[data->Name] = *data;
 			}
@@ -260,15 +261,23 @@ public:
 			if (readyToSend_(metric.first) || forceSend)
 			{
 				TLOG(24) << "Sending metric " << metric.first;
-				if (metric.second.size() == 0 && metricRegistry_.count(metric.first))
+				if (metric.second.empty() && metricRegistry_.count(metric.first))
 				{
 					TLOG(24) << "Sending zero";
 					sendZero_(metricRegistry_[metric.first]);
 				}
-				else if (metric.second.size() > 0)
+				else if (!metric.second.empty())
 				{
 					TLOG(24) << "Aggregating " << metric.second.size() << " MetricData points";
+
+					if ((metric.second.front().Mode & MetricMode::Persist) != MetricMode::None && metric.second.size() > 1)
+					{
+						TLOG(24) << "Metric is in Persist mode and multiple instances are present. Removing the first entry.";
+						metric.second.erase(metric.second.begin());
+					}
+
 					MetricData& data = metric.second.front();
+
 					auto it = ++(metric.second.begin());
 					while (it != metric.second.end())
 					{
@@ -278,7 +287,7 @@ public:
 
 					std::bitset<32> modeSet(static_cast<uint32_t>(data.Mode));
 					bool useSuffix = true;
-					if (modeSet.count() <= 1) useSuffix = false;
+					if (modeSet.count() <= 1 || (modeSet.count() <= 2 && (data.Mode & MetricMode::Persist) != MetricMode::None)) useSuffix = false;
 
 					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
@@ -344,9 +353,16 @@ public:
 						sendMetric_(data.Name + (useSuffix ? " - Max" : ""), data.Max, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 
+					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
+					{
 					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
 					metric.second.clear();
 					TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+				}
+					else
+					{
+						TLOG(24) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";
+					}
 				}
 				interval_start_[metric.first] = interval_end;
 			}
@@ -367,7 +383,7 @@ public:
 	{
 		inhibit_ = true;
 		sendMetrics(true);
-		for (auto metric : metricRegistry_)
+		for (auto const& metric : metricRegistry_)
 		{
 			sendZero_(metric.second);
 		}
@@ -395,7 +411,7 @@ public:
 	{
 		for (auto& metric : metricData_)
 		{
-			if (metric.second.size() > 0)
+			if (!metric.second.empty())
 			{
 				TLOG(TLVL_TRACE) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
 				return true;
@@ -414,17 +430,22 @@ protected:
 	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run
 
 private:
+	MetricPlugin(const MetricPlugin&) = delete;
+	MetricPlugin(MetricPlugin&&) = delete;
+	MetricPlugin& operator=(const MetricPlugin&) = delete;
+	MetricPlugin& operator=(MetricPlugin&&) = delete;
+
 	std::unordered_map<std::string, std::list<MetricData>> metricData_;
 	std::unordered_map<std::string, MetricData> metricRegistry_;
 	std::unordered_map<std::string, std::chrono::steady_clock::time_point> lastSendTime_;
 	std::unordered_map<std::string, std::chrono::steady_clock::time_point> interval_start_;
 
-	std::chrono::system_clock::time_point to_system_clock(std::chrono::steady_clock::time_point t)
+	std::chrono::system_clock::time_point to_system_clock(std::chrono::steady_clock::time_point const& t)
 	{
 		return std::chrono::system_clock::now() + (t - std::chrono::steady_clock::now());
 	}
 
-	bool readyToSend_(std::string name)
+	bool readyToSend_(std::string const& name)
 	{
 		auto now = std::chrono::steady_clock::now();
 		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(now - lastSendTime_[name]).count() >= accumulationTime_)
@@ -490,7 +511,7 @@ private:
 		}
 	}
 
-	void sendMetric_(std::string name, MetricData::MetricDataValue data, std::string unit, MetricType type, std::chrono::system_clock::time_point interval_end)
+	void sendMetric_(std::string const& name, MetricData::MetricDataValue data, std::string const& unit, MetricType type, std::chrono::system_clock::time_point const& interval_end)
 	{
 		switch (type)
 		{
