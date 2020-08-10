@@ -23,17 +23,20 @@ build_type=${BUILDTYPE}
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 case ${qual_set} in
-    e19)
-        basequal=e19
-        ;;
     c7)
        basequal=c7
        ;;
-	e17)
-		basequal=e17
-		;;
     c2)
 		basequal=c2
+		;;
+    e20)
+        basequal=e20
+        ;;
+    e19)
+        basequal=e19
+        ;;
+	e17)
+		basequal=e17
 		;;
     e15)
         basequal=e15
