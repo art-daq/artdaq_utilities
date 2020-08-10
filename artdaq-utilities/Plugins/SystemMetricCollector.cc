@@ -79,7 +79,7 @@ double artdaq::SystemMetricCollector::GetProcessCPUUsagePercent()
 	return (utime + stime) * 100.0 / static_cast<double>(delta_t);
 }
 
-unsigned long artdaq::SystemMetricCollector::GetAvailableRAM()
+uint64_t artdaq::SystemMetricCollector::GetAvailableRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -90,7 +90,7 @@ unsigned long artdaq::SystemMetricCollector::GetAvailableRAM()
 	return 0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetBufferedRAM()
+uint64_t artdaq::SystemMetricCollector::GetBufferedRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -101,7 +101,7 @@ unsigned long artdaq::SystemMetricCollector::GetBufferedRAM()
 	return 0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetTotalRAM()
+uint64_t artdaq::SystemMetricCollector::GetTotalRAM()
 {
 	struct sysinfo meminfo;
 	auto err = sysinfo(&meminfo);
@@ -124,11 +124,11 @@ double artdaq::SystemMetricCollector::GetAvailableRAMPercent(bool buffers)
 	return 0.0;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetProcessMemUsage()
+uint64_t artdaq::SystemMetricCollector::GetProcessMemUsage()
 {
 	auto filp = fopen("/proc/self/statm", "r");
-	unsigned long mem;
-	fscanf(filp, "%*u %lu", &mem);
+	uint64_t mem;
+	fscanf(filp, "%*u %lu", &mem);  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 	fclose(filp);
 	return mem * sysconf(_SC_PAGESIZE);
 }
@@ -141,25 +141,25 @@ double artdaq::SystemMetricCollector::GetProcessMemUsagePercent()
 	return proc * 100.0 / static_cast<double>(total);
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveBytes(std::string ifname)
+uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveBytes(std::string ifname)
 {
 	UpdateNetstat_();
 	return thisNetStat_.stats[ifname].recv_bytes - lastNetStat_.stats[ifname].recv_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendBytes(std::string ifname)
+uint64_t artdaq::SystemMetricCollector::GetNetworkSendBytes(std::string ifname)
 {
 	UpdateNetstat_();
 	return thisNetStat_.stats[ifname].send_bytes - lastNetStat_.stats[ifname].send_bytes;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkReceiveErrors(std::string ifname)
+uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveErrors(std::string ifname)
 {
 	UpdateNetstat_();
 	return thisNetStat_.stats[ifname].recv_errs - lastNetStat_.stats[ifname].recv_errs;
 }
 
-unsigned long artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string ifname)
+uint64_t artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string ifname)
 {
 	UpdateNetstat_();
 	return thisNetStat_.stats[ifname].send_errs - lastNetStat_.stats[ifname].send_errs;
@@ -219,7 +219,7 @@ artdaq::SystemMetricCollector::cpustat artdaq::SystemMetricCollector::ReadProcSt
 	auto filp = fopen("/proc/stat", "r");
 	cpustat this_cpu;
 
-	fscanf(filp, "cpu %llu %llu %llu %llu %llu %llu %llu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,
+	fscanf(filp, "cpu %lu %lu %lu %lu %lu %lu %lu", &this_cpu.user, &this_cpu.nice, &this_cpu.system,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 	       &this_cpu.idle, &this_cpu.iowait, &this_cpu.irq, &this_cpu.softirq);
 	fclose(filp);
 
@@ -277,11 +277,11 @@ artdaq::SystemMetricCollector::netstats artdaq::SystemMetricCollector::ReadProcN
 		fgets(buf, 200, filp);
 	}
 
-	unsigned long rbytes, rerrs, rdrop, rfifo, rframe, tbytes, terrs, tdrop, tfifo, tcolls, tcarrier;
+	uint64_t rbytes, rerrs, rdrop, rfifo, rframe, tbytes, terrs, tdrop, tfifo, tcolls, tcarrier;
 
-	while (fgets(buf, 200, filp))
+	while (fgets(buf, 200, filp) != nullptr)
 	{
-		sscanf(buf, " %[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,
+		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
 		std::string ifname(ifname_c);

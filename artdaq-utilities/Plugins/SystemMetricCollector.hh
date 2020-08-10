@@ -33,17 +33,17 @@ public:
 	/// Get the amount of available RAM in the system
 	/// </summary>
 	/// <returns>The amount of available (free) RAM in bytes</returns>
-	unsigned long GetAvailableRAM();
+	uint64_t GetAvailableRAM();
 	/// <summary>
 	/// Get the amount of RAM currently being used for cache
 	/// </summary>
 	/// <returns>The amount of RAM used in cache in bytes</returns>
-	unsigned long GetBufferedRAM();
+	uint64_t GetBufferedRAM();
 	/// <summary>
 	/// Get the total amount of RAM in the system
 	/// </summary>
 	/// <returns>The total amount of RAM in the system, in bytes</returns>
-	unsigned long GetTotalRAM();
+	uint64_t GetTotalRAM();
 	/// <summary>
 	/// Get the percentage of available RAM
 	/// </summary>
@@ -54,7 +54,7 @@ public:
 	/// Get the amount of RAM being used by this process
 	/// </summary>
 	/// <returns>The amount of RAM being used by this process, in bytes</returns>
-	unsigned long GetProcessMemUsage();
+	uint64_t GetProcessMemUsage();
 	/// <summary>
 	/// Get the amount of RAM being used by this process
 	/// </summary>
@@ -66,25 +66,25 @@ public:
 	/// </summary>
 	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes recevied from the network in the last second</returns>
-	unsigned long GetNetworkReceiveBytes(std::string ifname);
+	uint64_t GetNetworkReceiveBytes(std::string ifname);
 	/// <summary>
 	/// Get the amount of data sent to the network in the last network collection interval (1.0 s)
 	/// </summary>
 	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes sent to the network in the last second</returns>
-	unsigned long GetNetworkSendBytes(std::string ifname);
+	uint64_t GetNetworkSendBytes(std::string ifname);
 	/// <summary>
 	/// Get the number of network receive errors in the last network collection interval (1.0 s)
 	/// </summary>
 	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network receive errors in the last second</returns>
-	unsigned long GetNetworkReceiveErrors(std::string ifname);
+	uint64_t GetNetworkReceiveErrors(std::string ifname);
 	/// <summary>
 	/// Get the number of network send errors in the last network collection interval (1.0 s)
 	/// </summary>
 	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network send errors in the last second</returns>
-	unsigned long GetNetworkSendErrors(std::string ifname);
+	uint64_t GetNetworkSendErrors(std::string ifname);
 
 	std::list<std::string> GetNetworkInterfaceNames();
 	/// <summary>
@@ -96,10 +96,8 @@ public:
 private:
 	struct cpustat
 	{
-		unsigned long long user, nice, system, idle, iowait, irq, softirq;
-		unsigned long long totalUsage, total;
-		cpustat()
-		    : user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), totalUsage(0), total(0) {}
+		uint64_t user{0}, nice{0}, system{0}, idle{0}, iowait{0}, irq{0}, softirq{0};
+		uint64_t totalUsage{0}, total{0};
 	};
 	cpustat ReadProcStat_();
 	static size_t GetCPUCount_();  // Read /proc/stat, count lines beyond the first that start with "cpu"
@@ -113,9 +111,8 @@ private:
 
 	struct netstat
 	{
-		unsigned long long send_bytes, recv_bytes, send_errs, recv_errs;
-		netstat()
-		    : send_bytes(0), recv_bytes(0), send_errs(0), recv_errs(0) {}
+		uint64_t send_bytes{0}, recv_bytes{0}, send_errs{0}, recv_errs{0};
+		std::chrono::steady_clock::time_point collectionTime;
 	};
 	struct netstats
 	{
