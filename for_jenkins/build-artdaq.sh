@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
 IFS=":"
@@ -200,6 +201,30 @@ artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
 cat ${artManifest} >>${artdaqManifest}
 cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.tmp
 mv ${artdaqManifest}.tmp ${artdaqManifest}
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing art bundle products"
+  for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "artdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "nodejs" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "smc_compiler" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "swig" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "xmlrpc" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+	    rm -f $file
+    fi
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
+fi
 
 echo
 echo "move files"
