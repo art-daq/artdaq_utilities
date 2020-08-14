@@ -256,20 +256,26 @@ cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
 
 if [ $copyback_deps == "false" ]; then
-  echo "Removing art bundle products"
+  echo "Removing non-bundle products"
   for file in ${blddir}/*.bz2;do
     filebase=`basename $file`
     if [[ "${filebase}" =~ "artdaq" ]]; then
         echo "Not deleting ${filebase}"
-    elif [[ "${filebase}" =~ "nodejs" ]]; then
+    elif [[ "${filebase}" =~ "epics" ]]; then
         echo "Not deleting ${filebase}"
-    elif [[ "${filebase}" =~ "smc_compiler" ]]; then
+    elif [[ "${filebase}" =~ "qt" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mrb" ]]; then
         echo "Not deleting ${filebase}"
     elif [[ "${filebase}" =~ "swig" ]]; then
         echo "Not deleting ${filebase}"
-    elif [[ "${filebase}" =~ "TRACE" ]]; then
+    elif [[ "${filebase}" =~ "hdf5" ]]; then
         echo "Not deleting ${filebase}"
-    elif [[ "${filebase}" =~ "xmlrpc" ]]; then
+    elif [[ "${filebase}" =~ "mongodb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "nodejs" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
         echo "Not deleting ${filebase}"
     else
         echo "Deleting ${filebase}"
