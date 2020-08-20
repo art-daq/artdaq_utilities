@@ -57,16 +57,16 @@ fi
 #do_build qt v5_12_3a ${basequal}
 #do_build hdf5 v1_12_0a ${basequal}
 
-do_build git v2_20_1
-setup git v2_20_1
-do_build mongodb v4_0_8c ${basequal}
-unsetup git
+#do_build git v2_20_1
+#setup git v2_20_1
+#do_build mongodb v4_0_8c ${basequal}
+#unsetup git
 
 #build_noarch nodejs v4_5_0
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-#do_build xdaq v14_12_0 ${basequal}
+do_build xdaq v15_14_0 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
