@@ -51,7 +51,8 @@ fi
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-#do_build epics v3_15_8 ${basequal}
+do_build epics v3_15_8 ${basequal}
+do_build epics v3_16_2a ${basequal}
 #do_build sqlite v3_26_00_00
 #do_build python v2_7_15a
 #do_build qt v5_12_3a ${basequal}
@@ -66,7 +67,7 @@ fi
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v15_14_0 ${basequal}
+#do_build xdaq v15_14_0 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
