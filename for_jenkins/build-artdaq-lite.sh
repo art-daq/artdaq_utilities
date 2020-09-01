@@ -28,6 +28,7 @@ read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
 basequal=
 squal=
+pyflag=
 
 # Remove shared memory segments which have 0 nattach
 killall art && sleep 5 && killall -9 art
@@ -39,6 +40,12 @@ for qual in ${qualarray[@]};do
         e*) basequal=${qual} ;;
         c*) basequal=${qual} ;;
         s*) squal=${qual} ;;
+        py2)
+            pyflag=py2
+            ;;
+        py3)
+            pyflag=py3
+            ;;
 	esac
 done
 
@@ -48,7 +55,7 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-basequal_dash=$basequal
+basequal_dash=$basequal${pyflag:+-${pyflag}}
 
 case ${build_type} in
     debug) ;;
@@ -109,12 +116,12 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
  if [[ "${demo_build}" != "false" ]]; then
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
