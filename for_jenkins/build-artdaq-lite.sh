@@ -19,7 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
-demo_build=${DEMO_BUILD:-0}
+demo_build=${DEMO_BUILD}
 copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
@@ -113,7 +113,7 @@ export CTEST_OUTPUT_ON_FAILURE=1
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
- if [[ "${demo_build}" != "0" ]]; then
+ if [[ "${demo_build}" != "false" ]]; then
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
