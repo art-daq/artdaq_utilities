@@ -101,9 +101,9 @@ for qual in ${qualarray[@]};do
             squal=s96
             artver=v3_05_00
 	    ;;
-	s100)
-	    squal=s100
-	    artver=v3_06_02
+	s101)
+	    squal=s101
+	    artver=v3_06_03
 	    ;;
 		esac
 done

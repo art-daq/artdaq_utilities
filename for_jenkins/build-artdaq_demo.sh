@@ -103,8 +103,8 @@ for qual in ${qualarray[@]};do
             artver=v3_05_00
             ;;
 	s100)
-	    squal=s100
-	    artver=v3_06_02
+	    squal=s101
+	    artver=v3_06_03
 	    ;;
         nodb)
             build_db=0
