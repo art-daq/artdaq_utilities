@@ -356,9 +356,9 @@ public:
 					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
 					{
 						METLOG_P(24) << "Clearing metric data list sz=" << metric.second.size();
-					metric.second.clear();
-					METLOG_P(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
-				}
+						metric.second.clear();
+						METLOG_P(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+					}
 					else
 					{
 						TLOG(24) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";

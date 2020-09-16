@@ -277,8 +277,8 @@ private:
 		try
 		{
 			outputStream_.flush();
-		outputStream_.close();
-	}
+			outputStream_.close();
+		}
 		catch (...)
 		{
 			// IGNORED

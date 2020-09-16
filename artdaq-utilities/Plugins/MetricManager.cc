@@ -570,10 +570,10 @@ void artdaq::MetricManager::sendMetricLoop_()
 			{
 				if (q.second != nullptr && q.second->DataPointCount > 0)
 				{
-				temp_list.emplace_back(new MetricData(*q.second));
-				q.second->Reset();
+					temp_list.emplace_back(new MetricData(*q.second));
+					q.second->Reset();
+				}
 			}
-		}
 		}
 
 		auto calls = metric_calls_.exchange(0);
