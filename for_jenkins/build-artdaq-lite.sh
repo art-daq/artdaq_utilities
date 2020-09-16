@@ -19,7 +19,8 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
-demo_build=${DEMO_BUILD:-0}
+demo_build=${DEMO_BUILD}
+copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
 IFS=":"
@@ -27,6 +28,7 @@ read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
 basequal=
 squal=
+pyflag=
 
 # Remove shared memory segments which have 0 nattach
 killall art && sleep 5 && killall -9 art
@@ -35,42 +37,16 @@ for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;do
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-        e15)
-            basequal=e15
+        e*) basequal=${qual} ;;
+        c*) basequal=${qual} ;;
+        s*) squal=${qual} ;;
+        py2)
+            pyflag=py2
             ;;
-		e17)
-			basequal=e17
-			;;
-        e19)
-            basequal=e19
+        py3)
+            pyflag=py3
             ;;
-        c2)
-            basequal=c2
-            ;;
-        c7)
-            basequal=c7
-            ;;
-        s67)
-            squal=s67
-            ;;
-        s73)
-            squal=s73
-            ;;
-        s82)
-            squal=s82
-            ;;
-		s83)
-			squal=s83
-			;;
-		s85)
-			squal=s85
-			;;
-        s87)
-            squal=s87
-            ;;
-        s89) squal=s89;;
-        s92) squal=s92;;
-		esac
+	esac
 done
 
 if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
@@ -79,7 +55,7 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-basequal_dash=$basequal
+basequal_dash=$basequal${pyflag:+-${pyflag}}
 
 case ${build_type} in
     debug) ;;
@@ -140,12 +116,12 @@ echo
 echo "begin build"
 echo
 export CTEST_OUTPUT_ON_FAILURE=1
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
- if [[ "${demo_build}" != "0" ]]; then
-./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
+ if [[ "${demo_build}" != "false" ]]; then
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
@@ -166,6 +142,36 @@ if [ -f ${demoManifest} ];then
    cat ${artdaqManifest} >>${demoManifest}
    cat ${demoManifest}|grep -v source|sort|uniq >>${demoManifest}.tmp
    mv ${demoManifest}.tmp ${demoManifest}
+fi
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing non-bundle products"
+  for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "artdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "epics" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "qt" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mrb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "swig" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "hdf5" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mongodb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "nodejs" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+	    rm -f $file
+    fi
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
 fi
 
 echo
