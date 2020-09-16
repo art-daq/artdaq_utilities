@@ -184,8 +184,8 @@ private:
 			else
 			{
 				TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+			}
 		}
-	}
 	}
 };
 }  //End namespace artdaq

@@ -355,10 +355,10 @@ public:
 
 					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
 					{
-					TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
-					metric.second.clear();
-					TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
-				}
+						TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
+						metric.second.clear();
+						TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+					}
 					else
 					{
 						TLOG(24) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";

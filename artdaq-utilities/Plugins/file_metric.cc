@@ -286,12 +286,12 @@ private:
 >>>>>>> develop
 		outputStream_.close();
 	}
-		catch (...)
-		{
-			// IGNORED
-		}
+	catch (...)
+	{
+		// IGNORED
 	}
-};
+}
+};  // namespace artdaq
 }  // End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::FileMetric)
