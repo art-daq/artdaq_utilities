@@ -36,6 +36,7 @@ enum class MetricMode : uint32_t
 	///< over. Use to create rates from counters.
 	Minimum = 0x10,  ///< Reports the minimum value recorded.
 	Maximum = 0x20,  ///< Repots the maximum value recorded.
+	Persist = 0x40,  ///< Keep previous metric value in memory
 };
 /// <summary>
 /// Bitwise OR operator for MetricMode
@@ -103,10 +104,10 @@ struct MetricData
 	/// </summary>
 	union MetricDataValue
 	{
-		int i;                ///< Value of the metric, if it is a MetricType::IntMetric
-		double d;             ///< Value of the metric, if it is a MetricType::DoubleMetric
-		float f;              ///< Value of the metric, if it is a MetricType::FloatMetric
-		long unsigned int u;  ///< Value of the metric, if it is a MetricType::UnsignedMetric
+		int i;       ///< Value of the metric, if it is a MetricType::IntMetric
+		double d;    ///< Value of the metric, if it is a MetricType::DoubleMetric
+		float f;     ///< Value of the metric, if it is a MetricType::FloatMetric
+		uint64_t u;  ///< Value of the metric, if it is a MetricType::UnsignedMetric
 
 		/// <summary>
 		/// Construct a MetricDataValue
@@ -135,7 +136,7 @@ struct MetricData
 		/// Construct a MetricDataValue as unsigned int
 		/// </summary>
 		/// <param name="v">Unsigned int to store</param>
-		MetricDataValue(long unsigned int v)
+		MetricDataValue(uint64_t v)
 		    : u(v) {}
 	};
 
@@ -150,7 +151,7 @@ struct MetricData
 	/// <summary>
 	/// Type of the metric
 	/// </summary>
-	MetricType Type;
+	MetricType Type{MetricType::InvalidMetric};
 	/// <summary>
 	/// Units of the metric
 	/// </summary>
@@ -174,7 +175,7 @@ struct MetricData
 	/// <summary>
 	/// Number of data points accumulated in this MetricData
 	/// </summary>
-	size_t DataPointCount;
+	size_t DataPointCount{0};
 
 	/// <summary>
 	/// Construct a MetricData point using a string value
@@ -233,7 +234,7 @@ struct MetricData
 	    : Name(name), Value(value), Last(value), Min(value), Max(value), Type(MetricType::FloatMetric), Unit(unit), Level(level), Mode(mode), MetricPrefix(metricPrefix), UseNameOverride(useNameOverride), DataPointCount(1) {}
 
 	/// <summary>
-	/// Construct a MetricData point using a unsigned long int value
+	/// Construct a MetricData point using a uint64_t value
 	/// </summary>
 	/// <param name="name">Name of the metric</param>
 	/// <param name="value">Value of the metric</param>
@@ -242,7 +243,7 @@ struct MetricData
 	/// <param name="mode">Accumulation mode of the metric</param>
 	/// <param name="metricPrefix">Name prefix for the metric</param>
 	/// <param name="useNameOverride">Whether to override the default name</param>
-	MetricData(std::string const& name, long unsigned int const& value, std::string const& unit, int level,
+	MetricData(std::string const& name, uint64_t const& value, std::string const& unit, int level,
 	           MetricMode mode, std::string const& metricPrefix, bool useNameOverride)
 	    : Name(name), Value(value), Last(value), Min(value), Max(value), Type(MetricType::UnsignedMetric), Unit(unit), Level(level), Mode(mode), MetricPrefix(metricPrefix), UseNameOverride(useNameOverride), DataPointCount(1) {}
 
@@ -250,7 +251,7 @@ struct MetricData
 	/// Default constructor, constructs an MetricType::InvalidMetric
 	/// </summary>
 	MetricData()
-	    : Name(""), Type(MetricType::InvalidMetric), DataPointCount(0) {}
+	    : Name("") {}
 
 	/// <summary>
 	/// Add two MetricData instances together
@@ -377,10 +378,10 @@ struct MetricData
 		if (point < Min.f) Min.f = point;
 	}
 	/// <summary>
-	/// Add an unsigned int point to this MetricData
+	/// Add an uint64_t point to this MetricData
 	/// </summary>
-	/// <param name="point">Unsigned int value to add</param>
-	void AddPoint(unsigned long int point)
+	/// <param name="point">uint64_t value to add</param>
+	void AddPoint(uint64_t point)
 	{
 		Last.u = point;
 		Value.u += point;
@@ -389,11 +390,11 @@ struct MetricData
 		if (point < Min.u) Min.u = point;
 	}
 
-    /// <summary>
-    /// Reset this MetricData instance to the initial state
-    /// 
-    /// Sets the value, last and count fields to 0, the min to the maximum for the datatype and the max to the minimum for the datatype
-    /// </summary>
+	/// <summary>
+	/// Reset this MetricData instance to the initial state
+	///
+	/// Sets the value, last and count fields to 0, the min to the maximum for the datatype and the max to the minimum for the datatype
+	/// </summary>
 	void Reset()
 	{
 		switch (Type)
@@ -422,8 +423,8 @@ struct MetricData
 			case MetricType::UnsignedMetric:
 				Value.u = 0;
 				Last.u = 0;
-				Min.u = std::numeric_limits<unsigned>::max();
-				Max.u = std::numeric_limits<unsigned>::min();
+				Min.u = std::numeric_limits<uint64_t>::max();
+				Max.u = std::numeric_limits<uint64_t>::min();
 				break;
 			case MetricType::InvalidMetric:
 				break;

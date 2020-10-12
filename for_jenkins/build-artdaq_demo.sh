@@ -19,6 +19,7 @@ working_dir=${WORKSPACE}
 version=${VERSION}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+copyback_deps=${COPYBACK_DEPS}
 
 IFS_save=$IFS
 IFS=":"
@@ -46,6 +47,9 @@ for qual in ${qualarray[@]};do
         e19)
             basequal=e19
             ;;
+	e20)
+	    basequal=e20
+	    ;;
         c2)
             basequal=c2
             ;;
@@ -94,6 +98,14 @@ for qual in ${qualarray[@]};do
 			squal=s94
 			artver=v3_04_00
 			;;
+        s96)
+            squal=s96
+            artver=v3_05_00
+            ;;
+	s100)
+	    squal=s101
+	    artver=v3_06_03
+	    ;;
         nodb)
             build_db=0
             ;;
@@ -170,9 +182,9 @@ mv ${blddir}/*source* ${srcdir}/
 cd ${blddir} || exit 1
 # pulling binaries is allowed to fail
 # we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
-./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
+#./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
@@ -209,6 +221,16 @@ if [ -d ${blddir}/artdaq_node_server ]; then
   rm -rf ${blddir}/artdaq_node_server
   if [ `ls -l ${blddir}/artdaq_node_server*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_node_server*.tar.bz2; fi
 fi
+if [ -d ${blddir}/artdaq_mpich_plugin ]; then
+  echo "Removing ${blddir}/artdaq_mpich_plugin"
+  rm -rf ${blddir}/artdaq_mpich_plugin
+  if [ `ls -l ${blddir}/artdaq_mpich_plugin*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_mpich_plugin*.tar.bz2; fi
+fi
+if [ -d ${blddir}/artdaq_demo_hdf5 ]; then
+  echo "Removing ${blddir}/artdaq_demo_hdf5"
+  rm -rf ${blddir}/artdaq_demo_hdf5
+  if [ `ls -l ${blddir}/artdaq_demo_hdf5*.tar.bz2 | wc -l` -gt 0 ]; then rm -fv ${blddir}/artdaq_demo_hdf5*.tar.bz2; fi
+fi
 
 echo
 echo "begin build"
@@ -232,6 +254,36 @@ cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.t
 mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing non-bundle products"
+  for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "artdaq" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "epics" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "qt" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mrb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "swig" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "hdf5" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "mongodb" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "nodejs" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+	    rm -f $file
+    fi
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
+fi
 
 echo
 echo "move files"
