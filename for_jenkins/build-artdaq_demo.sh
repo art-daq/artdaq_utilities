@@ -27,7 +27,6 @@ read -a qualarray <<<"$qual_set"
 IFS=$IFS_save
 basequal=
 squal=
-artver=
 pyflag=
 build_db=1
 
@@ -37,79 +36,13 @@ killall transfer_driver
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
 for qual in ${qualarray[@]};do
-	case ${qual} in
-        e15)
-            basequal=e15
-            ;;
-		e17)
-			basequal=e17
-			;;
-        e19)
-            basequal=e19
-            ;;
-	e20)
-	    basequal=e20
-	    ;;
-        c2)
-            basequal=c2
-            ;;
-        c7)
-            basequal=c7
-            ;;
-        py2)
-            pyflag=py2
-            ;;
-        py3)
-            pyflag=py3
-            ;;
-        s67)
-            squal=s67
-            artver=v2_11_01
-            ;;
-        s73)
-            squal=s73
-            artver=v2_11_05
-            ;;
-        s82)
-            squal=s82
-            artver=v3_02_04
-            ;;
-		s83)
-			squal=s83
-			artver=v3_02_05
-			;;
-		s85)
-			squal=s85
-			artver=v2_13_00
-			;;
-        s87)
-            squal=s87
-            artver=v3_03_00
-            ;;
-        s89)
-            squal=s89
-            artver=v3_03_01
-            ;;
-		s92)
-			squal=s92
-			artver=v3_02_06c
-			;;
-		s94)
-			squal=s94
-			artver=v3_04_00
-			;;
-        s96)
-            squal=s96
-            artver=v3_05_00
-            ;;
-	s100)
-	    squal=s101
-	    artver=v3_06_03
-	    ;;
-        nodb)
-            build_db=0
-            ;;
-		esac
+    case ${qual} in
+        e*) basequal=$qual;;
+	c*) basequal=$qual;;
+        py*) pyflag=$qual;;
+        s*) squal=$qual;;
+        nodb) build_db=0;;
+    esac
 done
 export build_db
 
@@ -137,7 +70,6 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
-art_dotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 artdaq_dotver=`echo ${artdaq_ver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the artdaq_demo distribution for ${version} ${dotver} ${qual_set} ${build_type}"
@@ -180,11 +112,7 @@ chmod +x buildFW
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
-# pulling binaries is allowed to fail
-# we pull what we can so we don't have to build everything
-#./pullProducts ${blddir} ${flvr} art-${artver} ${basequal_dash} ${build_type}
-#./pullProducts ${blddir} ${flvr} artdaq-${artdaq_ver} ${squal}-${basequal_dash} ${build_type}
-#./pullProducts ${blddir} ${flvr} artdaq_demo-${version} ${squal}-${basequal_dash} ${build_type}
+
 # remove any artdaq_demo entities that were pulled so it will always be rebuilt
 if [ -d ${blddir}/artdaq_demo ]; then
   echo "Removing ${blddir}/artdaq_demo"
