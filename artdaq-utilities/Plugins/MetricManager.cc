@@ -529,7 +529,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
-		TLOG(6) << "sendMetricLoop_: Entering Metric input wait loop";
+		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Entering Metric input wait loop";
 		while (metricQueueEmpty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
@@ -538,7 +538,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() >
 			    metric_send_interval_ms_)
 			{
-				TLOG(6) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
+				TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
 				if (std::chrono::duration_cast<std::chrono::microseconds>(now - last_metric_received_).count() < metric_holdoff_us_)
 				{
 					usleep(metric_holdoff_us_);
@@ -558,7 +558,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			usleep(metric_holdoff_us_);
 		}
 
-		TLOG(6) << "sendMetricLoop_: After Metric input wait loop";
+		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: After Metric input wait loop";
 		busy_ = true;
 		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
@@ -593,7 +593,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			for (auto& m : systemMetrics) { temp_list.emplace_back(std::move(m)); }
 		}
 
-		TLOG(6) << "sendMetricLoop_: Before processing temp_list";
+		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Before processing temp_list";
 		while (!temp_list.empty())
 		{
 			auto data_ = std::move(temp_list.front());
@@ -636,7 +636,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
-		TLOG(6) << "sendMetricLoop_: Before sending metrics";
+		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Before sending metrics";
 		for (auto& metric : metric_plugins_)
 		{
 			if (!metric)
@@ -647,7 +647,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 
 		// Limit rate of metrics going to plugins
-		TLOG(6) << "sendMetricLoop_: End of working loop";
+		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: End of working loop";
 		busy_ = false;
 		usleep(10000);
 	}
