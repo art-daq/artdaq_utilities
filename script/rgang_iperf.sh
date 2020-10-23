@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: rgang_iperf.sh,v $
- # rev='$Revision: 1.54 $$Date: 2019/11/04 22:36:29 $'
+ # rev='$Revision: 1.57 $$Date: 2020/10/11 21:28:34 $'
 
 
 USAGE="\
@@ -337,7 +337,8 @@ test -n "${opt_max_backlog-}"   && echo $opt_max_backlog   >|/proc/sys/net/core/
 adv_win_scale=`cat /proc/sys/net/ipv4/tcp_adv_win_scale`
 app_win=`cat /proc/sys/net/ipv4/tcp_app_win`
 
-grep . /proc/sys/net/{core/{rmem_max,netdev_max_backlog},ipv4/tcp_{moderate_rcvbuf,adv_win_scale,app_win,rmem}}
+vecho 0 "
+`grep . /proc/sys/net/{core/{rmem_max,netdev_max_backlog},ipv4/tcp_{moderate_rcvbuf,adv_win_scale,app_win,rmem}}`"
 
 if [ -z "${opt_local-}" ];then
     myIP=`if2IP $IF`
@@ -357,7 +358,8 @@ routeline=`IP2routeshow $myIP | sed -e 's/ initrwnd .*//'`
 /sbin/ip route show | grep "$routeline"
 }
 
-test $opt_time -gt 10 && interval=--interval=10 || interval=
+#test $opt_time -gt 10 && interval=--interval=10 || interval=
+interval=--interval=1
 
 expr "$IPERF" : '.*3$' >/dev/null && IPERF3_OPTS=-4 || IPERF3_OPTS=
 
@@ -414,7 +416,7 @@ ${opt_wmem_max+echo $opt_wmem_max >|/proc/sys/net/core/wmem_max}
 #"
 test -n "${opt_flow-}" && rcmd0="${rcmd0}ethtool -A \$itf autoneg off rx $opt_flow tx $opt_flow
 "
-rcmd0="${rcmd0}grep . /proc/sys/net/{core/wmem_max,ipv4/tcp_congestion_control}
+rcmd0="${rcmd0}grep . /proc/sys/net/{core/wmem_max,ipv4/tcp_{congestion_control,no_metrics_save}}
 "
 
 # NOTE: it's important to snarf at least 72 bytes to get the tcp options where the
@@ -535,8 +537,8 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     port=`expr 5001 + $poff`
                     #note taskset -c needs space between it and $cpulist
                     test $poff -eq 0 && vecho 1 \
-"The iperf server cmd is: taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &"
-                          taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &
+"The iperf server cmd is: taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} $interval --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &"
+                          taskset -c $cpulist $IPERF $IPERF3_OPTS -s ${opt_bwudp+-u} ${wrrd_len:+-l$wrrd_len} $interval --port=$port --format=K $window >$srvr_ofile.$poff 2>&1 &
                     srvr_pid="$srvr_pid $!"
                 done
 
@@ -581,7 +583,7 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     # RUN THE iperf CLIENTs
                     lcl_stats_mark
                     test $opt_v -le 3\
-                && { $RGANG $nfile "$rcmd0$rcmd1;$rcmd2$rcmd3$rcmd4" >$clnt_ofile 2>&1; echo $? >$clnt_ofile.sts; } \
+                        && { $RGANG $nfile "$rcmd0$rcmd1;$rcmd2$rcmd3$rcmd4" >$clnt_ofile 2>&1; echo $? >$clnt_ofile.sts; } \
                         || ( $RGANG $nfile "$rcmd0$rcmd1;$rcmd2$rcmd3$rcmd4" 2>&1; echo $? >$clnt_ofile.sts ) | tee $clnt_ofile
                     rgang_sts=`cat $clnt_ofile.sts`
                     test 0 -ne $rgang_sts && echo "Warning: rgang returned non-zero exit status ($rgang_sts)"
@@ -596,8 +598,14 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                         rmt_delt="0 $drop_pcnt% 0"   # should be noted somewhere that w/UDP, not "retrans", but "drop%"
                     fi
                     test $format = g && mORg=1000000 || mORg=1000
+                    # [  3]  0.0- 1.0 sec  320000 KBytes  2621440 Kbits/sec
+                    # [  3]  0.0-20.2 sec  7983744 KBytes  3243172 Kbits/sec
+                    # [  3]  0.0- 1.0 sec  429312 KBytes  3516924 Kbits/sec
+                    # [  3]  0.0-20.2 sec  10055252 KBytes  4086747 Kbits/sec
+                    # [  3]  0.0- 1.0 sec  273792 KBytes  2242904 Kbits/sec
+                    # [  3]  0.0-20.2 sec  5805696 KBytes  2358249 Kbits/sec
                     if [ -n "${opt_num-}" ];then
-                        # time will vary in this mode
+                        # time will vary in this mode:
                         # ignoring [SUM] (when -P >1) -- when $7 is not a number, 0 is added
                         tot_Xb=`awk "/ 0\.00*- *[1-9][0-9]*\./"'{if(NF<=9)tot+=$7}'"END{print tot/$mORg}" $clnt_ofile`
                     else
@@ -607,7 +615,10 @@ printf("inflight:%5.1f,%6.1f,%4.1f%%,%5.1f%% retrans:%d/%d\n",tot/cnt/1024,max/1
                     SndBuf=`awk '/TCP win/{win[ii++]=$4}END{zz=" ";for(xx=1;xx<ii;++xx){if(win[xx]!=win[xx-1]){zz="*";break}}print win[0] zz}' $clnt_ofile`
                     # NOTE $rmt_delt is 3 numbers
                     printf "%29s %6.2f %4d %4d %5d %5d %6d %6s %3d %5d  %9.1f  %7.1f %7s %7s\n" "`date`"\
-                $tot_Xb $lcl_delt $rmt_delt $flows $inflight $rbufK "$SndBuf" "$max_rwinK" |tee -a $data_file
+                        $tot_Xb $lcl_delt $rmt_delt $flows $inflight $rbufK "$SndBuf" "$max_rwinK" |tee -a $data_file
+
+                    vecho 1 "
+`egrep -i 'mtu|no_metrics_save' $clnt_ofile`"
                     if [ -n "${opt_shark+1}" ];then
                         kill $shark_pid_list 2>/dev/null
                         inflights=`grep inflight $clnt_ofile`

@@ -91,7 +91,14 @@ public:
 	 */
 	MetricManager& operator=(MetricManager const&) = delete;
 
+	/**
+	 * \brief Move Constructor is deleted
+	 */
 	MetricManager(MetricManager&&) = delete;
+	/**
+	 * @brief Move assignment operator is deleted
+	 * @return Moved MetricManager
+	*/
 	MetricManager& operator=(MetricManager&&) = delete;
 
 	/**
