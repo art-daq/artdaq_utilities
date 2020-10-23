@@ -1,4 +1,5 @@
 #include "trace.h"
+#define TRACE_NAME "SystemMetricCollector"
 
 #include <chrono>
 #include "SystemMetricCollector.hh"
@@ -156,7 +157,7 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 		output.emplace_back(new MetricData("Network Receive Errors", GetNetworkReceiveErrors(), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
 	}
 
-	TLOG(TLVL_DEBUG)
+	TLOG(10)
 	    << "Time to collect system metrics: "
 	    << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
 	    << " us.";
