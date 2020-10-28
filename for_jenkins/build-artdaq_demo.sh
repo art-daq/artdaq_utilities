@@ -34,8 +34,6 @@ build_db=1
 killall art && sleep 5 && killall -9 art
 killall transfer_driver
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
-rm /tmp/trace_buffer_$USER
-export TRACE_FILE=/tmp/trace_buffer_$USER
 
 for qual in ${qualarray[@]};do
     case ${qual} in
