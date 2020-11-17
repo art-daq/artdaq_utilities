@@ -45,7 +45,7 @@ fi
 
 ########## ARTDAQ Dependencies ############
 
-build_cet -p trace-git TRACE v3_16_01 -nq-
+build_cet -p trace-git TRACE v3_16_02 -nq-
 #do_build xmlrpc_c v1_51_06 ${basequal}
 #do_build swig v4_0_2 ${basequal}
 
