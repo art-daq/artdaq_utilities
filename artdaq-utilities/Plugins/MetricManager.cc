@@ -540,9 +540,13 @@ void artdaq::MetricManager::sendMetricLoop_()
 			    metric_send_interval_ms_)
 			{
 				TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
+				{
+					std::unique_lock<std::mutex> lk(metric_cache_mutex_);  // last_metric_received_ is protected by metric_cache_mutex_
 				if (std::chrono::duration_cast<std::chrono::microseconds>(now - last_metric_received_).count() < metric_holdoff_us_)
 				{
+						lk.unlock();
 					usleep(metric_holdoff_us_);
+				}
 				}
 				for (auto& metric : metric_plugins_)
 				{
@@ -554,9 +558,13 @@ void artdaq::MetricManager::sendMetricLoop_()
 				last_send_time = now;
 			}
 		}
+		{
+			std::unique_lock<std::mutex> lk(metric_cache_mutex_);  // last_metric_received_ is protected by metric_cache_mutex_
 		if (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - last_metric_received_).count() < metric_holdoff_us_)
 		{
+				lk.unlock();
 			usleep(metric_holdoff_us_);
+		}
 		}
 
 		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: After Metric input wait loop";
