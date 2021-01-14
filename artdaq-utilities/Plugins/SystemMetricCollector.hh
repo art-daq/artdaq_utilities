@@ -85,6 +85,11 @@ public:
 	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network send errors in the last second</returns>
 	uint64_t GetNetworkSendErrors(std::string ifname);
+	/// <summary>
+	/// Return the current number of TCP (total) segments retransmitted, segments
+	/// </summary>
+	/// <returns>the current number of TCP (total) segments retransmitted, segments</returns>
+	uint64_t GetNetworkTCPRetransSegs();
 
 	std::list<std::string> GetNetworkInterfaceNames();
 	/// <summary>

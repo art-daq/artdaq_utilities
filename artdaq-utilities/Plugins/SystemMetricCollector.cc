@@ -160,6 +160,38 @@ uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveErrors(std::string ifna
 	return thisNetStat_.stats[ifname].recv_errs - lastNetStat_.stats[ifname].recv_errs;
 }
 
+uint64_t artdaq::SystemMetricCollector::GetNetworkTCPRetransSegs()
+{
+	auto filp = fopen("/proc/net/snmp", "r");
+#	define BFSZ_ 200
+	char tcp_lbls[BFSZ_];
+	char tcp_data[BFSZ_];
+	char *bufptr=tcp_lbls;
+
+	// find the Tcp line token
+#	define TCP_LINE_TKN_ "Tcp:"
+#	define TCP_RETRANSSEGS_TKN_ "RetransSegs"
+	uint64_t retranssegs=0;
+	while (fgets(bufptr, BFSZ_-1, filp) != nullptr)
+		if (strstr( bufptr, TCP_LINE_TKN_))
+		{
+			char    *tokn_name, *tokn_data, *tokn_save, *data_save;
+			fgets(tcp_data, BFSZ_-1, filp);
+			tokn_name = strtok_r( tcp_lbls, " ", &tokn_save );
+			tokn_data = strtok_r( tcp_data, " ", &data_save );
+			while (tokn_name != NULL && strcmp(tokn_name,TCP_RETRANSSEGS_TKN_) != 0)
+			{
+				tokn_name = strtok_r( NULL, " ", &tokn_save );
+				tokn_data = strtok_r( NULL, " ", &data_save );
+			}
+			if (tokn_name) retranssegs = strtoull(tokn_data,0,0);
+			break;
+		}
+	TRACE(TLVL_DEBUG+10,"retranssegs=%lu", retranssegs);
+	fclose(filp);
+	return 0;
+}
+
 uint64_t artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string ifname)
 {
 	UpdateNetstat_();
@@ -206,6 +238,7 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 			output.emplace_back(new MetricData(ifname + " Network Send Errors", GetNetworkSendErrors(ifname), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
 			output.emplace_back(new MetricData(ifname + " Network Receive Errors", GetNetworkReceiveErrors(ifname), "Errors", MLEVEL_NETWORK, MetricMode::Accumulate, "", false));
 		}
+		output.emplace_back(new MetricData("Network TCP RetransSegs", GetNetworkTCPRetransSegs(), "Segs", MLEVEL_NETWORK, MetricMode::Rate, "", false));
 	}
 
 	TLOG(10)
@@ -282,7 +315,7 @@ artdaq::SystemMetricCollector::netstats artdaq::SystemMetricCollector::ReadProcN
 
 	while (fgets(buf, 200, filp) != nullptr)
 	{
-		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
+		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
 		std::string ifname(ifname_c);
