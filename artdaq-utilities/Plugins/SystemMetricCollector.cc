@@ -315,7 +315,7 @@ artdaq::SystemMetricCollector::netstats artdaq::SystemMetricCollector::ReadProcN
 
 	while (fgets(buf, 200, filp) != nullptr)
 	{
-		sscanf(buf, "%[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
+		sscanf(buf, " %[^:]: %lu %*u %lu %lu %lu %lu %*u %*u %lu %*u %lu %lu %lu %lu %lu", ifname_c, &rbytes, &rerrs,  // NOLINT(cert-err34-c) Proc files are defined by the kernel API, and will not have unexpected values
 		       &rdrop, &rfifo, &rframe, &tbytes, &terrs, &tdrop, &tfifo, &tcolls, &tcarrier);
 
 		std::string ifname(ifname_c);
