@@ -114,60 +114,60 @@ public:
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
-   * \param time Time the metric was sent
-		*/
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+     * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
-   * \param time Time the metric was sent
-		*/
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+     * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
-   * \param time Time the metric was sent
-		*/
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		 * \param name Name of the metric
-		 * \param value Value of the metric
-		 * \param unit Units of the metric
-   * \param time Time the metric was sent
-		 */
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Perform startup actions. No-Op.
-		 */
+	 * \brief Perform startup actions. No-Op.
+	 */
 	void startMetrics_() override {}
 	/**
-		 * \brief Perform shutdown actions. No-Op.
-		 */
+	 * \brief Perform shutdown actions. No-Op.
+	 */
 	void stopMetrics_() override {}
 };
 }  //End namespace artdaq
