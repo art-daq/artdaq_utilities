@@ -276,21 +276,18 @@ private:
 
 	void closeFile_()
 	{
-<<<<<<< HEAD
 		getTime_(outputStream_, std::chrono::system_clock::now()) << "FileMetric closing file stream." << std::endl;
-=======
-		getTime_(outputStream_) << "FileMetric closing file stream." << std::endl;
+
 		try
 		{
 			outputStream_.flush();
->>>>>>> develop
-		outputStream_.close();
+			outputStream_.close();
+		}
+		catch (...)
+		{
+			// IGNORED
+		}
 	}
-	catch (...)
-	{
-		// IGNORED
-	}
-}
 };  // namespace artdaq
 }  // End namespace artdaq
 

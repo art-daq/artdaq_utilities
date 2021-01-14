@@ -442,7 +442,8 @@ private:
 
 	std::chrono::system_clock::time_point to_system_clock(std::chrono::steady_clock::time_point const& t)
 	{
-		return std::chrono::system_clock::now() + (t - std::chrono::steady_clock::now());
+		auto pt = std::chrono::system_clock::now() + (t - std::chrono::steady_clock::now());
+		return std::chrono::system_clock::time_point(std::chrono::duration_cast<std::chrono::system_clock::duration>(pt.time_since_epoch()));
 	}
 
 	bool readyToSend_(std::string const& name)

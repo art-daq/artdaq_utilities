@@ -82,12 +82,10 @@ public:
 		 * \brief Set the value to be written to the pipe when it is opened by a reader
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
+		 * \param unit Units of the metric.
+   * \param time Time the metric was sent
 		 */
-<<<<<<< HEAD
-	void sendMetric_(const std::string& name, const std::string& value, const std::string&, const std::chrono::system_clock::time_point&) override
-=======
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
->>>>>>> develop
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point&) override
 	{
 		if (value_map_.count(name) != 0u)
 		{

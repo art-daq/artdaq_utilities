@@ -82,20 +82,13 @@ public:
 		 * \brief Send a metric to Graphite
 		 * \param name Name of the metric. Will have the namespace prepended
 		 * \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
    * \param time Time the metric was sent
 		 */
-<<<<<<< HEAD
-	void sendMetric_(const std::string& name, const std::string& value, const std::string&, const std::chrono::system_clock::time_point& time) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_)
 		{
-=======
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
-	{
-		if (!stopped_)
-		{
-			const auto result = std::time(nullptr);
->>>>>>> develop
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
