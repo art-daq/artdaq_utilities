@@ -12,6 +12,7 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "tracemf.h"
 
+#include <pthread.h>
 #include <boost/exception/all.hpp>
 #include <chrono>
 #include <memory>
@@ -458,6 +459,11 @@ void artdaq::MetricManager::startMetricLoop_()
 	try
 	{
 		metric_sending_thread_ = boost::thread(attrs, boost::bind(&MetricManager::sendMetricLoop_, this));
+
+		char tname[16];
+		snprintf(tname, 16, "%s", "MetricSend");  // NOLINT
+		auto handle = metric_sending_thread_.native_handle();
+		pthread_setname_np(handle, tname);
 	}
 	catch (const boost::exception& e)
 	{
