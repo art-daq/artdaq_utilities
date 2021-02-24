@@ -24,7 +24,7 @@ public:
 	/// </summary>
 	struct MetricPoint
 	{
-		std::chrono::steady_clock::time_point sent_time;  ///< When the metric was received
+		std::chrono::system_clock::time_point sent_time;  ///< When the metric was received
 		std::string metric;                               ///< Name of the metric
 		std::string value;                                ///< Value of the metric
 		std::string unit;                                 ///< Units for the metric
