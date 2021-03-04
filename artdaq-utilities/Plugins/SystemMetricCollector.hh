@@ -2,6 +2,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "artdaq-utilities/Plugins/MetricData.hh"
 
 namespace artdaq {
@@ -19,10 +20,9 @@ public:
 	SystemMetricCollector(bool processMetrics, bool systemMetrics);
 
 	/// <summary>
-	/// Return the current overall system CPU usage in %
+	/// Calculate the system CPU usage percentages
 	/// </summary>
-	/// <returns>System CPU usage, %</returns>
-	double GetSystemCPUUsagePercent();
+	void GetSystemCPUUsage();
 	/// <summary>
 	/// Return the current amount of CPU usage for the current process, %
 	/// </summary>
@@ -64,24 +64,34 @@ public:
 	/// <summary>
 	/// Get the amount of data received from the network in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes recevied from the network in the last second</returns>
-	uint64_t GetNetworkReceiveBytes();
+	uint64_t GetNetworkReceiveBytes(std::string ifname);
 	/// <summary>
 	/// Get the amount of data sent to the network in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of bytes sent to the network in the last second</returns>
-	uint64_t GetNetworkSendBytes();
+	uint64_t GetNetworkSendBytes(std::string ifname);
 	/// <summary>
 	/// Get the number of network receive errors in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network receive errors in the last second</returns>
-	uint64_t GetNetworkReceiveErrors();
+	uint64_t GetNetworkReceiveErrors(std::string ifname);
 	/// <summary>
 	/// Get the number of network send errors in the last network collection interval (1.0 s)
 	/// </summary>
+	/// <param name="ifname">Name of the interface to collect</param>
 	/// <returns>The number of network send errors in the last second</returns>
-	uint64_t GetNetworkSendErrors();
+	uint64_t GetNetworkSendErrors(std::string ifname);
+	/// <summary>
+	/// Return the current number of TCP (total) segments retransmitted, segments
+	/// </summary>
+	/// <returns>the current number of TCP (total) segments retransmitted, segments</returns>
+	uint64_t GetNetworkTCPRetransSegs();
 
+	std::list<std::string> GetNetworkInterfaceNames();
 	/// <summary>
 	/// Send the configured metrics
 	/// </summary>
@@ -95,20 +105,33 @@ private:
 		uint64_t totalUsage{0}, total{0};
 	};
 	cpustat ReadProcStat_();
+	static size_t GetCPUCount_();  // Read /proc/stat, count lines beyond the first that start with "cpu"
+	size_t cpuCount_;
+	double nonIdleCPUPercent_;  // user + nice + system + iowait + irq + softirq
+	double userCPUPercent_;     // Includes nice
+	double systemCPUPercent_;
+	double idleCPUPercent_;
+	double iowaitCPUPercent_;
+	double irqCPUPercent_;  // includes softirq
 
 	struct netstat
 	{
 		uint64_t send_bytes{0}, recv_bytes{0}, send_errs{0}, recv_errs{0};
 		std::chrono::steady_clock::time_point collectionTime;
 	};
-	netstat ReadProcNetDev_();
+	struct netstats
+	{
+		std::unordered_map<std::string, netstat> stats;
+		std::chrono::steady_clock::time_point collectionTime;
+	};
+	netstats ReadProcNetDev_();
 	void UpdateNetstat_();
 
 	cpustat lastCPU_;
 	struct tms lastProcessCPUTimes_;
 	clock_t lastProcessCPUTime_;
-	netstat thisNetStat_;
-	netstat lastNetStat_;
+	netstats thisNetStat_;
+	netstats lastNetStat_;
 	bool sendProcessMetrics_;
 	bool sendSystemMetrics_;
 };
