@@ -73,7 +73,6 @@ public:
 	/**
 		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
 		 */
-
 	~GraphiteMetric() override { stopMetrics(); }
 
 	/**
@@ -86,19 +85,19 @@ public:
 		 * \brief Send a metric to Graphite
 		 * \param name Name of the metric. Will have the namespace prepended
 		 * \param value Value of the metric
+     * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_)
 		{
-			const auto result = std::time(nullptr);
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
 			std::ostream out(&data);
 			out << namespace_ << nameTemp << " "
 			    << value << " "
-			    << result << std::endl;
+			    << std::chrono::system_clock::to_time_t(time) << std::endl;
 
 			boost::system::error_code error;
 			boost::asio::write(socket_, data, error);
@@ -115,10 +114,11 @@ public:
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -126,10 +126,11 @@ public:
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -137,10 +138,11 @@ public:
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -148,10 +150,11 @@ public:
 		* \param name Name of the metric. Will have the namespace prepended
 		* \param value Value of the metric
 		 * \param unit Units of the metric (Not used)
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**

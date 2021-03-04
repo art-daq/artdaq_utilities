@@ -85,7 +85,7 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& /*time*/) override
 	{
 		if (value_map_.count(name) != 0u)
 		{
@@ -99,10 +99,11 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 * \param unit Units of the metric.
+	 * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -110,10 +111,11 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 * \param unit Units of the metric.
+	 * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -121,10 +123,11 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 * \param unit Units of the metric.
+	 * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -132,10 +135,11 @@ public:
 		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
 		 * \param value Value of the metric.
 		 * \param unit Units of the metric.
+	 * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**

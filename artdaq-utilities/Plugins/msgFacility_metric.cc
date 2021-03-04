@@ -91,8 +91,10 @@ public:
 		 * \param name Name of the metric
 		 * \param value Value of the metric
 		 * \param unit Units for the metric
+		 *
+		 * Not using the time field, as MessageFacility will put its own timestamp on
 		 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!inhibit_)
 		{
@@ -119,10 +121,11 @@ public:
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units of the metric
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -130,10 +133,11 @@ public:
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units of the metric
+     * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -141,10 +145,11 @@ public:
 		* \param name Name of the metric
 		* \param value Value of the metric
 		* \param unit Units of the metric
+	 * \param time Time the metric was sent
 		*/
-	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
@@ -152,10 +157,11 @@ public:
 		 * \param name Name of the metric
 		 * \param value Value of the metric
 		 * \param unit Units of the metric
+	 * \param time Time the metric was sent
 		 */
-	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit);
+		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
