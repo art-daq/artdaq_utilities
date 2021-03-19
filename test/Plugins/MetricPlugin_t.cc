@@ -1,7 +1,7 @@
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
 
-#define BOOST_TEST_MODULES MetricPlugin_t
+#define BOOST_TEST_MODULE MetricPlugin_t
 #include "cetlib/quiet_unit_test.hpp"
 #include "cetlib_except/exception.h"
 #include "fhiclcpp/make_ParameterSet.h"
