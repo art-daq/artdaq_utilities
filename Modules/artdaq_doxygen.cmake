@@ -26,7 +26,7 @@ endfunction()
 
 macro (create_doxygen_documentation)
 if(DOXYGEN_FOUND)
-	cet_parse_args( CM "EXCLUDE;DEPENDS" "" ${ARGN})
+	cmake_parse_arguments( CM "" "" "EXCLUDE;DEPENDS" ${ARGN})
 	set(EXCLUDE_FILES "")
 	if(CM_EXCLUDE)
 		foreach(file ${CM_EXCLUDE})

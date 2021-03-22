@@ -1,8 +1,3 @@
-cmake_policy(VERSION 3.0.1) # We've made this work for 3.0.1.
-cmake_policy(SET CMP0078 OLD)
-cmake_policy(SET CMP0086 OLD)
-
-include(CetParseArgs)
 
 set(CAN_BUILD true)
 
@@ -27,7 +22,7 @@ if(CAN_BUILD)
   FIND_PACKAGE(PythonLibs)  
   INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 
-  find_ups_product(python v2_7_11)
+  find_ups_product(python)
   INCLUDE_DIRECTORIES($ENV{PYTHON_INCLUDE})
 endif(CAN_BUILD)
 
@@ -36,7 +31,7 @@ macro (create_python_addon)
         set(cet_file_list "")
         set(create_python_addon_usage "USAGE: create_python_addon( [ADDON_NAME <addon name>] [LIBRARIES <library list>] [INCLUDES <include directories>])")
         #message(STATUS "create_python_addon debug: called with ${ARGN} from ${CMAKE_CURRENT_SOURCE_DIR}")
-        cet_parse_args( PIA "ADDON_NAME;LIBRARIES;INCLUDES" "" ${ARGN})
+        cmake_parse_arguments( PIA "" "" "ADDON_NAME;LIBRARIES;INCLUDES" ${ARGN})
         # there are no default arguments
         if( PIA_DEFAULT_ARGS )
             message(FATAL_ERROR  " undefined arguments ${CNA_DEFAULT_ARGS} \n ${create_python_addon_usage}")
@@ -60,28 +55,20 @@ macro (create_python_addon)
 
     #swig_add_module (${PIA_ADDON_NAME} python ${PIA_SOURCES} ${LIB_SOURCES})
 	swig_add_library(${PIA_ADDON_NAME} LANGUAGE python SOURCES ${PIA_SOURCES} ${LIB_SOURCES})
-    swig_link_libraries (${PIA_ADDON_NAME} ${PIA_LIBRARIES})
+    swig_link_libraries (${PIA_ADDON_NAME} ${PIA_LIBRARIES} ${PYTHON_LIBRARIES})
 
     set(PIA_ADDON_LIBNAME _${PIA_ADDON_NAME})
 
-  set( mrb_build_dir $ENV{MRB_BUILDDIR} )
-  if( mrb_build_dir )
-    set( this_build_path ${mrb_build_dir}/${product} )
-  else()
-    set( this_build_path ${CETPKG_BUILD} )
-  endif()
-
-    install (FILES ${this_build_path}/lib/${PIA_ADDON_LIBNAME}.so ${this_build_path}/lib/${PIA_ADDON_NAME}.py
-      PERMISSIONS OWNER_EXECUTE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE
-      DESTINATION ${flavorqual_dir}/lib/)
-      
-       add_custom_command(TARGET ${PIA_ADDON_LIBNAME} POST_BUILD 
-     # COMMAND echo "**** Exports for ${this_build_path}/lib/${PIA_ADDON_LIBNAME}.so"
-     # COMMAND echo "**** BEGIN"
-     # COMMAND /usr/bin/nm ${this_build_path}/lib/${PIA_ADDON_LIBNAME}.so | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
-     # COMMAND echo "**** END" 
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py ${this_build_path}/lib/
-      )
+    set( mrb_build_dir $ENV{MRB_BUILDDIR} )
+    if( mrb_build_dir )
+        set( this_build_path ${mrb_build_dir}/${product} )
+    else()
+        set( this_build_path ${CETPKG_BUILD} )
+    endif()
+          
+     add_custom_command(TARGET ${PIA_ADDON_NAME} POST_BUILD 
+                        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py ${this_build_path}/${artdaq_LIBRARY_DIR}
+     )
 
     else(CAN_BUILD)
         message("Compatible version of Swig found. NOT building ${PIA_ADDON_NAME}")
