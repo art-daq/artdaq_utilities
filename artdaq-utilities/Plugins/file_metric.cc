@@ -9,6 +9,7 @@
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
+#include "trace.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -87,7 +88,9 @@ public:
 
 		if (uniquify_file_name_)
 		{
-			std::string unique_id = std::to_string(getpid());
+			struct timespec ts;
+			clock_gettime(CLOCK_REALTIME, &ts);
+			std::string unique_id = std::to_string(ts.tv_sec) + "_" + std::to_string(getpid());
 			if (outputFile_.find("%UID%") != std::string::npos)
 			{
 				outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
@@ -104,6 +107,7 @@ public:
 				}
 			}
 		}
+
 		openFile_();
 		startMetrics();
 	}
