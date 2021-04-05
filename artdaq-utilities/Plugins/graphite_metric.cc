@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for Graphite
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_graphite_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -19,15 +22,15 @@ using boost::asio::ip::tcp;
 
 namespace artdaq {
 /**
- * \brief Send a metric to Graphite
- * 
- * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
- * artdaq/
- *   BoardReader/
- *     Fragment_Rate
- *     
- *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
- */
+	 * \brief Send a metric to Graphite
+	 * 
+	 * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
+	 * artdaq/
+	 *   BoardReader/
+	 *     Fragment_Rate
+	 *     
+	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
+	 */
 class GraphiteMetric final : public MetricPlugin
 {
 private:
@@ -42,19 +45,19 @@ private:
 
 public:
 	/**
-	 * \brief GraphiteMetric Constructor
-	 * \param config ParameterSet used to configure GraphiteMetric
-	 * \param app_name Name of the application sending metrics
-	 * 
-	 * \verbatim
-	 * GraphiteMetric accepts the following Parameters:
-	 * "host" (Default: "localhost"): Destination host
-	 * "port" (Default: 2003): Destination port
-	 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
-	 * \endverbatim
-	 */
-	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+		 * \brief GraphiteMetric Constructor
+		 * \param config ParameterSet used to configure GraphiteMetric
+		 * \param app_name Name of the application sending metrics
+		 * 
+		 * \verbatim
+		 * GraphiteMetric accepts the following Parameters:
+		 * "host" (Default: "localhost"): Destination host
+		 * "port" (Default: 2003): Destination port
+		 * "namespace" (Default: "artdaq."): Directory name to prepend to all metrics. Should include the trailing '.'
+		 * \endverbatim
+		 */
+	explicit GraphiteMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , host_(pset.get<std::string>("host", "localhost"))
 	    , port_(pset.get<int>("port", 2003))
 	    , namespace_(pset.get<std::string>("namespace", "artdaq."))
@@ -63,26 +66,27 @@ public:
 	    , stopped_(true)
 	    , errorCount_(0)
 	{
+		METLOG(TLVL_TRACE) << "GraphiteMetric ctor";
 		startMetrics();
 	}
 
 	/**
-	 * \brief GraphiteMetric Destructor. Calls stopMetrics()
-	 */
+		 * \brief GraphiteMetric Destructor. Calls stopMetrics()
+		 */
 	~GraphiteMetric() override { stopMetrics(); }
 
 	/**
-	 * \brief Get the library name for the Graphite metric
-	 * \return The library name for the Graphite metric, "graphite"
-	 */
+		 * \brief Get the library name for the Graphite metric
+		 * \return The library name for the Graphite metric, "graphite"
+		 */
 	std::string getLibName() const override { return "graphite"; }
 
 	/**
-	 * \brief Send a metric to Graphite
-	 * \param name Name of the metric. Will have the namespace prepended
-	 * \param value Value of the metric
+		 * \brief Send a metric to Graphite
+		 * \param name Name of the metric. Will have the namespace prepended
+		 * \param value Value of the metric
      * \param time Time the metric was sent
-	 */
+		 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_)
@@ -106,56 +110,56 @@ public:
 	}
 
 	/**
-	 * \brief Send a metric to Graphite
-	 * \param name Name of the metric. Will have the namespace prepended
-	 * \param value Value of the metric
-	 * \param unit Units of the metric (Not used)
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to Graphite
-	 * \param name Name of the metric. Will have the namespace prepended
-	 * \param value Value of the metric
-	 * \param unit Units of the metric (Not used)
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to Graphite
-	 * \param name Name of the metric. Will have the namespace prepended
-	 * \param value Value of the metric
-	 * \param unit Units of the metric (Not used)
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to Graphite
-	 * \param name Name of the metric. Will have the namespace prepended
-	 * \param value Value of the metric
-	 * \param unit Units of the metric (Not used)
+		* \brief Send a metric to Graphite
+		* \param name Name of the metric. Will have the namespace prepended
+		* \param value Value of the metric
+		 * \param unit Units of the metric (Not used)
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Perform startup actions. For Graphite, this means reconnecting the socket.
-	 */
+		 * \brief Perform startup actions. For Graphite, this means reconnecting the socket.
+		 */
 	void startMetrics_() override
 	{
 		if (stopped_)
@@ -166,8 +170,8 @@ public:
 	}
 
 	/**
-	 * \brief Perform shutdown actions. This shuts down the socket and closes it.
-	 */
+		 * \brief Perform shutdown actions. This shuts down the socket and closes it.
+		 */
 	void stopMetrics_() override
 	{
 		if (!stopped_)
@@ -180,11 +184,11 @@ public:
 			}
 			catch (boost::system::system_error& err)
 			{
-				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
+				METLOG(TLVL_WARNING) << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", the following boost::system::system_error exception was thrown out of a call to stopMetrics() and caught: " << err.code() << ", \"" << err.what() << "\"";
 			}
 			catch (...)
 			{
-				mf::LogWarning("GraphiteMetric") << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
+				METLOG(TLVL_WARNING) << "In destructor of GraphiteMetric instance associated with " << host_ << ":" << port_ << ", an *unknown* exception was thrown out of a call to stopMetrics() and caught!";
 			}
 		}
 	}
@@ -196,8 +200,8 @@ private:
 	GraphiteMetric& operator=(GraphiteMetric&&) = delete;
 
 	/**
-	 * \brief Reconnect to Graphite
-	 */
+		 * \brief Reconnect to Graphite
+		 */
 	void reconnect_()
 	{
 		if (errorCount_ < 5)
@@ -209,7 +213,7 @@ private:
 			if (!error) { errorCount_ = 0; }
 			else
 			{
-				mf::LogWarning("GraphiteMetric") << "Error reconnecting socket, attempt #" << errorCount_;
+				METLOG(TLVL_WARNING) << "Error reconnecting socket, attempt #" << errorCount_;
 			}
 			waitStart_ = std::chrono::steady_clock::now();
 		}

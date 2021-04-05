@@ -1,9 +1,10 @@
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_procfile_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#define TRACE_NAME "procFile_metric"
-#include "trace.h"
 
 #include <fcntl.h>     // open
 #include <sys/stat.h>  // mkfifo
@@ -45,11 +46,12 @@ public:
 		 * "name": Name of the metric to write to pipe
 		 * \endverbatim
 		 */
-	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
 	    , stopped_(true)
 	{
+		METLOG(TLVL_TRACE) << "ProcFileMetric ctor";
 		auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
 
 		for (const auto& name : names)
@@ -59,7 +61,7 @@ public:
 
 		int sts = mkfifo(pipe_.c_str(), 0777);
 		if (sts != 0) { perror("ProcFileMetric mkfifo"); }
-		TLOG(10) << "ProcFileMetric mkfifo()" << pipe_ << " sts=" << sts;
+		METLOG(10) << "ProcFileMetric mkfifo()" << pipe_ << " sts=" << sts;
 		startMetrics();
 	}
 
@@ -68,7 +70,7 @@ public:
 		 */
 	~ProcFileMetric() override
 	{
-		TLOG(11) << "~ProcFileMetric";
+		METLOG(11) << "~ProcFileMetric";
 		stopMetrics();
 	}
 
@@ -87,7 +89,7 @@ public:
 	{
 		if (value_map_.count(name) != 0u)
 		{
-			TLOG(12) << "sendMetric_ setting value=" << value;
+			METLOG(12) << "sendMetric_ setting value=" << value;
 			value_map_[name] = value;
 		}
 	}
@@ -173,23 +175,23 @@ public:
 		{
 			stopped_ = true;
 			// do read on pipe to make sure writePipe is not blocking on open
-			TLOG(11) << "stopMetrics_ before open " << pipe_;
+			METLOG(11) << "stopMetrics_ before open " << pipe_;
 			int fd = open(pipe_.c_str(), O_RDONLY | O_NONBLOCK);
 			if (fd == -1)
 			{
 				perror("stopMetrics_ open(\"r\")");
 				exit(1);
 			}
-			TLOG(10) << "stopMetrics_ between open and unlink" << pipe_ << " fd=" << fd;
+			METLOG(10) << "stopMetrics_ between open and unlink" << pipe_ << " fd=" << fd;
 			unlink(pipe_.c_str());
-			TLOG(11) << "stopMetrics_ unlinked " << pipe_;
+			METLOG(11) << "stopMetrics_ unlinked " << pipe_;
 #if 0
 				char buf[256];
 				read(fd, buf, sizeof(buf));
 #endif
 			usleep(10000);
 			close(fd);
-			TLOG(11) << "stopMetrics_ after close " << pipe_;
+			METLOG(11) << "stopMetrics_ after close " << pipe_;
 			if (thread_.joinable())
 			{
 				thread_.join();
@@ -204,19 +206,19 @@ public:
 	{
 		while (!stopped_)
 		{
-			TLOG(11) << "writePipe before open";
+			METLOG(11) << "writePipe before open";
 			int fd = open(pipe_.c_str(), O_WRONLY);
 			std::string str;
 			for (const auto& value : value_map_)
 			{
-				TLOG(10) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
+				METLOG(10) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
 				str += value.first + ": " + value.second + "\n";
 				//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
 			}
 			int sts = write(fd, str.c_str(), str.size());
-			TLOG(11) << "writePipe write complete sts=" << sts;
+			METLOG(11) << "writePipe write complete sts=" << sts;
 			close(fd);
-			TLOG(11) << "writePipe after close -- about to usleep";
+			METLOG(11) << "writePipe after close -- about to usleep";
 			usleep(400000);  // must wait to make sure other end closes
 		}
 	}

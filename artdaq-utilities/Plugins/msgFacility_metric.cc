@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for Message Facility
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_msgfacility_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -41,8 +44,8 @@ public:
 		  0: Info, 1: Debug, 2: Warning, 3: Error
 		\endverbatim
 		 */
-	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
 	    , outputLevel_(0)
 	{
@@ -114,60 +117,60 @@ public:
 	}
 
 	/**
-	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
      * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+		 * \param name Name of the metric
+		 * \param value Value of the metric
+		 * \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Perform startup actions. No-Op.
-	 */
+		 * \brief Perform startup actions. No-Op.
+		 */
 	void startMetrics_() override {}
 	/**
-	 * \brief Perform shutdown actions. No-Op.
-	 */
+		 * \brief Perform shutdown actions. No-Op.
+		 */
 	void stopMetrics_() override {}
 };
 }  //End namespace artdaq

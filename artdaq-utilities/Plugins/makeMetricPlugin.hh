@@ -23,6 +23,6 @@ class MetricPlugin;
 	 */
 std::unique_ptr<MetricPlugin>
 makeMetricPlugin(std::string const& generator_plugin_spec,
-                 fhicl::ParameterSet const& ps, std::string const& app_name);
+                 fhicl::ParameterSet const& ps, std::string const& app_name, std::string const& metric_name);
 }  // namespace artdaq
 #endif /* artdaq_Plugins_makeMetricPlugin_hh */
