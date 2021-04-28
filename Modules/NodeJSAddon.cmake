@@ -88,7 +88,7 @@ macro (create_nodejs_addon)
         if( mrb_build_dir )
             set( this_build_path ${mrb_build_dir}/${product} )
         else()
-            set( this_build_path ${CETPKG_BUILD} )
+            set( this_build_path $ENV{CETPKG_BUILD} )
         endif()
 
         install (FILES ${this_build_path}/lib/${CNA_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${CNA_ADDON_NAME})

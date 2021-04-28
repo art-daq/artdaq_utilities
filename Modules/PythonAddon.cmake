@@ -63,7 +63,7 @@ macro (create_python_addon)
     if( mrb_build_dir )
         set( this_build_path ${mrb_build_dir}/${product} )
     else()
-        set( this_build_path ${CETPKG_BUILD} )
+        set( this_build_path $ENV{CETPKG_BUILD} )
     endif()
           
      add_custom_command(TARGET ${PIA_ADDON_NAME} POST_BUILD 
