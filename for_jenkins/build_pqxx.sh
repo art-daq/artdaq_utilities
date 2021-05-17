@@ -112,6 +112,23 @@ export CTEST_OUTPUT_ON_FAILURE=1
    exit 1 
  }
 
+ for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "pqxx" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "postgresql" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "python" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "sqlite" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+		sed -i "/${filebase}/d" *_MANIFEST.txt
+	    rm -f $file
+    fi
+  done
+
 source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
