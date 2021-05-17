@@ -31,30 +31,9 @@ for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;do
 
 for qual in ${qualarray[@]};do
 	case ${qual} in
-		e14)
-			basequal=e14
-			;;
-        e15)
-            basequal=e15
-            ;;
-		e17)
-			basequal=e17
-			;;
-        c2)
-            basequal=c2
-            ;;
-		p2715)
-			pyqual=p2715
-			;;
-		p2711)
-			pyqual=p2711
-			;;
-		p2713b)
-			pyqual=p2713b
-			;;
-		p2713d)
-			pyqual=p2713d
-			;;
+		e*) basequal=$qual;;
+		c*) basequal=$qual;;
+		p*)	pyqual=$qual;;
 		esac
 done
 
@@ -65,9 +44,9 @@ if [[ "x$basequal" == "x" ]]; then
 fi
 
 case ${build_type} in
-    debug) ;;
-    prof) ;;
-    *)
+	debug) ;;
+	prof) ;;
+	*)
 	echo "ERROR: build type must be debug or prof"
 	usage
 	exit 1
@@ -78,7 +57,7 @@ echo "building the pqxx distribution for ${version} ${qual_set} ${build_type}"
 OS=`uname`
 if [ "${OS}" = "Linux" ]
 then
-    flvr=slf`lsb_release -r | sed -e 's/[[:space:]]//g' | cut -f2 -d":" | cut -f1 -d"."`
+	flvr=slf`lsb_release -r | sed -e 's/[[:space:]]//g' | cut -f2 -d":" | cut -f1 -d"."`
 elif [ "${OS}" = "Darwin" ]
 then
   flvr=d`uname -r | cut -f1 -d"."`
