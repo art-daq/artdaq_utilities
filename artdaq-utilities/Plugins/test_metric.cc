@@ -4,8 +4,8 @@
 //
 // An implementation of the MetricPlugin that writes to the TestMetric static storage
 
-#define TRACE_NAME "TestMetric"
-#include "trace.h"
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME "test_metric"
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
@@ -28,8 +28,8 @@ public:
    * \param config ParameterSet used to configure TestMetric
    * \param app_name Name of the application sending metrics
    */
-	explicit TestMetricImpl(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit TestMetricImpl(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	{
 		startMetrics();
 	}
@@ -60,7 +60,7 @@ public:
 		if (!inhibit_)
 		{
 			TestMetric::LockReceivedMetricMutex();
-			TLOG(TLVL_TRACE) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
+			METLOG(TLVL_TRACE) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
 			TestMetric::received_metrics.emplace_back(TestMetric::MetricPoint{time, name, value, unit});
 			TestMetric::UnlockReceivedMetricMutex();
 		}

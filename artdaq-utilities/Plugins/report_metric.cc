@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for creating "Periodic Report" messages
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_report_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -18,8 +21,8 @@
 
 namespace artdaq {
 /**
- * \brief PeriodicReportMetric writes metric data to a file on disk
- */
+	 * \brief PeriodicReportMetric writes metric data to a file on disk
+	 */
 class PeriodicReportMetric final : public MetricPlugin
 {
 private:
@@ -31,16 +34,16 @@ private:
 
 public:
 	/**
-	 * \brief PeriodicReportMetric Constructor.
-	 * \param config ParameterSet used to configure PeriodicReportMetric
-	 * \param app_name Name of the application sending metrics
-	 * 
-	 * \verbatim
-	 * PeriodicReportMetric accepts no parameters.
-	 * \endverbatim
-	 */
-	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+		 * \brief PeriodicReportMetric Constructor.
+		 * \param config ParameterSet used to configure PeriodicReportMetric
+		 * \param app_name Name of the application sending metrics
+		 * 
+		 * \verbatim
+		 * PeriodicReportMetric accepts no parameters.
+		 * \endverbatim
+		 */
+	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , last_report_time_(std::chrono::steady_clock::now())
 
 	{
@@ -48,27 +51,27 @@ public:
 	}
 
 	/**
-	 * \brief PeriodicReportMetric Destructor. Calls stopMetrics and then closes the file
-	 */
+		 * \brief PeriodicReportMetric Destructor. Calls stopMetrics and then closes the file
+		 */
 	~PeriodicReportMetric() override
 	{
 		stopMetrics();
 	}
 
 	/**
-	* \brief Get the library name for the PeriodicReport metric
-	* \return The library name for the PeriodicReport metric, "report"
-	*/
+		* \brief Get the library name for the PeriodicReport metric
+		* \return The library name for the PeriodicReport metric, "report"
+		*/
 	std::string getLibName() const override { return "report"; }
 
 	/**
-	* \brief Write metric data to a file
-	* \param name Name of the metric
-	* \param value Value of the metric
-	* \param unit Units of the metric
+		* \brief Write metric data to a file
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
 	*
 	* Not using the time field, as the report will have its own timestamp from TRACE
-	*/
+		*/
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!inhibit_)
@@ -79,63 +82,63 @@ public:
 	}
 
 	/**
-	 * \brief Write metric data to a file
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+	   * \brief Write metric data to a file
+	   * \param name Name of the metric
+	   * \param value Value of the metric
+	   * \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Write metric data to a file
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		* \brief Write metric data to a file
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Write metric data to a file
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		* \brief Write metric data to a file
+		* \param name Name of the metric
+		* \param value Value of the metric
+		* \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		*/
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Write metric data to a file
-	 * \param name Name of the metric
-	 * \param value Value of the metric
-	 * \param unit Units of the metric
+		 * \brief Write metric data to a file
+		 * \param name Name of the metric
+		 * \param value Value of the metric
+		 * \param unit Units of the metric
 	 * \param time Time the metric was sent
-	 */
+		 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-	 * \brief Perform startup actions.
-	 */
+		 * \brief Perform startup actions.
+		 */
 	void startMetrics_() override
 	{
 	}
 
 	/**
-	 * \brief Perform shutdown actions.
-	 */
+		 * \brief Perform shutdown actions.
+		 */
 	void stopMetrics_() override
 	{
 		writeReportMessage_(true);
@@ -178,12 +181,13 @@ private:
 			}
 			if (live_metrics > 0)
 			{
-				TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
-				                     << str.str();
+				METLOG(TLVL_INFO) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
+				                  << str.str();
 			}
 			else
 			{
 				TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+				METLOG(TLVL_INFO) << "Periodic report: No active metrics in last reporting interval!";
 			}
 		}
 	}

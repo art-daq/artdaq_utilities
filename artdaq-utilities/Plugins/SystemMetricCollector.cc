@@ -163,31 +163,31 @@ uint64_t artdaq::SystemMetricCollector::GetNetworkReceiveErrors(std::string ifna
 uint64_t artdaq::SystemMetricCollector::GetNetworkTCPRetransSegs()
 {
 	auto filp = fopen("/proc/net/snmp", "r");
-#	define BFSZ_ 200
+#define BFSZ_ 200
 	char tcp_lbls[BFSZ_];
 	char tcp_data[BFSZ_];
-	char *bufptr=tcp_lbls;
+	char* bufptr = tcp_lbls;
 
 	// find the Tcp line token
-#	define TCP_LINE_TKN_ "Tcp:"
-#	define TCP_RETRANSSEGS_TKN_ "RetransSegs"
-	uint64_t retranssegs=0;
-	while (fgets(bufptr, BFSZ_-1, filp) != nullptr)
-		if (strstr( bufptr, TCP_LINE_TKN_))
+#define TCP_LINE_TKN_ "Tcp:"
+#define TCP_RETRANSSEGS_TKN_ "RetransSegs"
+	uint64_t retranssegs = 0;
+	while (fgets(bufptr, BFSZ_ - 1, filp) != nullptr)
+		if (strstr(bufptr, TCP_LINE_TKN_))
 		{
-			char    *tokn_name, *tokn_data, *tokn_save, *data_save;
-			fgets(tcp_data, BFSZ_-1, filp);
-			tokn_name = strtok_r( tcp_lbls, " ", &tokn_save );
-			tokn_data = strtok_r( tcp_data, " ", &data_save );
-			while (tokn_name != NULL && strcmp(tokn_name,TCP_RETRANSSEGS_TKN_) != 0)
+			char *tokn_name, *tokn_data, *tokn_save, *data_save;
+			fgets(tcp_data, BFSZ_ - 1, filp);
+			tokn_name = strtok_r(tcp_lbls, " ", &tokn_save);
+			tokn_data = strtok_r(tcp_data, " ", &data_save);
+			while (tokn_name != NULL && strcmp(tokn_name, TCP_RETRANSSEGS_TKN_) != 0)
 			{
-				tokn_name = strtok_r( NULL, " ", &tokn_save );
-				tokn_data = strtok_r( NULL, " ", &data_save );
+				tokn_name = strtok_r(NULL, " ", &tokn_save);
+				tokn_data = strtok_r(NULL, " ", &data_save);
 			}
-			if (tokn_name) retranssegs = strtoull(tokn_data,0,0);
+			if (tokn_name) retranssegs = strtoull(tokn_data, 0, 0);
 			break;
 		}
-	TRACE(TLVL_DEBUG+10,"retranssegs=%lu", retranssegs);
+	TRACE(TLVL_DEBUG + 10, "retranssegs=%lu", retranssegs);
 	fclose(filp);
 	return 0;
 }

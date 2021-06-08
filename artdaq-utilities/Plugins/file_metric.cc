@@ -4,11 +4,12 @@
 //
 // An implementation of the MetricPlugin for Log Files
 
-#define TRACE_NAME "FileMetric"
-#include "tracemf.h"
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_file_metric").c_str()
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
+#include "trace.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -68,8 +69,8 @@ public:
    * "time_format" (Default: "%c"): Format to use for time printout (see std::put_time)
    * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
    */
-	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , outputFile_(pset.get<std::string>("fileName", "FileMetric.out"))
 	    , file_name_is_absolute_path_(pset.get<bool>("absolute_file_path", true))
 	    , relative_env_var_(pset.get<std::string>("relative_directory_env_var", "ARTDAQ_LOG_ROOT"))
@@ -85,9 +86,13 @@ public:
 			mode_ = std::ofstream::out | std::ofstream::trunc;
 		}
 
+		METLOG(TLVL_TRACE) << "FileMetric ctor";
+
 		if (uniquify_file_name_)
 		{
-			std::string unique_id = std::to_string(getpid());
+			struct timespec ts;
+			clock_gettime(CLOCK_REALTIME, &ts);
+			std::string unique_id = std::to_string(ts.tv_sec) + "_" + std::to_string(getpid());
 			if (outputFile_.find("%UID%") != std::string::npos)
 			{
 				outputFile_ = outputFile_.replace(outputFile_.find("%UID%"), 5, unique_id);
@@ -104,6 +109,7 @@ public:
 				}
 			}
 		}
+
 		openFile_();
 		startMetrics();
 	}
@@ -209,7 +215,7 @@ private:
 	{
 		if (!file_name_is_absolute_path_)
 		{
-			TLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
+			METLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
 			std::string logPathProblem;
 			std::string logfileName;
 			char* logRootString = getenv(relative_env_var_.c_str());
@@ -219,9 +225,9 @@ private:
 			{
 				if (!BFS::exists(logRootString))
 				{
-					TLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " points to a non-existant directory! Using /tmp/!";
+					METLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " points to a non-existant directory! Using /tmp/!";
 					outputFile_ = "/tmp/" + outputFile_;
-					TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+					METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 					outputStream_.open(outputFile_, mode_);
 				}
 				else
@@ -231,14 +237,14 @@ private:
 
 					while (outputFile_.find('/') != std::string::npos)
 					{
-						TLOG(TLVL_DEBUG) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
+						METLOG(TLVL_DEBUG) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
 						logfileDir.append(outputFile_.substr(0, outputFile_.find('/') + 1));
 						outputFile_.erase(0, outputFile_.find('/') + 1);
 					}
 
 					// As long as the top-level directory exists, I don't think we
 					// really care if we have to create application directories...
-					TLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
+					METLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
 					if (!BFS::exists(logfileDir))
 					{
 						BFS::create_directories(logfileDir);
@@ -247,21 +253,21 @@ private:
 					logfileName.append(logfileDir);
 					logfileName.append(outputFile_);
 
-					TLOG(TLVL_INFO) << "FileMetric Opening file " << logfileName;
+					METLOG(TLVL_INFO) << "FileMetric Opening file " << logfileName;
 					outputStream_.open(logfileName, mode_);
 				}
 			}
 			else
 			{
-				TLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " is null! Using /tmp/!";
+				METLOG(TLVL_WARNING) << "Relative directory environment variable " << relative_env_var_ << " is null! Using /tmp/!";
 				outputFile_ = "/tmp/" + outputFile_;
-				TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+				METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 				outputStream_.open(outputFile_, mode_);
 			}
 		}
 		else
 		{
-			TLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
+			METLOG(TLVL_INFO) << "FileMetric Opening file " << outputFile_;
 			outputStream_.open(outputFile_, mode_);
 		}
 		if (outputStream_.is_open())
@@ -270,7 +276,7 @@ private:
 		}
 		else
 		{
-			TLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
+			METLOG(TLVL_ERROR) << "Error opening metric file " << outputFile_;
 		}
 	}
 
