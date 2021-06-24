@@ -31,6 +31,7 @@ set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
 
 include(CetCMakeEnv)
 cet_cmake_env()
+set(artdaq_utilities_OLD_STYLE_CONFIG_VARS TRUE)
 
 cet_set_compiler_flags(DIAGS VIGILANT
   WERROR
@@ -69,14 +70,6 @@ find_ups_product( fhiclcpp v3_04_00 )
 find_ups_product( messagefacility v1_14_01 )
 
 #find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
-
-# as of art v2_11_00, messagefacility has a single library
-check_ups_version(messagefacility $ENV{MESSAGEFACILITY_VERSION} v2_02_00 PRODUCT_MATCHES_VAR ONE_MF_LIBRARY)
-if(ONE_MF_LIBRARY)
-    set( MESSAGEFACILITY_LIBS MF_MessageLogger)
-else()
-    set( MESSAGEFACILITY_LIBS MF_MessageLogger MF_Utilities)
-endif()
 
 string(REGEX MATCHALL "[0-9][0-9]?[0-9]?" MESSAGEFACILITY_VERSION_LIST "$ENV{MESSAGEFACILITY_VERSION}")
 list(GET MESSAGEFACILITY_VERSION_LIST 0 MESSAGEFACILITY_MAJOR_VERSION)
