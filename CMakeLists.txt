@@ -28,10 +28,10 @@ ENDIF()
 set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
               ${CMAKE_CURRENT_LIST_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
-
+			  
 include(CetCMakeEnv)
-cet_cmake_env()
 set(artdaq_utilities_OLD_STYLE_CONFIG_VARS TRUE)
+cet_cmake_env()
 
 cet_set_compiler_flags(DIAGS VIGILANT
   WERROR
