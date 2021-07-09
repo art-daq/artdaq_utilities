@@ -3,7 +3,7 @@ cet_make(
   LIBRARIES
   ${FHICLCPP}
   ${CETLIB}
-  ${MESSAGEFACILITY_LIBS}
+  ${MF_MESSAGELOGGER}
   ${CETLIB_EXCEPT}
   pthread
   ${Boost_THREAD_LIBRARY}
@@ -16,7 +16,7 @@ basic_plugin("file" "metric"
   ${CETLIB_EXCEPT}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
-  ${MESSAGEFACILITY_LIBS}
+  ${MF_MESSAGELOGGER}
 )
 
 basic_plugin("test" "metric"
@@ -30,14 +30,14 @@ basic_plugin("report" "metric"
   ${FHICLCPP}
   ${CETLIB}
   ${CETLIB_EXCEPT}
-  ${MESSAGEFACILITY_LIBS}
+  ${MF_MESSAGELOGGER}
 )
 
 basic_plugin("msgFacility" "metric"
    ${FHICLCPP}
    ${CETLIB}
   ${CETLIB_EXCEPT}
-  ${MESSAGEFACILITY_LIBS}
+  ${MF_MESSAGELOGGER}
 )
 
 basic_plugin("graphite" "metric"
