@@ -30,7 +30,6 @@ set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 			  
 include(CetCMakeEnv)
-set(artdaq_utilities_OLD_STYLE_CONFIG_VARS TRUE)
 cet_cmake_env()
 
 cet_set_compiler_flags(DIAGS VIGILANT

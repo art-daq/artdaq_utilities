@@ -1,60 +1,60 @@
 cet_make(
   EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc test_metric.cc
   LIBRARIES
-  ${FHICLCPP}
-  ${CETLIB}
-  ${MF_MESSAGELOGGER}
-  ${CETLIB_EXCEPT}
+  fhiclcpp
+  cetlib
+  MF_MessageLogger
+  cetlib_except
   pthread
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   )
 
 basic_plugin("file" "metric"
-  ${FHICLCPP}
-  ${CETLIB}
-  ${CETLIB_EXCEPT}
+  fhiclcpp
+  cetlib
+  cetlib_except
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
-  ${MF_MESSAGELOGGER}
+  MF_MessageLogger
 )
 
 basic_plugin("test" "metric"
 	artdaq-utilities_Plugins
-  ${FHICLCPP}
-  ${CETLIB}
-  ${CETLIB_EXCEPT}
+  fhiclcpp
+  cetlib
+  cetlib_except
 )
 
 basic_plugin("report" "metric"
-  ${FHICLCPP}
-  ${CETLIB}
-  ${CETLIB_EXCEPT}
-  ${MF_MESSAGELOGGER}
+  fhiclcpp
+  cetlib
+  cetlib_except
+  MF_MessageLogger
 )
 
 basic_plugin("msgFacility" "metric"
-   ${FHICLCPP}
-   ${CETLIB}
-  ${CETLIB_EXCEPT}
-  ${MF_MESSAGELOGGER}
+   fhiclcpp
+   cetlib
+  cetlib_except
+  MF_MessageLogger
 )
 
 basic_plugin("graphite" "metric"
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
-  ${FHICLCPP}
-  ${CETLIB}
-  ${CETLIB_EXCEPT}
-   ${MF_MESSAGELOGGER}
+  fhiclcpp
+  cetlib
+  cetlib_except
+   MF_MessageLogger
   pthread
 )
 
 basic_plugin("procFile" "metric"
-  ${FHICLCPP}
-  ${CETLIB}
-  ${CETLIB_EXCEPT}
-   ${MF_MESSAGELOGGER}
+  fhiclcpp
+  cetlib
+  cetlib_except
+   MF_MessageLogger
   pthread
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
