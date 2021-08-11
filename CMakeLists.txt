@@ -18,7 +18,7 @@ cmake_minimum_required (VERSION 3.16)
 
 find_package(cetbuildtools)
 
-project(artdaq_utilities VERSION 1.06.02)
+project(artdaq_utilities VERSION 1.06.03)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
@@ -30,7 +30,6 @@ set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 			  
 include(CetCMakeEnv)
-set(artdaq_utilities_OLD_STYLE_CONFIG_VARS TRUE)
 cet_cmake_env()
 
 cet_set_compiler_flags(DIAGS VIGILANT
