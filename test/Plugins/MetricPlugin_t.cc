@@ -1,10 +1,10 @@
+#include "artdaq-utilities/Plugins/MakeParameterSet.hh"
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
 
-#define BOOST_TEST_MODULES MetricPlugin_t
+#define BOOST_TEST_MODULE MetricPlugin_t
 #include "cetlib/quiet_unit_test.hpp"
 #include "cetlib_except/exception.h"
-#include "fhiclcpp/make_ParameterSet.h"
 
 #include "TRACE/trace.h"
 
@@ -103,8 +103,7 @@ BOOST_AUTO_TEST_CASE(Constructor)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case Constructor BEGIN";
 	std::string testConfig = "reporting_interval: 0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 	BOOST_REQUIRE_EQUAL(mpta.get_pset().to_string(), pset.to_string());
 	BOOST_REQUIRE_EQUAL(mpta.get_accumulationTime_(), 0.0);
@@ -117,8 +116,7 @@ BOOST_AUTO_TEST_CASE(IsLevelEnabled)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case IsLevelEnabled BEGIN";
 	std::string testConfig = "reporting_interval: 0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	BOOST_REQUIRE_EQUAL(mpta.IsLevelEnabled(0), true);
@@ -152,8 +150,7 @@ BOOST_AUTO_TEST_CASE(LibraryName)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case LibraryName BEGIN";
 	std::string testConfig = "reporting_interval: 0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	BOOST_REQUIRE_EQUAL(mpta.getLibName(), "ERROR");
@@ -164,8 +161,7 @@ BOOST_AUTO_TEST_CASE(AddMetricData)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case AddMetricData BEGIN";
 	std::string testConfig = "reporting_interval: 1.0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	auto smd = std::make_unique<artdaq::MetricData>("String Metric", "Test Value", "Units", 1, artdaq::MetricMode::LastPoint, "", false);
@@ -193,8 +189,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case SendMetrics BEGIN";
 	std::string testConfig = "reporting_interval: 0.01 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	auto smd = std::make_unique<artdaq::MetricData>("String Metric", "Test Value", "Units", 1, artdaq::MetricMode::LastPoint, "", false);
@@ -260,8 +255,7 @@ BOOST_AUTO_TEST_CASE(StartMetrics)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case StartMetrics BEGIN";
 	std::string testConfig = "reporting_interval: 0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	mpta.startMetrics();
@@ -273,8 +267,7 @@ BOOST_AUTO_TEST_CASE(StopMetrics)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case StopMetrics BEGIN";
 	std::string testConfig = "reporting_interval: 1.0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\"";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 	artdaqtest::MetricPluginTestAdapter mpta(pset);
 
 	auto smd = std::make_unique<artdaq::MetricData>("String Metric", "Test Value", "Units", 1, artdaq::MetricMode::LastPoint, "", false);
