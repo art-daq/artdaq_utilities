@@ -91,7 +91,12 @@ public:
 	/// <returns>the current number of TCP (total) segments retransmitted, segments</returns>
 	uint64_t GetNetworkTCPRetransSegs();
 
+	/**
+	 * @brief Get the names of the local network interfaces
+	 * @return The names of the local network interfaces (e.g. {"ens0","enp3s1f1"})
+	*/
 	std::list<std::string> GetNetworkInterfaceNames();
+
 	/// <summary>
 	/// Send the configured metrics
 	/// </summary>
