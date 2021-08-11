@@ -1,5 +1,3 @@
-# project name
-project(artdaq-utilities_BuildInfo)
 
 # the utcDateTime variable is used by the GetPackageBuildInfo code
 # to report the build datetime
