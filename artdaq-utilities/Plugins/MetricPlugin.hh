@@ -18,6 +18,7 @@
 #include <chrono>
 #include <string>
 #include <unordered_map>
+#include <bitset>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/ConfigurationTable.h"

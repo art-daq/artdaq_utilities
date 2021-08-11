@@ -2,13 +2,13 @@
 #define TRACE_NAME "MetricManager_t"
 #include "trace.h"
 
+#include "artdaq-utilities/Plugins/MakeParameterSet.hh"
 #include "artdaq-utilities/Plugins/MetricManager.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
 
-#define BOOST_TEST_MODULES MetricManager_t
+#define BOOST_TEST_MODULE MetricManager_t
 #include "cetlib/quiet_unit_test.hpp"
 #include "cetlib_except/exception.h"
-#include "fhiclcpp/make_ParameterSet.h"
 
 BOOST_AUTO_TEST_SUITE(MetricManager_test)
 
@@ -57,8 +57,7 @@ BOOST_AUTO_TEST_CASE(Initialize)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 5 metricPluginType: test reporting_interval: 1.0}";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -82,8 +81,7 @@ BOOST_AUTO_TEST_CASE(Initialize_WithError)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "err: { level: 5 metricPluginType: nonExistentPluginType reporting_interval: 1.0}";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -106,8 +104,7 @@ BOOST_AUTO_TEST_CASE(Shutdown)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 5 metricPluginType: test reporting_interval: 1.0}";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -138,8 +135,7 @@ BOOST_AUTO_TEST_CASE(SendMetric_String)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 5 metricPluginType: test reporting_interval: 1.0}";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -172,8 +168,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 5 metricPluginType: test reporting_interval: 0.5 send_zeros: false} metric_send_maximum_delay_ms: 100 metric_holdoff_us: 10000";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -329,8 +324,7 @@ BOOST_AUTO_TEST_CASE(SendMetrics_Levels)  // NOLINT(readability-function-size)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 0 metric_levels: [ 1, 2 ] level_string: \"3-5,9,7\" metricPluginType: test reporting_interval: 0.1 send_zeros: false} metric_send_maximum_delay_ms: 100";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
@@ -452,8 +446,7 @@ BOOST_AUTO_TEST_CASE(MetricFlood)  // NOLINT(readability-function-size)
 	TRACE_REQUIRE_EQUAL(mm.metricQueueSize(), 0);
 
 	std::string testConfig = "msgFac: { level: 5 metricPluginType: test reporting_interval: 0.1 send_zeros: false}  metric_send_maximum_delay_ms: 100";
-	fhicl::ParameterSet pset;
-	fhicl::make_ParameterSet(testConfig, pset);
+	fhicl::ParameterSet pset = artdaq::make_pset(testConfig);
 
 	mm.initialize(pset, "MetricManager_t");
 	TRACE_REQUIRE_EQUAL(mm.Initialized(), true);
