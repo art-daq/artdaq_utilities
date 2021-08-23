@@ -1,1 +1,1 @@
-cet_script(rgang_iperf.sh)
+cet_script(ALWAYS_COPY rgang_iperf.sh)
