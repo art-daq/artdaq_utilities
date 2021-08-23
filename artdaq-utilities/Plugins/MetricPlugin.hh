@@ -18,10 +18,10 @@
 #define METLOG(lvl) TLOG(lvl) << metric_name_ << ": "
 #define METLOG_P(lvl) TLOG(lvl, "MetricPlugin") << metric_name_ << ": "
 
+#include <bitset>
 #include <chrono>
 #include <string>
 #include <unordered_map>
-#include <bitset>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/ConfigurationTable.h"
