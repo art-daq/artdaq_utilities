@@ -76,6 +76,11 @@ if [ `uname` = Darwin ]; then
   fi
 fi
 
+# setup the test version for art v3_09_00
+
+unsetup mrb
+setup mrb v5_16_00
+
 setup gitflow || exit 1
 export MRB_PROJECT=dune
 echo "Mrb path:"
