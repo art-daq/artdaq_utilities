@@ -16,11 +16,11 @@
 
 namespace artdaq {
 /**
-	 * \brief A MetricPlugin which writes a long unsigned int metric with a given name to a given pipe
-	 *
-	 * This MetricPlugin emulates the function of the /proc file system, where the kernel provides
-	 * access to various counters and parameters.
-	 */
+ * \brief A MetricPlugin which writes a long unsigned int metric with a given name to a given pipe
+ *
+ * This MetricPlugin emulates the function of the /proc file system, where the kernel provides
+ * access to various counters and parameters.
+ */
 class ProcFileMetric final : public MetricPlugin
 {
 private:
@@ -36,16 +36,17 @@ private:
 
 public:
 	/**
-		 * \brief ProcFileMetric Constructor
-		 * \param config FHiCL ParameterSet used to configure the ProcFileMetric
-		 * \param app_name Name of the application sending metrics
-		 *
-		 * \verbatim
-		 * ProcFileMetric accepts the following Parameters (in addition to those accepted by MetricPlugin):
-		 * "pipe": Name of pipe virtual file to write to
-		 * "name": Name of the metric to write to pipe
-		 * \endverbatim
-		 */
+	 * \brief ProcFileMetric Constructor
+	 * \param config FHiCL ParameterSet used to configure the ProcFileMetric
+	 * \param app_name Name of the application sending metrics
+	 * \param metric_name Name of this MetricPlugin instance
+	 *
+	 * \verbatim
+	 * ProcFileMetric accepts the following Parameters (in addition to those accepted by MetricPlugin):
+	 * "pipe": Name of pipe virtual file to write to
+	 * "name": Name of the metric to write to pipe
+	 * \endverbatim
+	 */
 	explicit ProcFileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
 	    : MetricPlugin(config, app_name, metric_name)
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
@@ -66,8 +67,8 @@ public:
 	}
 
 	/**
-		 * \brief ProcFileMetric Destructor
-		 */
+	 * \brief ProcFileMetric Destructor
+	 */
 	~ProcFileMetric() override
 	{
 		METLOG(11) << "~ProcFileMetric";
@@ -75,16 +76,16 @@ public:
 	}
 
 	/**
-		 * \brief Get the "library name" of this Metric
-		 * \return The library name of this metric, "procFile"
-		 */
+	 * \brief Get the "library name" of this Metric
+	 * \return The library name of this metric, "procFile"
+	 */
 	std::string getLibName() const override { return "procFile"; }
 
 	/**
-		 * \brief Set the value to be written to the pipe when it is opened by a reader
-		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
-		 * \param value Value of the metric.
-		 */
+	 * \brief Set the value to be written to the pipe when it is opened by a reader
+	 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+	 * \param value Value of the metric.
+	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& /*time*/) override
 	{
 		if (value_map_.count(name) != 0u)
@@ -95,56 +96,56 @@ public:
 	}
 
 	/**
-		 * \brief Set the value to be written to the pipe when it is opened by a reader
-		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
-		 * \param value Value of the metric.
-		 * \param unit Units of the metric.
+	 * \brief Set the value to be written to the pipe when it is opened by a reader
+	 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+	 * \param value Value of the metric.
+	 * \param unit Units of the metric.
 	 * \param time Time the metric was sent
-		 */
+	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Set the value to be written to the pipe when it is opened by a reader
-		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
-		 * \param value Value of the metric.
-		 * \param unit Units of the metric.
+	 * \brief Set the value to be written to the pipe when it is opened by a reader
+	 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+	 * \param value Value of the metric.
+	 * \param unit Units of the metric.
 	 * \param time Time the metric was sent
-		 */
+	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Set the value to be written to the pipe when it is opened by a reader
-		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
-		 * \param value Value of the metric.
-		 * \param unit Units of the metric.
+	 * \brief Set the value to be written to the pipe when it is opened by a reader
+	 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+	 * \param value Value of the metric.
+	 * \param unit Units of the metric.
 	 * \param time Time the metric was sent
-		 */
+	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Set the value to be written to the pipe when it is opened by a reader
-		 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
-		 * \param value Value of the metric.
-		 * \param unit Units of the metric.
+	 * \brief Set the value to be written to the pipe when it is opened by a reader
+	 * \param name Name of the metric. Must match configred name for value to be updated (This MetricPlugin should be used with the useNameOverride parameter!)
+	 * \param value Value of the metric.
+	 * \param unit Units of the metric.
 	 * \param time Time the metric was sent
-		 */
+	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Start the metric-sending thread
-		 */
+	 * \brief Start the metric-sending thread
+	 */
 	void startMetrics_() override
 	{
 		if (stopped_)
@@ -167,8 +168,8 @@ public:
 	}
 
 	/**
-		 * \brief Open the pipe for reading to allow the metric-sending thread to end gracefully
-		 */
+	 * \brief Open the pipe for reading to allow the metric-sending thread to end gracefully
+	 */
 	void stopMetrics_() override
 	{
 		if (!stopped_)
@@ -200,8 +201,8 @@ public:
 	}
 
 	/**
-		 * \brief Wait for the pipe to be opened and then write the current value to it
-		 */
+	 * \brief Wait for the pipe to be opened and then write the current value to it
+	 */
 	void writePipe()
 	{
 		while (!stopped_)

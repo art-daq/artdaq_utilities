@@ -59,6 +59,7 @@ public:
    * \brief FileMetric Constructor. Opens the file and starts the metric
    * \param config ParameterSet used to configure FileMetric
    * \param app_name Name of the application sending metrics
+   * \param metric_name Name of this MetricPlugin instance
    *
    * \verbatim
    * FileMetric accepts the following Parameters:

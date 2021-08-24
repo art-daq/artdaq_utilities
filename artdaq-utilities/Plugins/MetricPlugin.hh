@@ -66,6 +66,7 @@ public:
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
 		 * \param app_name The Application name which can be used by the Metric Plugin for identification
+		 * \param metric_name Name for this MetricPlugin instance
 		 *
 		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
 		 *  metric. String metrics cannot be accumulated.
@@ -428,10 +429,10 @@ public:
 	}
 
 protected:
-	fhicl::ParameterSet pset;  ///< The ParameterSet used to configure the MetricPlugin
-	double accumulationTime_;  ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
-	std::string app_name_;     ///< Name of the application which is sending metrics to this plugin
-	std::string metric_name_;
+	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
+	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
+	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
+	std::string metric_name_;     ///< Name of this MetricPlugin instance
 	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
 	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
 	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run

@@ -17,8 +17,8 @@
 
 namespace artdaq {
 /**
-	 * \brief A MetricPlugin class which sends metric data to MessageFacility
-	 */
+ * \brief A MetricPlugin class which sends metric data to MessageFacility
+ */
 class MsgFacilityMetric final : public MetricPlugin
 {
 private:
@@ -32,18 +32,19 @@ private:
 
 public:
 	/**
-		 * \brief MsgFacilityMetric Constructor
-		 * \param config ParameterSet used to configure MsgFacilityMetric
-		 * \param app_name Name of the application sending metrics
-		 * 
-		 * \verbatim
-		  MsgFacilityMetric accepts the following Parameters:
-		  "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
-		  "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
-		  the string name of the severity.
-		  0: Info, 1: Debug, 2: Warning, 3: Error
-		\endverbatim
-		 */
+	 * \brief MsgFacilityMetric Constructor
+	 * \param config ParameterSet used to configure MsgFacilityMetric
+	 * \param app_name Name of the application sending metrics
+	 * \param metric_name Name of this MetricPlugin instance
+	 * 
+	 * \verbatim
+	 MsgFacilityMetric accepts the following Parameters:
+	 "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
+	 "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
+	 the string name of the severity.
+	 0: Info, 1: Debug, 2: Warning, 3: Error
+	 * \endverbatim
+	 */
 	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
 	    : MetricPlugin(config, app_name, metric_name)
 	    , facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
@@ -77,23 +78,23 @@ public:
 	}
 
 	/**
-		 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
-		 */
+	 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
+	 */
 	~MsgFacilityMetric() override { stopMetrics(); }
 	/**
-		 * \brief Return the library name of the MetricPlugin
-		 * \return The library name of MsgFacilityMetric: "msgFacility"
-		 */
+	 * \brief Return the library name of the MetricPlugin
+	 * \return The library name of MsgFacilityMetric: "msgFacility"
+	 */
 	std::string getLibName() const override { return "msgFacility"; }
 
 	/**
-		 * \brief Send a metric to MessageFacilty. Format is: "name: value unit."
-		 * \param name Name of the metric
-		 * \param value Value of the metric
-		 * \param unit Units for the metric
-		 *
-		 * Not using the time field, as MessageFacility will put its own timestamp on
-		 */
+	 * \brief Send a metric to MessageFacilty. Format is: "name: value unit."
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 *
+	 * Not using the time field, as MessageFacility will put its own timestamp on
+	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!inhibit_)
@@ -117,60 +118,60 @@ public:
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
      * \param time Time the metric was sent
-		*/
+	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
      * \param time Time the metric was sent
-		*/
+	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		* \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units of the metric
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
 	 * \param time Time the metric was sent
-		*/
+	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
-		 * \param name Name of the metric
-		 * \param value Value of the metric
-		 * \param unit Units of the metric
+	 * \brief Send a metric to MessageFacility. All metrics are converted to strings.
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
 	 * \param time Time the metric was sent
-		 */
+	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-		 * \brief Perform startup actions. No-Op.
-		 */
+	 * \brief Perform startup actions. No-Op.
+	 */
 	void startMetrics_() override {}
 	/**
-		 * \brief Perform shutdown actions. No-Op.
-		 */
+	 * \brief Perform shutdown actions. No-Op.
+	 */
 	void stopMetrics_() override {}
 };
 }  //End namespace artdaq
