@@ -131,7 +131,7 @@ mrb g -r -t $DRD_VERSION -d dune_raw_data dune-raw-data || exit 1
 
 cd $MRB_BUILDDIR || exit 1
 mrbsetenv || exit 1
-mrb b -j$ncores || exit 1
+mrb i -j$ncores || exit 1
 mrb mp -n dune_raw_data -- -j$ncores || exit 1
 
 # Extract flavor.
