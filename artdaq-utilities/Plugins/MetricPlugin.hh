@@ -13,12 +13,15 @@
 #define TRACE_NAME "MetricPlugin" /* a simple const char * */
 #define TRACE_NAME_POP 1
 #endif
-#include "TRACE/trace.h"  // TLOG(x,name)
+#include "TRACE/trace.h"  // TLOG(x,name)    Note:
+// MEtricTLOG
+#define METLOG(lvl) TLOG(lvl) << metric_name_ << ": "
+#define METLOG_P(lvl) TLOG(lvl, "MetricPlugin") << metric_name_ << ": "
 
+#include <bitset>
 #include <chrono>
 #include <string>
 #include <unordered_map>
-#include <bitset>
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/ConfigurationTable.h"
@@ -63,17 +66,20 @@ public:
 		 * \brief MetricPlugin Constructor
 		 * \param ps The ParameterSet used to configure this MetricPlugin instance
 		 * \param app_name The Application name which can be used by the Metric Plugin for identification
+		 * \param metric_name Name for this MetricPlugin instance
 		 *
 		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
 		 *  metric. String metrics cannot be accumulated.
 		 */
-	explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name)
+	explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name, std::string const& metric_name)
 	    : pset(ps)
 	    , app_name_(app_name)
+	    , metric_name_(metric_name)
 	    , inhibit_(false)
 	    , level_mask_(0ULL)
 	    , sendZeros_(pset.get<bool>("send_zeros", true))
 	{
+		METLOG_P(TLVL_TRACE) << "MetricPlugin ctor start";
 		if (pset.has_key("level"))
 		{
 			for (size_t ii = 0; ii <= pset.get<size_t>("level"); ++ii)
@@ -228,7 +234,7 @@ public:
 		*/
 	void addMetricData(std::unique_ptr<MetricData> const& data)
 	{
-		TLOG(22) << "Adding metric data for name " << data->Name;
+		METLOG_P(22) << "Adding metric data for name " << data->Name;
 		if (data->Type == MetricType::StringMetric)
 		{
 			sendMetric_(data->Name, data->StringValue, data->Unit, std::chrono::system_clock::now());
@@ -240,7 +246,7 @@ public:
 				metricRegistry_[data->Name] = *data;
 			}
 			metricData_[data->Name].push_back(*data);
-			TLOG(22) << "Current list size: " << metricData_[data->Name].size();
+			METLOG_P(22) << "Current list size: " << metricData_[data->Name].size();
 			//sendMetrics();
 		}
 	}
@@ -256,20 +262,20 @@ public:
 	void sendMetrics(bool forceSend = false,
 	                 std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 	{
-		TLOG(23) << "sendMetrics called" << std::endl;
+		METLOG_P(23) << "sendMetrics called" << std::endl;
 		for (auto& metric : metricData_)
 		{
 			if (readyToSend_(metric.first) || forceSend)
 			{
-				TLOG(24) << "Sending metric " << metric.first;
+				METLOG_P(24) << "Sending metric " << metric.first;
 				if (metric.second.empty() && metricRegistry_.count(metric.first))
 				{
-					TLOG(24) << "Sending zero";
+					METLOG_P(24) << "Sending zero";
 					sendZero_(metricRegistry_[metric.first]);
 				}
 				else if (!metric.second.empty())
 				{
-					TLOG(24) << "Aggregating " << metric.second.size() << " MetricData points";
+					METLOG_P(24) << "Aggregating " << metric.second.size() << " MetricData points";
 
 					if ((metric.second.front().Mode & MetricMode::Persist) != MetricMode::None && metric.second.size() > 1)
 					{
@@ -356,9 +362,9 @@ public:
 
 					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
 					{
-						TLOG(24) << "Clearing metric data list sz=" << metric.second.size();
+						METLOG_P(24) << "Clearing metric data list sz=" << metric.second.size();
 						metric.second.clear();
-						TLOG(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+						METLOG_P(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
 					}
 					else
 					{
@@ -368,7 +374,7 @@ public:
 				interval_start_[metric.first] = interval_end;
 			}
 		}
-		TLOG(23) << "sendMetrics done" << std::endl;
+		METLOG_P(23) << "sendMetrics done" << std::endl;
 	}
 
 	/**
@@ -414,7 +420,7 @@ public:
 		{
 			if (!metric.second.empty())
 			{
-				TLOG(TLVL_TRACE) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
+				METLOG_P(TLVL_TRACE) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
 				return true;
 			}
 		}
@@ -426,6 +432,7 @@ protected:
 	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
 	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
 	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
+	std::string metric_name_;     ///< Name of this MetricPlugin instance
 	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
 	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
 	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run

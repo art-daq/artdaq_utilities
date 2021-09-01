@@ -1,4 +1,4 @@
-cet_script(build-artdaq.sh
+cet_script(ALWAYS_COPY build-artdaq.sh
 build-darkmon.sh
 build-lbne_raw_data.sh
 create_all_jenkins_builds.sh
