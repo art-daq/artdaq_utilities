@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for creating "Periodic Report" messages
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_report_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -34,13 +37,14 @@ public:
 	 * \brief PeriodicReportMetric Constructor.
 	 * \param config ParameterSet used to configure PeriodicReportMetric
 	 * \param app_name Name of the application sending metrics
+	 * \param metric_name Name of this MetricPlugin instance
 	 * 
 	 * \verbatim
 	 * PeriodicReportMetric accepts no parameters.
 	 * \endverbatim
 	 */
-	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit PeriodicReportMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , last_report_time_(std::chrono::steady_clock::now())
 
 	{
@@ -62,13 +66,13 @@ public:
 	std::string getLibName() const override { return "report"; }
 
 	/**
-	* \brief Write metric data to a file
-	* \param name Name of the metric
-	* \param value Value of the metric
-	* \param unit Units of the metric
-	*
-	* Not using the time field, as the report will have its own timestamp from TRACE
-	*/
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 *
+	 * Not using the time field, as the report will have its own timestamp from TRACE
+	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!inhibit_)
@@ -178,12 +182,13 @@ private:
 			}
 			if (live_metrics > 0)
 			{
-				TLOG_INFO(app_name_) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
-				                     << str.str();
+				METLOG(TLVL_INFO) << "Periodic report: " << live_metrics << " active metrics:" << std::endl
+				                  << str.str();
 			}
 			else
 			{
 				TLOG_INFO(app_name_) << "Periodic report: No active metrics in last reporting interval!";
+				METLOG(TLVL_INFO) << "Periodic report: No active metrics in last reporting interval!";
 			}
 		}
 	}

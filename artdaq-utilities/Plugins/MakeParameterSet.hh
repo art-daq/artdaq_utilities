@@ -7,6 +7,11 @@
 #endif
 
 namespace artdaq {
+/**
+ * @brief Create a fhicl::ParameterSet from a string
+ * @param config_str ParameterSet string
+ * @return fhicl::ParameterSet from string
+ */
 inline fhicl::ParameterSet make_pset(std::string const& config_str)
 {
 #ifdef SIMPLER_PSET_MAKE
@@ -18,6 +23,12 @@ inline fhicl::ParameterSet make_pset(std::string const& config_str)
 #endif
 }
 
+/**
+ * @brief Load a fhicl::ParameterSet from file
+ * @param config_file Filename to load
+ * @param maker cet::filepath_maker with search location rules
+ * @return fhicl::ParameterSet loaded from file
+ */
 inline fhicl::ParameterSet make_pset(std::string const& config_file, cet::filepath_maker& maker)
 {
 #ifdef SIMPLER_PSET_MAKE
