@@ -18,7 +18,7 @@ cmake_minimum_required (VERSION 3.16)
 
 find_package(cetbuildtools)
 
-project(artdaq_utilities VERSION 1.06.03)
+project(artdaq_utilities VERSION 1.07.00)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
