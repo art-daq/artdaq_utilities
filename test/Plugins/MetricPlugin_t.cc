@@ -19,8 +19,8 @@ public:
 	/// Constructor
 	/// </summary>
 	/// <param name="ps">fhicl::ParameterSet used to configure MetricPLugin</param>
-	explicit MetricPluginTestAdapter(const fhicl::ParameterSet& ps)
-	    : artdaq::MetricPlugin(ps, "MetricPlugin_t")
+	explicit MetricPluginTestAdapter(fhicl::ParameterSet ps)
+	    : artdaq::MetricPlugin(ps, "MetricPlugin_t", "plugin_t")
 	    , sendMetric_string_calls(0)
 	    , sendMetric_int_calls(0)
 	    , sendMetric_double_calls(0)
