@@ -113,9 +113,6 @@ if ( NOT DEFINED ENV{DISABLE_DOXYGEN} )
 add_subdirectory(doc)
 endif()
 
-# ups - table and config files
-add_subdirectory(ups)
-
 # CMake module files used by artdaq-utilities packages
 FILE(COPY Modules DESTINATION .)
 INSTALL(DIRECTORY Modules DESTINATION ${product}/${version})
