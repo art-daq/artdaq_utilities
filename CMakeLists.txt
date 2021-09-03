@@ -117,5 +117,4 @@ endif()
 FILE(COPY Modules DESTINATION .)
 INSTALL(DIRECTORY Modules DESTINATION ${product}/${version})
 
-# packaging utility
-include(UseCPack)
+cet_cmake_config()
