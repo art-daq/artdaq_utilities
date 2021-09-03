@@ -22,7 +22,7 @@ old_style_config_vars
 product			version		optional
 messagefacility	v2_08_04	s112
 messagefacility	v2_07_02	s110
-TRACE			v3_17_01
+TRACE			v3_17_03
 cetbuildtools	v8_13_04	-	only_for_build
 end_product_list
 
