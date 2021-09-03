@@ -16,16 +16,14 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 3.16)
 
-find_package(cetbuildtools)
+find_package(cetmodules)
+set(CET_CETBUILDTOOLS_COMPAT TRUE)
+include(Compatibility)
+set(CET_WARN_DEPRECATED)
 
 project(artdaq_utilities VERSION 1.07.00)
-# cetbuildtools contains our cmake modules
-SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
-IF (NOT CETBUILDTOOLS_VERSION)
-    MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
-ENDIF()
 
-set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
+set(CMAKE_MODULE_PATH
               ${CMAKE_CURRENT_LIST_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 			  
