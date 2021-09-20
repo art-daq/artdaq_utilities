@@ -4,6 +4,9 @@
 //
 // An implementation of the MetricPlugin for Message Facility
 
+#include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
+#define TRACE_NAME (app_name_ + "_msgfacility_metric").c_str()
+
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -14,8 +17,8 @@
 
 namespace artdaq {
 /**
-	 * \brief A MetricPlugin class which sends metric data to MessageFacility
-	 */
+ * \brief A MetricPlugin class which sends metric data to MessageFacility
+ */
 class MsgFacilityMetric final : public MetricPlugin
 {
 private:
@@ -29,20 +32,21 @@ private:
 
 public:
 	/**
-		 * \brief MsgFacilityMetric Constructor
-		 * \param config ParameterSet used to configure MsgFacilityMetric
-		 * \param app_name Name of the application sending metrics
-		 * 
-		 * \verbatim
-		  MsgFacilityMetric accepts the following Parameters:
-		  "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
-		  "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
-		  the string name of the severity.
-		  0: Info, 1: Debug, 2: Warning, 3: Error
-		\endverbatim
-		 */
-	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	 * \brief MsgFacilityMetric Constructor
+	 * \param config ParameterSet used to configure MsgFacilityMetric
+	 * \param app_name Name of the application sending metrics
+	 * \param metric_name Name of this MetricPlugin instance
+	 * 
+	 * \verbatim
+	 MsgFacilityMetric accepts the following Parameters:
+	 "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
+	 "output_message_severity" (Default: 0): Severity which messages should be sent with. This parameter may also be specified using
+	 the string name of the severity.
+	 0: Info, 1: Debug, 2: Warning, 3: Error
+	 * \endverbatim
+	 */
+	explicit MsgFacilityMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , facility_(config.get<std::string>("output_message_category_name", "ARTDAQ Metric"))
 	    , outputLevel_(0)
 	{
@@ -74,23 +78,23 @@ public:
 	}
 
 	/**
-		 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
-		 */
+	 * \brief MsgFacilityMetric Destructor. Calls stopMetrics()
+	 */
 	~MsgFacilityMetric() override { stopMetrics(); }
 	/**
-		 * \brief Return the library name of the MetricPlugin
-		 * \return The library name of MsgFacilityMetric: "msgFacility"
-		 */
+	 * \brief Return the library name of the MetricPlugin
+	 * \return The library name of MsgFacilityMetric: "msgFacility"
+	 */
 	std::string getLibName() const override { return "msgFacility"; }
 
 	/**
-		 * \brief Send a metric to MessageFacilty. Format is: "name: value unit."
-		 * \param name Name of the metric
-		 * \param value Value of the metric
-		 * \param unit Units for the metric
-		 *
-		 * Not using the time field, as MessageFacility will put its own timestamp on
-		 */
+	 * \brief Send a metric to MessageFacilty. Format is: "name: value unit."
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 *
+	 * Not using the time field, as MessageFacility will put its own timestamp on
+	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!inhibit_)

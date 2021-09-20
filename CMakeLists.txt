@@ -16,16 +16,14 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 3.16)
 
-find_package(cetbuildtools)
+find_package(cetmodules)
+set(CET_CETBUILDTOOLS_COMPAT TRUE)
+include(Compatibility)
+set(CET_WARN_DEPRECATED)
 
-project(artdaq_utilities VERSION 1.06.03)
-# cetbuildtools contains our cmake modules
-SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
-IF (NOT CETBUILDTOOLS_VERSION)
-    MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
-ENDIF()
+project(artdaq_utilities VERSION 1.07.00)
 
-set(CMAKE_MODULE_PATH $ENV{CETBUILDTOOLS_DIR}/Modules
+set(CMAKE_MODULE_PATH
               ${CMAKE_CURRENT_LIST_DIR}/Modules
 		      ${CMAKE_MODULE_PATH})
 			  
@@ -115,12 +113,8 @@ if ( NOT DEFINED ENV{DISABLE_DOXYGEN} )
 add_subdirectory(doc)
 endif()
 
-# ups - table and config files
-add_subdirectory(ups)
-
 # CMake module files used by artdaq-utilities packages
 FILE(COPY Modules DESTINATION .)
 INSTALL(DIRECTORY Modules DESTINATION ${product}/${version})
 
-# packaging utility
-include(UseCPack)
+cet_cmake_config()
