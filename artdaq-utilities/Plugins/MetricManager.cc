@@ -6,11 +6,12 @@
 // and sends them data as it is recieved. It also maintains the state of the plugins
 // relative to the application state.
 
+#include "tracemf.h"
 #define TRACE_NAME "MetricManager"
+
 #include "artdaq-utilities/Plugins/MetricManager.hh"
 #include "artdaq-utilities/Plugins/makeMetricPlugin.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "tracemf.h"
 
 #include <pthread.h>
 #include <boost/exception/all.hpp>
@@ -87,7 +88,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 				TLOG(TLVL_DEBUG) << "Constructing metric plugin with name " << name;
 				auto plugin_pset = pset.get<fhicl::ParameterSet>(name);
 				metric_plugins_.push_back(
-				    makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_));
+				    makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_, name));
 			}
 			catch (const cet::exception& e)
 			{
