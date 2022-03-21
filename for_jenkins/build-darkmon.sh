@@ -19,37 +19,24 @@ working_dir=${WORKSPACE}
 version=${MYVER}
 qual_set="${QUAL}"
 build_type=${BUILDTYPE}
+copyback_deps=${COPYBACK_DEPS}
 
-case ${qual_set} in
-  e6) 
-     basequal=e6
-     artver=v1_13_01
-  ;;
-  e7) 
-     basequal=e7
-     case ${version} in
-       v1_00_09) 
-         artver=v1_14_02
-       ;;
-       *)
-         artver=v1_15_02
-     esac
-  ;;
-  s15:e7)
-     basequal=e7
-     squal=s15
-     artver=v1_15_02
-  ;;
-  e9)
-     basequal=e9
-     squal=s21
-     artver=v1_17_03
-  ;;
-  *)
-    echo "unexpected qualifier set ${qual_set}"
-    usage
-    exit 1
-esac
+IFS_save=$IFS
+IFS=":"
+read -a qualarray <<<"$qual_set"
+IFS=$IFS_save
+basequal=
+squal=
+pyflag=
+
+for qual in ${qualarray[@]};do
+    case ${qual} in
+        e*) basequal=$qual;;
+        c*) basequal=$qual;;
+        py*) pyflag=$qual;;
+        s*) squal=$qual;;
+    esac
+done
 
 case ${build_type} in
   debug) ;;
@@ -96,21 +83,13 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
+curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/buildFW || exit 1
+chmod +x buildFW
 
-# source code tarballs MUST be pulled first
-./pullProducts ${blddir} source darkmon-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of darkmon-${version} failed
-EOF
-        exit 1
-      }
 mv ${blddir}/*source* ${srcdir}/
 
 cd ${blddir} || exit 1
-# pulling binaries is allowed to fail
-# we pull what we can so we don't have to build everything
-./pullProducts ${blddir} ${flvr} art-${artver} ${basequal} ${build_type}
-./pullProducts ${blddir} ${flvr} darkmon-${version} ${basequal} ${build_type}
+
 # remove any darkmon and darksidecore entities that were pulled so
 # that they will always be rebuilt
 if [ -d ${blddir}/darksidecore ]; then
@@ -131,10 +110,46 @@ fi
 echo
 echo "begin build"
 echo
-./buildFW -t -b ${basequal} ${blddir} ${build_type} darkmon-${version} || \
+./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
+ 
+source ${blddir}/setups
+upsflavor=`ups flavor`
+echo "Fix Manifests"
+
+artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
+galleryManifest=`ls ${blddir}/gallery-*_MANIFEST.txt|tail -1`
+darkmonManifest=`ls ${blddir}/darkmon-*_MANIFEST.txt|tail -1`
+
+cat ${artManifest} >>${darkmonManifest}
+cat ${galleryManifest} >>${darkmonManifest}
+
+cat ${darkmonManifest}|grep -v source|sort|uniq >>${darkmonManifest}.tmp
+mv ${darkmonManifest}.tmp ${darkmonManifest}
+
+if [ $copyback_deps == "false" ]; then
+  echo "Removing non-bundle products"
+  for file in ${blddir}/*.bz2;do
+    filebase=`basename $file`
+    if [[ "${filebase}" =~ "darksidecore" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "darkmon" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "pqxx" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "artdaq_core" ]]; then
+        echo "Not deleting ${filebase}"
+    elif [[ "${filebase}" =~ "TRACE" ]]; then
+        echo "Not deleting ${filebase}"
+    else
+        echo "Deleting ${filebase}"
+	    rm -f $file
+    fi
+  done
+  rm -f ${blddir}/art-*_MANIFEST.txt
+fi
 
 echo
 echo "move files"
@@ -143,10 +158,10 @@ mv ${blddir}/*.bz2  $WORKSPACE/copyBack/
 mv ${blddir}/*.txt  $WORKSPACE/copyBack/
 mv ${blddir}/*.log  $WORKSPACE/copyBack/
 
-
 echo
 echo "cleanup"
 echo
 rm -rf ${blddir}
 rm -rf ${srcdir}
+
 exit 0
