@@ -57,7 +57,7 @@ fi
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-do_build epics v7_0_6_1 ${basequal}
+#do_build epics v7_0_6_1 ${basequal}
 #do_build sqlite v3_26_00_00
 #do_build python v2_7_15a
 #do_build qt v5_12_3a ${basequal}
@@ -84,9 +84,9 @@ do_build epics v7_0_6_1 ${basequal}
 #    do_build pqxx v6_2_5c ${basequal}:p2715a
 #fi
 
-#do_pull -n caencomm v1_2a
-#do_pull -n caenvme v2_50
-#do_build caendigitizer v2_12_0
+do_build caencomm v1_5_0
+do_build caenvme v3_3_0
+do_build caendigitizer v2_17_0
 
 # if [[ "${basequal}" = "e17" ]]; then
  # build_bundle art-2.12.01 e17
