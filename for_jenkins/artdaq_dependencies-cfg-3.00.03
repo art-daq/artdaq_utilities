@@ -84,8 +84,8 @@ fi
 #    do_build pqxx v6_2_5c ${basequal}:p2715a
 #fi
 
-do_build caencomm v1_5_0
 do_build caenvme v3_3_0
+do_build caencomm v1_5_0
 do_build caendigitizer v2_17_0
 
 # if [[ "${basequal}" = "e17" ]]; then
