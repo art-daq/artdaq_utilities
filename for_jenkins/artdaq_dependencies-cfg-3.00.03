@@ -86,7 +86,7 @@ fi
 
 do_build caenvme v3_3_0
 do_build caencomm v1_5_0
-do_build caendigitizer v2_17_0
+do_build caendigitizer v2_17_1
 
 # if [[ "${basequal}" = "e17" ]]; then
  # build_bundle art-2.12.01 e17
