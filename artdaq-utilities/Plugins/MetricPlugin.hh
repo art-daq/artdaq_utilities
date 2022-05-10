@@ -234,7 +234,7 @@ public:
 		*/
 	void addMetricData(std::unique_ptr<MetricData> const& data)
 	{
-		METLOG_P(22) << "Adding metric data for name " << data->Name;
+		METLOG_P(TLVL_DEBUG + 42) << "Adding metric data for name " << data->Name;
 		if (data->Type == MetricType::StringMetric)
 		{
 			sendMetric_(data->Name, data->StringValue, data->Unit, std::chrono::system_clock::now());
@@ -246,7 +246,7 @@ public:
 				metricRegistry_[data->Name] = *data;
 			}
 			metricData_[data->Name].push_back(*data);
-			METLOG_P(22) << "Current list size: " << metricData_[data->Name].size();
+			METLOG_P(TLVL_DEBUG + 42) << "Current list size: " << metricData_[data->Name].size();
 			//sendMetrics();
 		}
 	}
@@ -262,24 +262,24 @@ public:
 	void sendMetrics(bool forceSend = false,
 	                 std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 	{
-		METLOG_P(23) << "sendMetrics called" << std::endl;
+		METLOG_P(TLVL_DEBUG + 43) << "sendMetrics called" << std::endl;
 		for (auto& metric : metricData_)
 		{
 			if (readyToSend_(metric.first) || forceSend)
 			{
-				METLOG_P(24) << "Sending metric " << metric.first;
+				METLOG_P(TLVL_DEBUG + 44) << "Sending metric " << metric.first;
 				if (metric.second.empty() && metricRegistry_.count(metric.first))
 				{
-					METLOG_P(24) << "Sending zero";
+					METLOG_P(TLVL_DEBUG + 44) << "Sending zero";
 					sendZero_(metricRegistry_[metric.first]);
 				}
 				else if (!metric.second.empty())
 				{
-					METLOG_P(24) << "Aggregating " << metric.second.size() << " MetricData points";
+					METLOG_P(TLVL_DEBUG + 44) << "Aggregating " << metric.second.size() << " MetricData points";
 
 					if ((metric.second.front().Mode & MetricMode::Persist) != MetricMode::None && metric.second.size() > 1)
 					{
-						TLOG(24) << "Metric is in Persist mode and multiple instances are present. Removing the first entry.";
+						TLOG(TLVL_DEBUG + 44) << "Metric is in Persist mode and multiple instances are present. Removing the first entry.";
 						metric.second.erase(metric.second.begin());
 					}
 
@@ -362,19 +362,19 @@ public:
 
 					if ((data.Mode & MetricMode::Persist) == MetricMode::None)
 					{
-						METLOG_P(24) << "Clearing metric data list sz=" << metric.second.size();
+						METLOG_P(TLVL_DEBUG + 44) << "Clearing metric data list sz=" << metric.second.size();
 						metric.second.clear();
-						METLOG_P(24) << "Cleared metric data list sz=" << metricData_[metric.first].size();
+						METLOG_P(TLVL_DEBUG + 44) << "Cleared metric data list sz=" << metricData_[metric.first].size();
 					}
 					else
 					{
-						TLOG(24) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";
+						TLOG(TLVL_DEBUG + 44) << "Metric is Persisted, leaving " << metricData_[metric.first].size() << " entries (should be 1)";
 					}
 				}
 				interval_start_[metric.first] = interval_end;
 			}
 		}
-		METLOG_P(23) << "sendMetrics done" << std::endl;
+		METLOG_P(TLVL_DEBUG + 43) << "sendMetrics done" << std::endl;
 	}
 
 	/**
@@ -420,7 +420,7 @@ public:
 		{
 			if (!metric.second.empty())
 			{
-				METLOG_P(TLVL_TRACE) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
+				METLOG_P(TLVL_DEBUG + 33) << "Metric " << metric.first << " has " << metric.second.size() << " pending MetricData instances" << std::endl;
 				return true;
 			}
 		}

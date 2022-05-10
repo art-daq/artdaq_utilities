@@ -241,7 +241,7 @@ std::list<std::unique_ptr<artdaq::MetricData>> artdaq::SystemMetricCollector::Se
 		output.emplace_back(new MetricData("Network TCP RetransSegs", GetNetworkTCPRetransSegs(), "Segs", MLEVEL_NETWORK, MetricMode::Rate, "", false));
 	}
 
-	TLOG(10)
+	TLOG(TLVL_DEBUG + 35)
 	    << "Time to collect system metrics: "
 	    << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count()
 	    << " us.";
