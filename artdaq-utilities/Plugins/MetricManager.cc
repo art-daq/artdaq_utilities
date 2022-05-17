@@ -243,7 +243,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					if (mode == MetricMode::LastPoint)
 					{
@@ -297,7 +297,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -342,7 +342,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -387,7 +387,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -433,7 +433,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& 
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -600,7 +600,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 		TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-		                 << " missed)";
+		                      << " missed)";
 
 		if (system_metric_collector_ != nullptr)
 		{
@@ -693,7 +693,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 	TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-	                 << " missed)";
+	                      << " missed)";
 
 	while (!temp_list.empty())
 	{
