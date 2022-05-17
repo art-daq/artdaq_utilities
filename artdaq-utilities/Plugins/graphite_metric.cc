@@ -67,7 +67,7 @@ public:
 	    , stopped_(true)
 	    , errorCount_(0)
 	{
-		METLOG(TLVL_TRACE) << "GraphiteMetric ctor";
+		METLOG(TLVL_DEBUG + 32) << "GraphiteMetric ctor";
 		startMetrics();
 	}
 

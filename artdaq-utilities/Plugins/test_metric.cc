@@ -61,7 +61,7 @@ public:
 		if (!inhibit_)
 		{
 			TestMetric::LockReceivedMetricMutex();
-			METLOG(TLVL_TRACE) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
+			METLOG(TLVL_DEBUG + 32) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
 			TestMetric::received_metrics.emplace_back(TestMetric::MetricPoint{time, name, value, unit});
 			TestMetric::UnlockReceivedMetricMutex();
 		}

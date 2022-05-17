@@ -87,7 +87,7 @@ public:
 			mode_ = std::ofstream::out | std::ofstream::trunc;
 		}
 
-		METLOG(TLVL_TRACE) << "FileMetric ctor";
+		METLOG(TLVL_DEBUG + 32) << "FileMetric ctor";
 
 		if (uniquify_file_name_)
 		{
@@ -216,7 +216,7 @@ private:
 	{
 		if (!file_name_is_absolute_path_)
 		{
-			METLOG(TLVL_DEBUG) << "Reading relative directory evironment variable " << relative_env_var_;
+			METLOG(TLVL_DEBUG + 32) << "Reading relative directory evironment variable " << relative_env_var_;
 			std::string logPathProblem;
 			std::string logfileName;
 			char* logRootString = getenv(relative_env_var_.c_str());
@@ -238,14 +238,14 @@ private:
 
 					while (outputFile_.find('/') != std::string::npos)
 					{
-						METLOG(TLVL_DEBUG) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
+						METLOG(TLVL_DEBUG + 32) << "Extracting subdirectories from relative file path " << outputFile_ << " (logfileDir = " << logfileDir << ")";
 						logfileDir.append(outputFile_.substr(0, outputFile_.find('/') + 1));
 						outputFile_.erase(0, outputFile_.find('/') + 1);
 					}
 
 					// As long as the top-level directory exists, I don't think we
 					// really care if we have to create application directories...
-					METLOG(TLVL_DEBUG) << "Creating log file directory " << logfileDir;
+					METLOG(TLVL_DEBUG + 32) << "Creating log file directory " << logfileDir;
 					if (!BFS::exists(logfileDir))
 					{
 						BFS::create_directories(logfileDir);

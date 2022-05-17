@@ -85,7 +85,7 @@ void artdaq::MetricManager::initialize(fhicl::ParameterSet const& pset, std::str
 		{
 			try
 			{
-				TLOG(TLVL_DEBUG) << "Constructing metric plugin with name " << name;
+				TLOG(TLVL_DEBUG + 32) << "Constructing metric plugin with name " << name;
 				auto plugin_pset = pset.get<fhicl::ParameterSet>(name);
 				metric_plugins_.push_back(
 				    makeMetricPlugin(plugin_pset.get<std::string>("metricPluginType", ""), plugin_pset, prefix_, name));
@@ -126,7 +126,7 @@ void artdaq::MetricManager::do_start()
 	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (!running_)
 	{
-		TLOG(TLVL_DEBUG) << "Starting MetricManager";
+		TLOG(TLVL_DEBUG + 32) << "Starting MetricManager";
 		for (auto& metric : metric_plugins_)
 		{
 			if (!metric)
@@ -153,10 +153,10 @@ void artdaq::MetricManager::do_start()
 void artdaq::MetricManager::do_stop()
 {
 	std::unique_lock<std::mutex> lk(metric_mutex_);
-	TLOG(TLVL_DEBUG) << "Stopping Metrics";
+	TLOG(TLVL_DEBUG + 32) << "Stopping Metrics";
 	running_ = false;
 	metric_cv_.notify_all();
-	TLOG(TLVL_DEBUG) << "Joining Metric-Sending thread";
+	TLOG(TLVL_DEBUG + 32) << "Joining Metric-Sending thread";
 	lk.unlock();
 	try
 	{
@@ -169,7 +169,7 @@ void artdaq::MetricManager::do_stop()
 	{
 		// IGNORED
 	}
-	TLOG(TLVL_DEBUG) << "do_stop Complete";
+	TLOG(TLVL_DEBUG + 32) << "do_stop Complete";
 }
 
 void artdaq::MetricManager::do_pause()
@@ -187,7 +187,7 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 
 void artdaq::MetricManager::shutdown()
 {
-	TLOG(TLVL_DEBUG) << "MetricManager is shutting down...";
+	TLOG(TLVL_DEBUG + 32) << "MetricManager is shutting down...";
 	do_stop();
 
 	std::lock_guard<std::mutex> lk(metric_mutex_);
@@ -200,7 +200,7 @@ void artdaq::MetricManager::shutdown()
 			{
 				std::string name = i->getLibName();
 				i.reset(nullptr);
-				TLOG(TLVL_DEBUG) << "Metric Plugin " << name << " shutdown.";
+				TLOG(TLVL_DEBUG + 32) << "Metric Plugin " << name << " shutdown.";
 			}
 			catch (...)
 			{
@@ -242,7 +242,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 				{
 					if (size >= metric_cache_notify_size_)
 					{
-						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
+						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
 					if (mode == MetricMode::LastPoint)
@@ -258,7 +258,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 				}
 				else
 				{
-					TLOG(10) << "Rejecting metric because queue full";
+					TLOG(TLVL_DEBUG + 36) << "Rejecting metric because queue full";
 					missed_metric_calls_++;
 				}
 			}
@@ -296,14 +296,14 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 				{
 					if (size >= metric_cache_notify_size_)
 					{
-						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
+						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
 					cached->AddPoint(value);
 				}
 				else
 				{
-					TLOG(10) << "Rejecting metric because queue full";
+					TLOG(TLVL_DEBUG + 36) << "Rejecting metric because queue full";
 					missed_metric_calls_++;
 				}
 			}
@@ -341,14 +341,14 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 				{
 					if (size >= metric_cache_notify_size_)
 					{
-						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
+						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
 					cached->AddPoint(value);
 				}
 				else
 				{
-					TLOG(10) << "Rejecting metric because queue full";
+					TLOG(TLVL_DEBUG + 36) << "Rejecting metric because queue full";
 					missed_metric_calls_++;
 				}
 			}
@@ -386,14 +386,14 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 				{
 					if (size >= metric_cache_notify_size_)
 					{
-						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
+						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
 					cached->AddPoint(value);
 				}
 				else
 				{
-					TLOG(10) << "Rejecting metric because queue full";
+					TLOG(TLVL_DEBUG + 36) << "Rejecting metric because queue full";
 					missed_metric_calls_++;
 				}
 			}
@@ -432,14 +432,14 @@ void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& 
 				{
 					if (size >= metric_cache_notify_size_)
 					{
-						TLOG(9) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
+						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
 						        << ".";
 					}
 					cached->AddPoint(value);
 				}
 				else
 				{
-					TLOG(10) << "Rejecting metric because queue full";
+					TLOG(TLVL_DEBUG + 36) << "Rejecting metric because queue full";
 					missed_metric_calls_++;
 				}
 			}
@@ -505,7 +505,7 @@ bool artdaq::MetricManager::metricManagerBusy()
 		}
 	}
 
-	TLOG(TLVL_TRACE) << "Metric queue empty: " << metricQueueEmpty() << ", busy_: " << busy_ << ", Plugins busy: " << pluginsBusy;
+	TLOG(TLVL_DEBUG + 33) << "Metric queue empty: " << metricQueueEmpty() << ", busy_: " << busy_ << ", Plugins busy: " << pluginsBusy;
 	return !metricQueueEmpty() || busy_ || pluginsBusy;
 }
 
@@ -537,7 +537,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	auto last_send_time = std::chrono::steady_clock::time_point();
 	while (running_)
 	{
-		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Entering Metric input wait loop";
+		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: Entering Metric input wait loop";
 		while (metricQueueEmpty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
@@ -546,7 +546,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() >
 			    metric_send_interval_ms_)
 			{
-				TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
+				TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
 				{
 					std::unique_lock<std::mutex> lk(metric_cache_mutex_);  // last_metric_received_ is protected by metric_cache_mutex_
 					if (std::chrono::duration_cast<std::chrono::microseconds>(now - last_metric_received_).count() < metric_holdoff_us_)
@@ -574,7 +574,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
-		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: After Metric input wait loop";
+		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: After Metric input wait loop";
 		busy_ = true;
 		auto processing_start = std::chrono::steady_clock::now();
 		auto temp_list = std::list<std::unique_ptr<MetricData>>();
@@ -599,17 +599,17 @@ void artdaq::MetricManager::sendMetricLoop_()
 		temp_list.emplace_back(
 		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
-		TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
+		TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 		                 << " missed)";
 
 		if (system_metric_collector_ != nullptr)
 		{
-			TLOG(TLVL_TRACE) << "Collecting System metrics (CPU, RAM, Network)";
+			TLOG(TLVL_DEBUG + 33) << "Collecting System metrics (CPU, RAM, Network)";
 			auto systemMetrics = system_metric_collector_->SendMetrics();
 			for (auto& m : systemMetrics) { temp_list.emplace_back(std::move(m)); }
 		}
 
-		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Before processing temp_list";
+		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: Before processing temp_list";
 		while (!temp_list.empty())
 		{
 			auto data_ = std::move(temp_list.front());
@@ -652,7 +652,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			}
 		}
 
-		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: Before sending metrics";
+		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: Before sending metrics";
 		for (auto& metric : metric_plugins_)
 		{
 			if (!metric)
@@ -663,7 +663,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 
 		// Limit rate of metrics going to plugins
-		TLOG(TLVL_DEBUG + 3) << "sendMetricLoop_: End of working loop";
+		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: End of working loop";
 		busy_ = false;
 		usleep(10000);
 	}
@@ -692,7 +692,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	temp_list.emplace_back(
 	    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
-	TLOG(TLVL_TRACE) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
+	TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
 	                 << " missed)";
 
 	while (!temp_list.empty())
@@ -746,7 +746,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		try
 		{
 			metric->stopMetrics();
-			TLOG(TLVL_DEBUG) << "Metric Plugin " << metric->getLibName() << " stopped.";
+			TLOG(TLVL_DEBUG + 32) << "Metric Plugin " << metric->getLibName() << " stopped.";
 		}
 		catch (...)
 		{
@@ -755,5 +755,5 @@ void artdaq::MetricManager::sendMetricLoop_()
 		}
 	}
 	busy_ = false;
-	TLOG(TLVL_DEBUG) << "MetricManager has been stopped.";
+	TLOG(TLVL_DEBUG + 32) << "MetricManager has been stopped.";
 }

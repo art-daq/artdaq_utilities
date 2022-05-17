@@ -52,7 +52,7 @@ public:
 	    , pipe_(pset.get<std::string>("pipe", "/tmp/eventQueueStat"))
 	    , stopped_(true)
 	{
-		METLOG(TLVL_TRACE) << "ProcFileMetric ctor";
+		METLOG(TLVL_DEBUG + 33) << "ProcFileMetric ctor";
 		auto names = pset.get<std::vector<std::string>>("names", std::vector<std::string>());
 
 		for (const auto& name : names)
@@ -62,7 +62,7 @@ public:
 
 		int sts = mkfifo(pipe_.c_str(), 0777);
 		if (sts != 0) { perror("ProcFileMetric mkfifo"); }
-		METLOG(10) << "ProcFileMetric mkfifo()" << pipe_ << " sts=" << sts;
+		METLOG(TLVL_DEBUG + 35) << "ProcFileMetric mkfifo()" << pipe_ << " sts=" << sts;
 		startMetrics();
 	}
 
@@ -71,7 +71,7 @@ public:
 	 */
 	~ProcFileMetric() override
 	{
-		METLOG(11) << "~ProcFileMetric";
+		METLOG(TLVL_DEBUG + 36) << "~ProcFileMetric";
 		stopMetrics();
 	}
 
@@ -90,7 +90,7 @@ public:
 	{
 		if (value_map_.count(name) != 0u)
 		{
-			METLOG(12) << "sendMetric_ setting value=" << value;
+			METLOG(TLVL_DEBUG + 37) << "sendMetric_ setting value=" << value;
 			value_map_[name] = value;
 		}
 	}
@@ -176,23 +176,23 @@ public:
 		{
 			stopped_ = true;
 			// do read on pipe to make sure writePipe is not blocking on open
-			METLOG(11) << "stopMetrics_ before open " << pipe_;
+			METLOG(TLVL_DEBUG + 36) << "stopMetrics_ before open " << pipe_;
 			int fd = open(pipe_.c_str(), O_RDONLY | O_NONBLOCK);
 			if (fd == -1)
 			{
 				perror("stopMetrics_ open(\"r\")");
 				exit(1);
 			}
-			METLOG(10) << "stopMetrics_ between open and unlink" << pipe_ << " fd=" << fd;
+			METLOG(TLVL_DEBUG + 35) << "stopMetrics_ between open and unlink" << pipe_ << " fd=" << fd;
 			unlink(pipe_.c_str());
-			METLOG(11) << "stopMetrics_ unlinked " << pipe_;
+			METLOG(TLVL_DEBUG + 36) << "stopMetrics_ unlinked " << pipe_;
 #if 0
 				char buf[256];
 				read(fd, buf, sizeof(buf));
 #endif
 			usleep(10000);
 			close(fd);
-			METLOG(11) << "stopMetrics_ after close " << pipe_;
+			METLOG(TLVL_DEBUG + 36) << "stopMetrics_ after close " << pipe_;
 			if (thread_.joinable())
 			{
 				thread_.join();
@@ -207,19 +207,19 @@ public:
 	{
 		while (!stopped_)
 		{
-			METLOG(11) << "writePipe before open";
+			METLOG(TLVL_DEBUG + 36) << "writePipe before open";
 			int fd = open(pipe_.c_str(), O_WRONLY);
 			std::string str;
 			for (const auto& value : value_map_)
 			{
-				METLOG(10) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
+				METLOG(TLVL_DEBUG + 35) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
 				str += value.first + ": " + value.second + "\n";
 				//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
 			}
 			int sts = write(fd, str.c_str(), str.size());
-			METLOG(11) << "writePipe write complete sts=" << sts;
+			METLOG(TLVL_DEBUG + 36) << "writePipe write complete sts=" << sts;
 			close(fd);
-			METLOG(11) << "writePipe after close -- about to usleep";
+			METLOG(TLVL_DEBUG + 36) << "writePipe after close -- about to usleep";
 			usleep(400000);  // must wait to make sure other end closes
 		}
 	}
