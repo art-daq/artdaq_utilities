@@ -51,14 +51,13 @@ fi
 
 ########## ARTDAQ Dependencies ############
 
-build_cet -p trace-git TRACE v3_17_03 -nq-
+#build_cet -p trace-git TRACE v3_17_03 -nq-
 #do_build xmlrpc_c v1_51_06 ${basequal}
 #do_build swig v4_0_2 ${basequal}
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-#do_build epics v3_15_8 ${basequal}
-#do_build epics v3_16_2a ${basequal}
+#do_build epics v7_0_6_1 ${basequal}
 #do_build sqlite v3_26_00_00
 #do_build python v2_7_15a
 #do_build qt v5_12_3a ${basequal}
@@ -73,7 +72,7 @@ build_cet -p trace-git TRACE v3_17_03 -nq-
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v16_7_0_1 ${basequal}
+#do_build xdaq v16_7_0_1 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
@@ -85,9 +84,9 @@ do_build xdaq v16_7_0_1 ${basequal}
 #    do_build pqxx v6_2_5c ${basequal}:p2715a
 #fi
 
-#do_pull -n caencomm v1_2a
-#do_pull -n caenvme v2_50
-#do_build caendigitizer v2_12_0
+do_build caenvme v3_3_0
+do_build caencomm v1_5_0
+do_build caendigitizer v2_17_1
 
 # if [[ "${basequal}" = "e17" ]]; then
  # build_bundle art-2.12.01 e17

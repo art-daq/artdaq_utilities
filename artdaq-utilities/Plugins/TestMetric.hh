@@ -35,9 +35,9 @@ public:
 	/// </summary>
 	static void LockReceivedMetricMutex()
 	{
-		TLOG(20) << "Locking TestMetric::received_metrics_mutex";
+		TLOG(TLVL_DEBUG + 39) << "Locking TestMetric::received_metrics_mutex";
 		while (!received_metrics_mutex.try_lock()) usleep(10000);
-		TLOG(20) << "Locked TestMetric::received_metrics_mutex";
+		TLOG(TLVL_DEBUG + 39) << "Locked TestMetric::received_metrics_mutex";
 	}
 
 	/// <summary>
@@ -45,7 +45,7 @@ public:
 	/// </summary>
 	static void UnlockReceivedMetricMutex()
 	{
-		TLOG(20) << "Unlocking TestMetric::received_metrics_mutex";
+		TLOG(TLVL_DEBUG + 39) << "Unlocking TestMetric::received_metrics_mutex";
 		received_metrics_mutex.unlock();
 	}
 
