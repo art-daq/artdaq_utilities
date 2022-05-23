@@ -2,7 +2,7 @@
 basequal=${1}
 
 # specify version to bootstrap and setup ups
-check_ups v6_0_7
+check_ups v6_1_0
 
 
 
