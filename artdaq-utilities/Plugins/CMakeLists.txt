@@ -1,64 +1,39 @@
+cet_register_export_set(SET_NAME PluginTypes NAMESPACE artdaq_plugin_types)
+
+
 cet_make(
-  EXCLUDE graphite_metric.cc file_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc test_metric.cc
+  EXCLUDE file_metric.cc graphite_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc test_metric.cc  
   LIBRARIES
-  fhiclcpp
-  cetlib
-  MF_MessageLogger
-  cetlib_except
-  pthread
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  )
-
-basic_plugin("file" "metric"
-  fhiclcpp
-  cetlib
-  cetlib_except
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_FILESYSTEM_LIBRARY}
-  MF_MessageLogger
+  fhiclcpp::fhiclcpp
+  TRACE::TRACE
+  messagefacility::MF_MessageLogger
+  Boost::thread
 )
 
-basic_plugin("test" "metric"
-	artdaq-utilities_Plugins
-  fhiclcpp
-  cetlib
-  cetlib_except
-)
 
-basic_plugin("report" "metric"
-  fhiclcpp
-  cetlib
-  cetlib_except
-  MF_MessageLogger
-)
+cet_make_library(LIBRARY_NAME metric INTERFACE
+				 EXPORT_SET PluginTypes
+				 SOURCE MetricPlugin.hh
+				 LIBRARIES INTERFACE
+				 art_plugin_support::plugin_config_macros
+				 art_plugin_support::support_macros
+				 artdaq_utilities::artdaq-utilities_Plugins)
 
-basic_plugin("msgFacility" "metric"
-   fhiclcpp
-   cetlib
-  cetlib_except
-  MF_MessageLogger
-)
+include(BasicPlugin)
+foreach(type IN ITEMS metric)
+  cet_make_plugin_builder(${type} ${type} Modules
+    LIBRARIES REG artdaq_plugin_types::${type})
+endforeach()
 
-basic_plugin("graphite" "metric"
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_THREAD_LIBRARY}
-  fhiclcpp
-  cetlib
-  cetlib_except
-   MF_MessageLogger
-  pthread
-)
+cet_collect_plugin_builders(Modules MetricPlugins)
+include(MetricPlugins)
 
-basic_plugin("procFile" "metric"
-  fhiclcpp
-  cetlib
-  cetlib_except
-   MF_MessageLogger
-  pthread
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-)
+cet_build_plugin(file metric)
+cet_build_plugin(test metric)
+cet_build_plugin(report metric)
+cet_build_plugin(msgFacility metric)
+cet_build_plugin(graphite metric)
+cet_build_plugin(procFile metric)
 
 install_headers()
 install_source()

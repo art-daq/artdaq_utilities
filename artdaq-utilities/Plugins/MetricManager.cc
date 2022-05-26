@@ -6,7 +6,7 @@
 // and sends them data as it is recieved. It also maintains the state of the plugins
 // relative to the application state.
 
-#include "tracemf.h"
+#include "TRACE/tracemf.h"
 #define TRACE_NAME "MetricManager"
 
 #include "artdaq-utilities/Plugins/MetricManager.hh"
