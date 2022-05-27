@@ -21,9 +21,6 @@ if(CAN_BUILD)
   
   FIND_PACKAGE(PythonLibs)  
   INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-
-  find_ups_product(python)
-  INCLUDE_DIRECTORIES($ENV{PYTHON_INCLUDE})
 endif(CAN_BUILD)
 
 macro (create_python_addon)
