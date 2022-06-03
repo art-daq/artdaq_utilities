@@ -1,39 +1,78 @@
 cet_register_export_set(SET_NAME PluginTypes NAMESPACE artdaq_plugin_types)
-
-
-cet_make(
-  EXCLUDE file_metric.cc graphite_metric.cc msgFacility_metric.cc procFile_metric.cc report_metric.cc test_metric.cc  
-  LIBRARIES
-  fhiclcpp::fhiclcpp
-  TRACE::TRACE
-  messagefacility::MF_MessageLogger
-  Boost::thread
-)
-
+# Make sure our default export set's targets file is read _after_ PluginTypes'
+cet_register_export_set()
 
 cet_make_library(LIBRARY_NAME metric INTERFACE
-				 EXPORT_SET PluginTypes
-				 SOURCE MetricPlugin.hh
-				 LIBRARIES INTERFACE
-				 art_plugin_support::plugin_config_macros
-				 art_plugin_support::support_macros
-				 artdaq_utilities::artdaq-utilities_Plugins)
+	EXPORT_SET PluginTypes
+	SOURCE MetricPlugin.hh
+	LIBRARIES INTERFACE
+  fhiclcpp::types
+  fhiclcpp::fhiclcpp
+  cetlib::compiler_macros
+)
+
+cet_make_library(SOURCE
+  MetricManager.cc
+  SystemMetricCollector.cc
+  TestMetric.cc
+  makeMetricPlugin.cc
+  LIBRARIES
+  PUBLIC
+  artdaq_plugin_types::metric
+  fhiclcpp::types
+  Boost::thread
+  Threads::Threads
+  TRACE::TRACE
+  PRIVATE
+  fhiclcpp::fhiclcpp
+  cetlib::cetlib
+  cetlib::compiler_macros
+  TRACE::MF
+)
 
 include(BasicPlugin)
-foreach(type IN ITEMS metric)
-  cet_make_plugin_builder(${type} ${type} Modules
-    LIBRARIES REG artdaq_plugin_types::${type})
-endforeach()
+cet_write_plugin_builder(artdaq::metric art::plugin Modules
+  SUFFIX metric
+  INSTALL_BUILDER
+  LIBRARIES CONDITIONAL artdaq_plugin_types::metric)
 
-cet_collect_plugin_builders(Modules MetricPlugins)
+cet_collect_plugin_builders(Modules MetricPlugins LIST artdaq::metric)
 include(MetricPlugins)
 
-cet_build_plugin(file metric)
-cet_build_plugin(test metric)
-cet_build_plugin(report metric)
-cet_build_plugin(msgFacility metric)
-cet_build_plugin(graphite metric)
-cet_build_plugin(procFile metric)
+cet_build_plugin(file artdaq::metric
+  LIBRARIES PRIVATE
+  fhiclcpp::fhiclcpp
+  Boost::filesystem
+  TRACE::MF
+  TRACE::TRACE
+)
+cet_build_plugin(graphite artdaq::metric
+  LIBRARIES PRIVATE
+  fhiclcpp::fhiclcpp
+  TRACE::MF
+)
+cet_build_plugin(msgFacility artdaq::metric
+  LIBRARIES PRIVATE
+  messagefacility::MF_MessageLogger
+  fhiclcpp::fhiclcpp
+  TRACE::MF
+)
+cet_build_plugin(procFile artdaq::metric
+  LIBRARIES PRIVATE
+  fhiclcpp::fhiclcpp
+  Boost::thread
+  TRACE::MF
+)
+cet_build_plugin(report artdaq::metric
+  LIBRARIES PRIVATE
+  Threads::Threads
+  TRACE::MF
+)
+cet_build_plugin(test artdaq::metric
+  LIBRARIES PRIVATE
+  artdaq_utilities::artdaq-utilities_Plugins
+  TRACE::MF
+)
 
 install_headers()
 install_source()
