@@ -2,8 +2,7 @@
 #define artdaq_Plugins_MetricMacros_hh
 
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
-#include "fhiclcpp/fwd.h"
-
+namespace fhicl { class ParameterSet; }
 #include "cetlib/compiler_macros.h"
 
 #include <memory>
