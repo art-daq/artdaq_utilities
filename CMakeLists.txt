@@ -16,7 +16,7 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 3.19)
 
-find_package(cetmodules 3.08.00 REQUIRED)
+find_package(cetmodules 3.14.00 REQUIRED)
 
 project(artdaq_utilities VERSION 1.07.03)
 			  
@@ -58,9 +58,11 @@ endif()
 
 #cet_report_compiler_flags()
 
-find_package(Boost COMPONENTS thread)
-find_package(messagefacility)
-find_package(TRACE)
+find_package(messagefacility REQUIRED EXPORT)
+find_package(fhiclcpp REQUIRED EXPORT)
+find_package(cetlib REQUIRED EXPORT)
+find_package(Boost COMPONENTS filesystem thread REQUIRED EXPORT)
+find_package(TRACE REQUIRED EXPORT)
 
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
