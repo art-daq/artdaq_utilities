@@ -9,6 +9,7 @@ cet_make_library(LIBRARY_NAME metric INTERFACE
   fhiclcpp::types
   fhiclcpp::fhiclcpp
   cetlib::compiler_macros
+  TRACE::TRACE
 )
 
 cet_make_library(SOURCE
