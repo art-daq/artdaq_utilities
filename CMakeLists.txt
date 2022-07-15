@@ -14,21 +14,17 @@
 # ======================================================================
 
 # use cmake 2.8 or later
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.19)
 
-find_package(cetmodules)
-set(CET_CETBUILDTOOLS_COMPAT TRUE)
-include(Compatibility)
-set(CET_WARN_DEPRECATED)
+find_package(cetmodules 3.16.00 REQUIRED)
 
-project(artdaq_utilities VERSION 1.07.02)
-
-set(CMAKE_MODULE_PATH
-              ${CMAKE_CURRENT_LIST_DIR}/Modules
-		      ${CMAKE_MODULE_PATH})
+project(artdaq_utilities VERSION 1.08.00)
 			  
 include(CetCMakeEnv)
 cet_cmake_env()
+
+# Find our own CMake modules, and tell everyone else where to find them.
+cet_cmake_module_directories(Modules BINARY)
 
 cet_set_compiler_flags(DIAGS VIGILANT
   WERROR
@@ -62,30 +58,11 @@ endif()
 
 #cet_report_compiler_flags()
 
-# these are minimum required versions, not the actual product versions
-find_ups_boost(v1_53_0)
-find_ups_product (cetbuildtools v4_09_02)
-find_ups_product( TRACE v3_03_00 )
-find_ups_product( cetlib v1_08_00 )
-find_ups_product( cetpkgsupport v1_08_03 )
-find_ups_product( fhiclcpp v3_04_00 )
-find_ups_product( messagefacility v1_14_01 )
-
-#find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
-
-string(REGEX MATCHALL "[0-9][0-9]?[0-9]?" MESSAGEFACILITY_VERSION_LIST "$ENV{MESSAGEFACILITY_VERSION}")
-list(GET MESSAGEFACILITY_VERSION_LIST 0 MESSAGEFACILITY_MAJOR_VERSION)
-list(GET MESSAGEFACILITY_VERSION_LIST 1 MESSAGEFACILITY_MINOR_VERSION)
-list(GET MESSAGEFACILITY_VERSION_LIST 2 MESSAGEFACILITY_PATCH_VERSION)
-
-message("-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION}")
-add_definitions(-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION})
-
-# as of fhiclcpp v4_15_00 (s108), ParameterSet::make is the preferred way to make a ParameterSet
-check_ups_version(fhiclcpp $ENV{FHICLCPP_VERSION} v4_15_00 PRODUCT_MATCHES_VAR PSET_MAKE)
-if(PSET_MAKE)
-  add_definitions(-DSIMPLER_PSET_MAKE)
-endif()
+find_package(messagefacility REQUIRED EXPORT)
+find_package(fhiclcpp REQUIRED EXPORT)
+find_package(cetlib REQUIRED EXPORT)
+find_package(Boost COMPONENTS filesystem thread REQUIRED EXPORT)
+find_package(TRACE REQUIRED EXPORT)
 
 # Debug streamer.
 string(TOUPPER ${CMAKE_BUILD_TYPE} BTYPE_UC)
@@ -93,8 +70,7 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-# macros for artdaq_dictionary and simple_plugin
-include(BasicPlugin)
+cet_register_export_set(SET_NAME artdaq_utilities NAMESPACE artdaq_utilities)
 
 # source
 add_subdirectory(artdaq-utilities)

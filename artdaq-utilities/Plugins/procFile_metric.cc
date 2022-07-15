@@ -4,7 +4,6 @@
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <fcntl.h>     // open
 #include <sys/stat.h>  // mkfifo

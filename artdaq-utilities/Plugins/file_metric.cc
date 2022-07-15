@@ -9,7 +9,7 @@
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "trace.h"
+#include "TRACE/trace.h"
 
 #include <sys/types.h>
 #include <unistd.h>

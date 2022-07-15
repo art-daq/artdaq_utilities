@@ -3,7 +3,7 @@
 // Using LibraryManager, find the correct library and return an instance
 // of the specified generator.
 
-#include "fhiclcpp/fwd.h"
+namespace fhicl { class ParameterSet; }
 
 #include <memory>
 #include <string>

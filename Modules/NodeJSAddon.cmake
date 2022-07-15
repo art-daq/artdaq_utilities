@@ -18,10 +18,9 @@ function(check_dependencies)
     endif()
 
     if(NODEJS_CAN_BUILD)
-        find_ups_product(swig v3)
-        include(FindSWIG)
+        FIND_PACKAGE(SWIG REQUIRED) 
         INCLUDE(${SWIG_USE_FILE}) 
-        find_ups_product(nodejs v4_5_0)
+        find_package(nodejs v4_5_0)
     endif(NODEJS_CAN_BUILD)
 endfunction()
 
