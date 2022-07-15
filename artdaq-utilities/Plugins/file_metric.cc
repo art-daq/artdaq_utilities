@@ -7,9 +7,9 @@
 #include "TRACE/tracemf.h"  // order matters -- trace.h (no "mf") is nested from MetricMacros.hh
 #define TRACE_NAME (app_name_ + "_file_metric").c_str()
 
+#include "TRACE/trace.h"
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "TRACE/trace.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -56,20 +56,20 @@ private:
 
 public:
 	/**
-   * \brief FileMetric Constructor. Opens the file and starts the metric
-   * \param config ParameterSet used to configure FileMetric
-   * \param app_name Name of the application sending metrics
-   * \param metric_name Name of this MetricPlugin instance
-   *
-   * \verbatim
-   * FileMetric accepts the following Parameters:
-   * "fileName" (Default: "FileMetric.out"): Name of the output file
-   * "absolute_file_path" (Default: true): Whether the fileName should be treated as an absolute path (default), or as relative to
-   * "relative_directory_env_var" (Default: ARTDAQ_LOG_ROOT): If fileName is not an absolute path (absolute_file_path: false), it will be treated as relative to the directory specified in this environment variable.
-   * "uniquify" (Default: false): If true, will replace %UID% with the PID of the current process, or append _%UID% to the end of the filename if %UID% is not present in fileName 
-   * "time_format" (Default: "%c"): Format to use for time printout (see std::put_time)
-   * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
-   */
+	 * \brief FileMetric Constructor. Opens the file and starts the metric
+	 * \param config ParameterSet used to configure FileMetric
+	 * \param app_name Name of the application sending metrics
+	 * \param metric_name Name of this MetricPlugin instance
+	 *
+	 * \verbatim
+	 * FileMetric accepts the following Parameters:
+	 * "fileName" (Default: "FileMetric.out"): Name of the output file
+	 * "absolute_file_path" (Default: true): Whether the fileName should be treated as an absolute path (default), or as relative to
+	 * "relative_directory_env_var" (Default: ARTDAQ_LOG_ROOT): If fileName is not an absolute path (absolute_file_path: false), it will be treated as relative to the directory specified in this environment variable.
+	 * "uniquify" (Default: false): If true, will replace %UID% with the PID of the current process, or append _%UID% to the end of the filename if %UID% is not present in fileName
+	 * "time_format" (Default: "%c"): Format to use for time printout (see std::put_time)
+	 * "fileMode" (Default: "append"): Set to "Overwrite" to create a new file instead of appending \endverbatim
+	 */
 	explicit FileMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
 	    : MetricPlugin(config, app_name, metric_name)
 	    , outputFile_(pset.get<std::string>("fileName", "FileMetric.out"))
@@ -116,8 +116,8 @@ public:
 	}
 
 	/**
-   * \brief FileMetric Destructor. Calls stopMetrics and then closes the file
-   */
+	 * \brief FileMetric Destructor. Calls stopMetrics and then closes the file
+	 */
 	~FileMetric() override
 	{
 		stopMetrics();
@@ -125,18 +125,18 @@ public:
 	}
 
 	/**
-   * \brief Get the library name for the File metric
-   * \return The library name for the File metric, "file"
-   */
+	 * \brief Get the library name for the File metric
+	 * \return The library name for the File metric, "file"
+	 */
 	std::string getLibName() const override { return "file"; }
 
 	/**
-   * \brief Write metric data to a file
-   * \param name Name of the metric
-   * \param value Value of the metric
-   * \param unit Units of the metric
-   * \param time Time the metric was sent
-   */
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		if (!stopped_ && !inhibit_)
@@ -146,56 +146,56 @@ public:
 	}
 
 	/**
-   * \brief Write metric data to a file
-   * \param name Name of the metric
-   * \param value Value of the metric
-   * \param unit Units of the metric
-   * \param time Time the metric was sent
-   */
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-   * \brief Write metric data to a file
-   * \param name Name of the metric
-   * \param value Value of the metric
-   * \param unit Units of the metric
-   * \param time Time the metric was sent
-   */
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-   * \brief Write metric data to a file
-   * \param name Name of the metric
-   * \param value Value of the metric
-   * \param unit Units of the metric
-   * \param time Time the metric was sent
-   */
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-   * \brief Write metric data to a file
-   * \param name Name of the metric
-   * \param value Value of the metric
-   * \param unit Units of the metric
-   * \param time Time the metric was sent
-   */
+	 * \brief Write metric data to a file
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units of the metric
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
 	}
 
 	/**
-   * \brief Perform startup actions. Writes start message to output file.
-   */
+	 * \brief Perform startup actions. Writes start message to output file.
+	 */
 	void startMetrics_() override
 	{
 		stopped_ = false;
@@ -203,8 +203,8 @@ public:
 	}
 
 	/**
-   * \brief Perform shutdown actions. Writes stop message to output file.
-   */
+	 * \brief Perform shutdown actions. Writes stop message to output file.
+	 */
 	void stopMetrics_() override
 	{
 		stopped_ = true;

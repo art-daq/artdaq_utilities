@@ -13,7 +13,9 @@
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/SystemMetricCollector.hh"
 
-namespace fhicl { class ParameterSet; }
+namespace fhicl {
+class ParameterSet;
+}
 
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/Comment.h"
@@ -103,7 +105,7 @@ public:
 	/**
 	 * @brief Move assignment operator is deleted
 	 * @return Moved MetricManager
-	*/
+	 */
 	MetricManager& operator=(MetricManager&&) = delete;
 
 	/**
@@ -114,10 +116,10 @@ public:
 	 * The ParameterSet should be a collection of tables, each configuring a MetricPlugin.
 	 * See the MetricPlugin documentation for how to configure a MetricPlugin.
 	 * "metric_queue_size": (Default: 1000): The maximum number of metric entries which can be stored in the metric queue. If the queue is above this
-   * size, new metric entries will be dropped until the plugins catch up.
-     * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed. 
-     * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval) 
-     * "metric_holdoff_us": (Default: 1000): Amount of time, in microseconds, to delay sending metrics after each sendMetric call (to ensure that multiple associated calls are in the same metrics interval)
+	 * size, new metric entries will be dropped until the plugins catch up.
+	 * "metric_queue_notify_size": (Default: 10): The number of metric entries in the list which will cause reports of the queue size to be printed.
+	 * "metric_send_maximum_delay_ms": (Default: 15000): The maximum amount of time between metric send calls (will send 0s for metrics which have not reported in this interval)
+	 * "metric_holdoff_us": (Default: 1000): Amount of time, in microseconds, to delay sending metrics after each sendMetric call (to ensure that multiple associated calls are in the same metrics interval)
 	 */
 	void initialize(fhicl::ParameterSet const& pset, std::string const& prefix = "");
 
@@ -172,66 +174,66 @@ public:
 	                MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
-	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
-	* \param name The Name of the metric
-	* \param value The value of the metric
-	* \param unit The units of the metric
-	* \param level The verbosity level of the metric. Higher number == more verbose
+	 * \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
+	 * \param name The Name of the metric
+	 * \param value The value of the metric
+	 * \param unit The units of the metric
+	 * \param level The verbosity level of the metric. Higher number == more verbose
 	 * \param mode The MetricMode that the metric should operate in. Options are:
 	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
 	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
 	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
-	* \param metricPrefix An additional prefix to prepend to the metric name
-	* \param useNameOverride Whether to use name verbatim and not apply prefixes
-	*/
+	 * \param metricPrefix An additional prefix to prepend to the metric name
+	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
+	 */
 	void sendMetric(std::string const& name, int const& value, std::string const& unit, int level, MetricMode mode,
 	                std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
-	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
-	* \param name The Name of the metric
-	* \param value The value of the metric
-	* \param unit The units of the metric
-	* \param level The verbosity level of the metric. Higher number == more verbose
+	 * \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
+	 * \param name The Name of the metric
+	 * \param value The value of the metric
+	 * \param unit The units of the metric
+	 * \param level The verbosity level of the metric. Higher number == more verbose
 	 * \param mode The MetricMode that the metric should operate in. Options are:
 	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
 	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
 	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
-	* \param metricPrefix An additional prefix to prepend to the metric name
-	* \param useNameOverride Whether to use name verbatim and not apply prefixes
-	*/
+	 * \param metricPrefix An additional prefix to prepend to the metric name
+	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
+	 */
 	void sendMetric(std::string const& name, double const& value, std::string const& unit, int level, MetricMode mode,
 	                std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
-	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
-	* \param name The Name of the metric
-	* \param value The value of the metric
-	* \param unit The units of the metric
-	* \param level The verbosity level of the metric. Higher number == more verbose
+	 * \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
+	 * \param name The Name of the metric
+	 * \param value The value of the metric
+	 * \param unit The units of the metric
+	 * \param level The verbosity level of the metric. Higher number == more verbose
 	 * \param mode The MetricMode that the metric should operate in. Options are:
 	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
 	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
 	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
-	* \param metricPrefix An additional prefix to prepend to the metric name
-	* \param useNameOverride Whether to use name verbatim and not apply prefixes
-	*/
+	 * \param metricPrefix An additional prefix to prepend to the metric name
+	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
+	 */
 	void sendMetric(std::string const& name, float const& value, std::string const& unit, int level, MetricMode mode,
 	                std::string const& metricPrefix = "", bool useNameOverride = false);
 
 	/**
-	* \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
-	* \param name The Name of the metric
-	* \param value The value of the metric
-	* \param unit The units of the metric
-	* \param level The verbosity level of the metric. Higher number == more verbose
+	 * \brief Send a metric with the given parameters to any MetricPlugins with a threshold level >= to level.
+	 * \param name The Name of the metric
+	 * \param value The value of the metric
+	 * \param unit The units of the metric
+	 * \param level The verbosity level of the metric. Higher number == more verbose
 	 * \param mode The MetricMode that the metric should operate in. Options are:
 	 *    LastPoint: Every reporting_interval, the latest metric value is sent (For run/event numbers, etc)
 	 *    Accumulate: Every reporting_interval, the sum of all metric values since the last report is sent (for counters)
 	 *    Average: Every reporting_interval, the average of all metric values since the last report is sent (for rates)
-	* \param metricPrefix An additional prefix to prepend to the metric name
-	* \param useNameOverride Whether to use name verbatim and not apply prefixes
-	*/
+	 * \param metricPrefix An additional prefix to prepend to the metric name
+	 * \param useNameOverride Whether to use name verbatim and not apply prefixes
+	 */
 	void sendMetric(std::string const& name, uint64_t const& value, std::string const& unit, int level,
 	                MetricMode mode, std::string const& metricPrefix = "", bool useNameOverride = false);
 
