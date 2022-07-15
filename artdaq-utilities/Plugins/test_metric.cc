@@ -9,7 +9,6 @@
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
 #include "artdaq-utilities/Plugins/TestMetric.hh"
-#include "fhiclcpp/ParameterSet.h"
 
 #include <sys/types.h>
 #include <unistd.h>

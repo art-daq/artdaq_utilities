@@ -12,9 +12,14 @@
 #include "artdaq-utilities/Plugins/MetricData.hh"
 #include "artdaq-utilities/Plugins/MetricPlugin.hh"
 #include "artdaq-utilities/Plugins/SystemMetricCollector.hh"
-#include "fhiclcpp/fwd.h"
+
+namespace fhicl { class ParameterSet; }
+
+#include "fhiclcpp/types/Atom.h"
+#include "fhiclcpp/types/Comment.h"
+#include "fhiclcpp/types/ConfigurationTable.h"
+#include "fhiclcpp/types/Name.h"
 #include "fhiclcpp/types/OptionalTable.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
 
 #include <atomic>
 #include <boost/thread.hpp>

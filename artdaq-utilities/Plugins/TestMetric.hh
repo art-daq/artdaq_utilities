@@ -10,7 +10,7 @@
 #include <mutex>
 #include <string>
 
-#include "trace.h"
+#include "TRACE/trace.h"
 
 namespace artdaq {
 /// <summary>

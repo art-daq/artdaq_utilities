@@ -1,11 +1,9 @@
 #ifndef ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH
 #define ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH
 
-#include "fhiclcpp/fwd.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-
 #include <atomic>
 #include <condition_variable>
+#include <limits>
 #include <list>
 #include <sstream>
 

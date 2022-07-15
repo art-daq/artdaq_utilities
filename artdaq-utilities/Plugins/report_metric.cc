@@ -8,7 +8,6 @@
 #define TRACE_NAME (app_name_ + "_report_metric").c_str()
 
 #include "artdaq-utilities/Plugins/MetricMacros.hh"
-#include "fhiclcpp/ParameterSet.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -17,7 +16,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
-#include "tracemf.h"
+#include "TRACE/tracemf.h"
 
 namespace artdaq {
 /**
