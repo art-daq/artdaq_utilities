@@ -9,14 +9,14 @@
 
 namespace artdaq {
 /**
-   * \brief Make a MetricPlugin instance, loading the plugin if necessary
-   * \param ps ParameterSet used to configure the MetricPlugin instance
-   * \param application_name Name of the application sending metrics
-   * \return A std::unique_ptr<artdaq::MetricPlugin> to the new instance
-   */
+ * \brief Make a MetricPlugin instance, loading the plugin if necessary
+ * \param ps ParameterSet used to configure the MetricPlugin instance
+ * \param application_name Name of the application sending metrics
+ * \return A std::unique_ptr<artdaq::MetricPlugin> to the new instance
+ */
 typedef std::unique_ptr<artdaq::GPMPublisher> makeFunc_t(fhicl::ParameterSet const& ps, std::string const& application_name);
 
-//typedef std::unique_ptr<artdaq::GPMSubscriber> makeFunc_t(fhicl::ParameterSet const& ps, std::string const& application_name);
+// typedef std::unique_ptr<artdaq::GPMSubscriber> makeFunc_t(fhicl::ParameterSet const& ps, std::string const& application_name);
 }  // namespace artdaq
 
 #ifndef EXTERN_C_FUNC_DECLARE_START

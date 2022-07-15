@@ -8,9 +8,9 @@
 
 namespace artdaq {
 /**
-   * \brief The GPMPublisher class defines the interface that artdaq applications use to publish
-   * general-purpose messages.
-   */
+ * \brief The GPMPublisher class defines the interface that artdaq applications use to publish
+ * general-purpose messages.
+ */
 class GPMPublisher
 {
 public:
@@ -21,8 +21,8 @@ public:
 	}
 
 	/**
-     * \brief Default virtual Desctructor
-     */
+	 * \brief Default virtual Desctructor
+	 */
 	virtual ~GPMPublisher() = default;
 
 	///////////////////////////////////////////////////////////////////////////
@@ -32,19 +32,19 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 
 	/**
-     * \brief Binds the publisher to the specified implementation-specific endpoint.
-     */
+	 * \brief Binds the publisher to the specified implementation-specific endpoint.
+	 */
 	virtual int bind(std::string const&) = 0;
 
 	/**
-     * \brief Publishes the specified text string.
-     */
+	 * \brief Publishes the specified text string.
+	 */
 	virtual int send(std::string const&) = 0;
 
 protected:
 	fhicl::ParameterSet pset;       ///< The ParameterSet used to configure the MetricPlugin
 	std::string application_name_;  ///< Name of the application which is sending metrics to this plugin
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
-#endif  //End ifndef __GPM_PUBLISHER_INTERFACE__
+#endif  // End ifndef __GPM_PUBLISHER_INTERFACE__

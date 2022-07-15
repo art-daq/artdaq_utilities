@@ -36,7 +36,7 @@ public:
 	 * \param config ParameterSet used to configure MsgFacilityMetric
 	 * \param app_name Name of the application sending metrics
 	 * \param metric_name Name of this MetricPlugin instance
-	 * 
+	 *
 	 * \verbatim
 	 MsgFacilityMetric accepts the following Parameters:
 	 "output_message_category_name" (Default: "ARTDAQ Metric"): Name of the "category" (for filtering) in MessageFacility
@@ -122,7 +122,7 @@ public:
 	 * \param name Name of the metric
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
@@ -134,7 +134,7 @@ public:
 	 * \param name Name of the metric
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
@@ -174,6 +174,6 @@ public:
 	 */
 	void stopMetrics_() override {}
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::MsgFacilityMetric)
