@@ -3,57 +3,73 @@
 build_type=${build_type:-"artdaq"}
 build_tag=${build_tag:-""}
 
-ignorequals="nu|s50|s53|s54|s56|s57|s58|s60|s61|s62|s63|s66|s68|s69|ib"
+ignorequals="nu|s66|s67|s68|s69|s70|s71|s72|s73|s74|s75|s76|s77|s78|s79|s80|s81|s82|s83|s84|s86|s89|s90|s91|s92|s93|s94|s95|s97|s98|s99|s115|ib|py3"
 TOP_DIR=$PWD
-BASE_PRODUCTS=/home/eflumerf/products
+MASTER_PRODUCTS=`cat ~/.base_products`
+EXTRA_PRODUCTS=/cvmfs/fermilab.opensciencegrid.org/products/artdaq
 
 ulimit -c unlimited
 
 opt_clean=0;
 counter=0
-max_counter=$((`cat /proc/cpuinfo|grep processor|tail -1|awk '{print $3}'` + 1))
-build_j=1
+max_counter=$CETPKG_J #1
+build_j=1 #$CETPKG_J
+exit_script=0
 if [ $max_counter -gt 4 ]; then
 	build_j=$(($max_counter / 4))
 	max_counter=4
 fi
-rm -f build_*.log
+rm -f builds/build_*.log
 
 if [[ "x$1" == "xc" ]]; then
-    opt_clean=1
+	opt_clean=1
 	shift
 fi
 
+function setup_build() {
+	sourcedir=$1
+	builddir=builds/build_$sourcedir
+	btype=$2
+	quals=$3
+	qualdash=`echo $quals|sed 's/:/-/g'`
+	shift;shift;shift
+	source $MASTER_PRODUCTS/setup
+	source $TOP_DIR/products/setup
+	PRODUCTS=${PRODUCTS}${EXTRA_PRODUCTS:+:${EXTRA_PRODUCTS}}
+	#echo PRODUCTS is $PRODUCTS
+	buildname=${builddir}_${btype}-${qualdash}
+	mkdir -p $TOP_DIR/${buildname}
+	cd $TOP_DIR/${buildname}
+	unsetup_all >/dev/null 2>&1
+	ulimit -c unlimited
+	source $TOP_DIR/$sourcedir/ups/setup_for_development ${btype:+-${btype}} $quals &>$TOP_DIR/${buildname}.log
+}
+
+function clean_build() {
+	CETPKG_J=$build_j nice -n 10 buildtool -c &>>$TOP_DIR/${buildname}.log
+}
+
+function check_build() {
+	if [ `ls -l|grep -c "tar.bz2"` -gt 0 ];then
+		mv *.bz2 $TOP_DIR/builds/
+		cd $TOP_DIR
+		rm -f ${buildname}.log
+	else
+		echo "Build $sourcedir ${btype:+-${btype}} $quals FAILED"
+		exit_script=1
+	fi
+}
+
 function do_build_impl() {
-    (
-		sourcedir=$1
-		builddir=build_$sourcedir
-		btype=$2
-		quals=$3
-		qualdash=`echo $quals|sed 's/:/-/g'`
-		shift;shift;shift
-		source $BASE_PRODUCTS/setup
-		source $TOP_DIR/products/setup
-		buildname=${builddir}_${btype}-${qualdash}
-		mkdir -p $TOP_DIR/${buildname}
-		cd $TOP_DIR/${buildname}
-		unsetup_all >/dev/null 2>&1
-		source $TOP_DIR/$sourcedir/ups/setup_for_development -$btype $quals &>$TOP_DIR/${buildname}.log
-		opts="-piI $TOP_DIR/products"
-		if [ $opt_clean -eq 1 ];then
-			opts="-c ${opts}"
-		fi
-		opt_t="-t"
-		if [[ "$sourcedir" == "artdaq-utilities-database" ]]; then
-			opt_t=""
-		fi
-		CETPKG_J=$build_j nice -n 10 buildtool $opt_t $opts &>>$TOP_DIR/${buildname}.log
-		if [ `ls -l|grep -c "tar.bz2"` -gt 0 ];then
-			mv *.bz2 $TOP_DIR/
-			cd $TOP_DIR
-			rm -f ${buildname}.log
-		fi
-    )
+	opts="-piI $TOP_DIR/products"
+	if [ $opt_clean -eq 1 ];then
+		opts="-c ${opts}"
+	fi
+	opt_t="-t"
+	if [[ "$sourcedir" == "artdaq-utilities-database" ]]; then
+		opt_t=""
+	fi
+	CETPKG_J=$build_j nice -n 10 buildtool $opt_t $opts &>>$TOP_DIR/${buildname}.log
 }
 
 function do_build_nq() {
@@ -61,18 +77,60 @@ function do_build_nq() {
 	versiontag=$2
 	shift;shift
 
+	if [ $exit_script -eq 1 ];then exit;fi
 	if [ ! -d $sourcedir ];then
-		git clone http://cdcvs.fnal.gov/projects/$sourcedir
+		git clone git@github.com:art-daq/$sourcedir
 	fi
 
 	cd $sourcedir
-    if [ `cat .git/config|grep -c gitflow` -eq 0 ];then
-        git flow init -d
-    fi
+	if [ `cat .git/config|grep -c gitflow` -eq 0 ];then
+		git flow init -d
+	fi
+
 	git checkout $versiontag
 	cd $TOP_DIR
+	(
+	setup_build $sourcedir
 
-	do_build_impl $sourcedir 
+	do_build_impl $sourcedir
+	check_build $sourcedir
+	)
+}
+
+function maybe_calculate_coverage() {
+	(
+	sourcedir=$1
+	btype=$2
+	quals=$3
+	
+	do_coverage=0
+	if [[ $quals =~ e20 ]] && [[ $btype == "d" ]];then
+		do_coverage=1
+		export USE_GCOV=1
+	fi
+
+	setup_build $@
+	
+
+	clean_build $@
+
+	if [ $do_coverage -eq 1 ];then
+
+		lcov -d . --zerocounters &>>$TOP_DIR/${buildname}.log
+		lcov -c -i -d . -o ${sourcedir}.base &>>$TOP_DIR/${buildname}.log
+	fi
+	
+	do_build_impl $@
+		
+	if [ $do_coverage -eq 1 ];then
+		lcov -d . --capture --output-file ${sourcedir}.info &>>$TOP_DIR/${buildname}.log 2>&1
+		lcov -a ${sourcedir}.base -a ${sourcedir}.info --output-file ${sourcedir}.total &>>$TOP_DIR/${buildname}.log 2>&1
+		lcov --remove ${sourcedir}.total '/cvmfs/*' 'boost/*' '*/products/*' '*/builds/*' '/usr/include/curl/*' --output-file ${sourcedir}.info.cleaned &>>$TOP_DIR/${buildname}.log 2>&1
+		genhtml --demangle-cpp -o coverage ${sourcedir}.info.cleaned &>>$TOP_DIR/${buildname}.log 2>&1
+	fi
+
+	check_build $@
+	)
 }
 
 function do_build() {
@@ -80,14 +138,15 @@ function do_build() {
 	versiontag=$2
 	shift;shift
 	
+	if [ $exit_script -eq 1 ];then exit;fi
 	if [ ! -d $sourcedir ];then
-		git clone http://cdcvs.fnal.gov/projects/$sourcedir
+		git clone git@github.com:art-daq/$sourcedir
 	fi
 
 	cd $sourcedir
-    if [ `cat .git/config|grep -c gitflow` -eq 0 ];then
-        git flow init -d
-    fi
+	if [ `cat .git/config|grep -c gitflow` -eq 0 ];then
+		git flow init -d
+	fi
 	git checkout $versiontag
 	cd $TOP_DIR
 
@@ -96,127 +155,74 @@ function do_build() {
 	build_count=0
 	for btype in d p; do
 		for qualset in ${QUALS}; do
-            if [[ "$qualset" =~ $ignorequals ]]; then continue;fi
-            build_count=$(($build_count + 1))
+			if [[ "$qualset" =~ $ignorequals ]]; then continue;fi
+			build_count=$(($build_count + 1))
 		done
 	done
 	build_counter=0
 
 	for btype in d p; do
 		for qualset in ${QUALS}; do
-            if [[ "$qualset" =~ $ignorequals ]]; then continue;fi
+			if [[ "$qualset" =~ $ignorequals ]]; then continue;fi
 			build_counter=$(($build_counter + 1))
 			echo "Starting build $build_counter of $build_count for package $sourcedir"
-			do_build_impl $sourcedir $btype $qualset &
+			maybe_calculate_coverage $sourcedir $btype $qualset &
 			counter=$(($counter + 1))
 			if [ $counter -ge $max_counter ];then
 				wait
+				if [ $exit_script -eq 1 ];then exit;fi
 				counter=0
 			fi
 		done
+		wait
 	done
 }
 
-if [[ "$build_type" == "mu2e" ]]; then
-	if [[ "$build_tag" == "develop" ]]; then
-		do_build pcie_linux_kernel_module develop
-		do_build mu2e_artdaq-core develop
-		wait 
+#do_build_nq trace ${build_tag:-v3_17_05}
+wait
+#exit
 
-		do_build mu2e_artdaq develop
-		wait
-	else
-		do_build pcie_linux_kernel_module v1_11_01
-		do_build mu2e_artdaq-core v1_02_03
-		wait 
+#do_build artdaq_core ${build_tag:-v3_09_00}
+#do_build artdaq_utilities ${build_tag:-v1_08_00}
+wait
+#exit
 
-		do_build mu2e_artdaq v1_02_03
-		wait
-	fi
-elif [[ "$build_type" == "ots" ]];then
+#do_build artdaq_mfextensions ${build_tag:-v1_08_00}
+#do_build artdaq_epics_plugin ${build_tag:-v1_05_00}
+#do_build artdaq_pcp_mmv_plugin ${build_tag:-v1_03_00}
+wait
+#exit
 
-	if [[ "$build_tag" == "develop" ]]; then
-		do_build otsdaq develop
-		wait 
+#do_build artdaq ${build_tag:-v3_12_00}
+#do_build artdaq_core_demo ${build_tag:-v1_10_00}
+wait
+#exit
 
-		do_build otsdaq-utilities develop
-		wait
+#do_build artdaq_demo ${build_tag:-v3_12_00}
+#do_build_nq artdaq_daqinterface ${build_tag:-v3_12_00}
+#do_build artdaq_demo_hdf5 ${build_tag:-v1_04_00}
+wait 
+#exit
 
-		do_build components develop
-		wait
+#do_build artdaq_database ${build_tag:-v1_07_00}
+wait 
+#exit
 
-		do_build otsdaq-demo develop
-		do_build fermilabtestbeam develop
-		do_build prepmodernization develop
-		wait
-	else
-		do_build otsdaq v1_01_04
-		wait 
+do_build otsdaq ${build_tag:-v2_06_06}
+wait
+#exit
 
-		do_build otsdaq-utilities v1_01_04
-		wait
+do_build otsdaq_utilities ${build_tag:-v2_06_06}
+wait
+#exit
 
-		do_build components v1_01_04
-		wait
+do_build otsdaq_components ${build_tag:-v2_06_06}
+do_build otsdaq_epics ${build_tag:-v2_06_06}
+wait
+#exit
 
-		do_build otsdaq-demo v1_01_04
-		do_build fermilabtestbeam v1_01_04
-		do_build prepmodernization v1_01_04
-		wait
-	fi
+do_build otsdaq_prepmodernization ${build_tag:-v2_06_06}
+do_build otsdaq_demo ${build_tag:-v2_06_06}
+wait
 
-else # artdaq
 
-	if [[ "$build_tag" == "develop" ]]; then
-
-		do_build_nq trace-git master
-		wait
-
-		do_build artdaq-core develop
-		do_build artdaq-utilities develop
-		wait
-
-		do_build mf-extensions-git develop
-		do_build artdaq-utilities-ganglia-plugin develop
-		do_build artdaq-utilities-epics-plugin develop
-		wait
-
-		do_build artdaq develop
-		do_build artdaq-core-demo develop
-		wait
-
-		#do_build artdaq-demo develop
-		#do_build artdaq-utilities-database develop
-		#do_build_nq artdaq-utilities-daqinterface develop
-		wait 
-
-		#do_build artdaq-utilities-node-server develop
-		wait
-	else
-		do_build_nq trace-git v3_13_07
-		wait
-
-		do_build artdaq-core v3_04_04
-#		do_build artdaq-utilities v1_04_08
-		wait
-
-#		do_build mf-extensions-git v1_03_02a
-#        do_build artdaq-utilities-epics-plugin v1_02_05b
-#		do_build artdaq-utilities-ganglia-plugin v1_02_11b
-		wait
-
-#		do_build artdaq v3_03_01
-#		do_build artdaq-core-demo v1_06_12a
-		wait
-
-#		do_build artdaq-demo v3_03_01
-#		do_build artdaq-utilities-database v1_04_66
-#		do_build_nq artdaq-utilities-daqinterface v3_03_01
-#		do_build artdaq-utilities-mpich-plugin v1_00_04
-		wait 
-
-#		do_build artdaq-utilities-node-server v1_01_01c
-		wait
-
-	fi
-fi
