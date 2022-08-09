@@ -1,4 +1,4 @@
-#!/bin/bash
+1#!/bin/bash
 
 # build in $WORKSPACE/build
 # copyback directory is $WORKSPACE/copyBack
@@ -52,7 +52,7 @@ if [[ "x$squal" == "x" ]] || [[ "x$basequal" == "x" ]]; then
 	exit 1
 fi
 
-wget https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/repository/revisions/${version}/raw/ups/product_deps && \
+wget https://raw.githubusercontent.com/art-daq/artdaq_demo/develop/ups/product_deps && \
 artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \
 $(echo "Unexpected version ${version}" && usage && exit 1)
 rm product_deps
@@ -172,14 +172,8 @@ source ${blddir}/setups
 upsflavor=`ups flavor`
 echo "Fix Manifests"
 
-artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
-artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
 artdaqDemoManifest=`ls ${blddir}/artdaq_demo-*_MANIFEST.txt|tail -1`
 
-cat ${artManifest} >>${artdaqManifest}
-cat ${artdaqManifest} >>${artdaqDemoManifest}
-cat ${artdaqManifest}|grep -v source|grep -v mrb|sort|uniq >>${artdaqManifest}.tmp
-mv ${artdaqManifest}.tmp ${artdaqManifest}
 cat ${artdaqDemoManifest}|grep -v source|sort|uniq >>${artdaqDemoManifest}.tmp
 mv ${artdaqDemoManifest}.tmp ${artdaqDemoManifest}
 
