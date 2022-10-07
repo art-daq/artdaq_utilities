@@ -51,7 +51,9 @@ fi
 
 #build_cet -p trace-git TRACE v3_17_01 -nq-
 do_build xmlrpc_c v1_54_06 ${basequal}
-#do_build swig v4_0_2 ${basequal}
+do_build swig v4_0_2a ${basequal}
+
+exit
 
 ########## ARTDAQ_DEMO Dependencies #######
 
