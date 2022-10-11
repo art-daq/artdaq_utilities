@@ -37,6 +37,7 @@ elif [ "${basequal}" = "c7" ]; then
      new_py=1
 elif [ "${basequal}" = "c14" ]; then
      clangver=v14_0_6c
+     gccver=v12_1_0
      new_py=1
 fi
 
