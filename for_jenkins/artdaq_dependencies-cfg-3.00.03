@@ -71,12 +71,12 @@ fi
 #  do_build pqxx v7_7_4 ${basequal}:p3913
 #fi
 #do_build qt v5_15_6 ${basequal}
-#do_build hdf5 v1_12_0a ${basequal}
+do_build hdf5 v1_12_2 ${basequal}
 
-do_build git v2_20_1
-setup git v2_20_1
-do_build mongodb v6_0_2 ${basequal}
-unsetup git
+#do_build git v2_20_1
+#setup git v2_20_1
+#do_build mongodb v6_0_2 ${basequal}
+#unsetup git
 
 #build_noarch nodejs v4_5_0
 
