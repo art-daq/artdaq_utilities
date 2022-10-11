@@ -6,7 +6,7 @@ check_ups v6_1_0
 
 
 
-for cv in v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1; do
+for cv in v3_13_1 v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1; do
   do_build cmake ${cv}
 done
 
