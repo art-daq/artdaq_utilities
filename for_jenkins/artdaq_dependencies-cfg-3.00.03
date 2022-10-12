@@ -6,7 +6,7 @@ check_ups v6_1_0
 
 
 
-for cv in v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1; do
+for cv in v3_13_1 v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1; do
   do_build cmake ${cv}
 done
 
@@ -17,15 +17,28 @@ done
 ensure_cetbuildtools v8_07_00 v8_07_01 v8_07_02
 unset _cps_cetmodules_ver
 
+new_py=0
+old_py=0
+
 if [ "${basequal}" = "e19" ]; then
      gccver=v8_2_0
+     old_py=1
 elif [ "${basequal}" = "e20" ]; then
      gccver=v9_3_0
+     old_py=1
+     new_py=1
+elif [ "${basequal}" = "e26" ]; then
+     gccver=v12_1_0
+     new_py=1
 elif [ "${basequal}" = "c7" ]; then
      gccver=v8_2_0
      clangver=v7_0_0
+     old_py=1
+     new_py=1
 elif [ "${basequal}" = "c14" ]; then
      clangver=v14_0_6c
+     gccver=v12_1_0
+     new_py=1
 fi
 
 if [[ "x${gccver:-}" != "x" ]]; then
@@ -38,34 +51,42 @@ fi
 ########## ARTDAQ Dependencies ############
 
 #build_cet -p trace-git TRACE v3_17_01 -nq-
-do_build xmlrpc_c v1_54_06 ${basequal}
-#do_build swig v4_0_2 ${basequal}
+#do_build xmlrpc_c v1_54_06 ${basequal}
+#do_build swig v4_0_2a ${basequal}
+
+#exit
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-do_build epics v7_0_7 ${basequal}
-#do_build sqlite v3_26_00_00
-#do_build python v2_7_15a
-do_build qt v5_15_6 ${basequal}
-#do_build hdf5 v1_12_0a ${basequal}
+#do_build epics v7_0_7 ${basequal}
+#if [ $old_py -eq 1 ];then
+#  do_build sqlite v3_34_01_00
+#  do_build python v3_9_2
+#  do_pull -n postgresql v13_2 p392
+#  do_build pqxx v7_7_4 ${basequal}:p392
+#fi
+#if [ $new_py -eq 1 ];then
+#  do_build sqlite v3_39_02_00
+#  do_build python v3_9_13
+#  do_pull -n postgresql v14_5 p3913
+#  do_build pqxx v7_7_4 ${basequal}:p3913
+#fi
+#do_build qt v5_15_6 ${basequal}
+do_build hdf5 v1_12_2 ${basequal}
 
 #do_build git v2_20_1
 #setup git v2_20_1
-#do_build mongodb v4_0_8c ${basequal}
+#do_build mongodb v6_0_2 ${basequal}
 #unsetup git
 
 #build_noarch nodejs v4_5_0
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v16_20_0_1 ${basequal}
+#do_build xdaq v16_20_0_1 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
-#do_pull -n sqlite v3_26_00_00
-#do_pull -n python v2_7_15a
-#do_pull -n postgresql v9_6_11b p2715a
-#do_build pqxx v6_2_5c ${basequal}:p2715a
 
 #do_build caenvme v3_3_0
 #do_build caencomm v1_5_0
