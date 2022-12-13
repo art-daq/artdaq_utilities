@@ -155,10 +155,10 @@ void artdaq::MetricManager::do_start()
 void artdaq::MetricManager::do_stop()
 {
 	std::unique_lock<std::mutex> lk(metric_mutex_);
-	// TLOG(TLVL_DEBUG + 32) << "Stopping Metrics";
+	TLOG(TLVL_DEBUG + 32) << "Stopping Metrics";
 	running_ = false;
 	metric_cv_.notify_all();
-	// TLOG(TLVL_DEBUG + 32) << "Joining Metric-Sending thread";
+	TLOG(TLVL_DEBUG + 32) << "Joining Metric-Sending thread";
 	lk.unlock();
 	try
 	{
@@ -171,7 +171,7 @@ void artdaq::MetricManager::do_stop()
 	{
 		// IGNORED
 	}
-	// TLOG(TLVL_DEBUG + 32) << "do_stop Complete";
+	TLOG(TLVL_DEBUG + 32) << "do_stop Complete";
 }
 
 void artdaq::MetricManager::do_pause()
