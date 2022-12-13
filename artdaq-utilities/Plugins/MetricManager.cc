@@ -26,7 +26,9 @@ artdaq::MetricManager::MetricManager()
     , active_(false)
     , busy_(false)
     , missed_metric_calls_(0)
-    , metric_calls_(0) {}
+    , metric_calls_(0) {
+TLOG(TLVL_INFO) << "MetricManager CONSTRUCTOR";
+}
 
 artdaq::MetricManager::~MetricManager() noexcept { shutdown(); }
 
@@ -153,10 +155,10 @@ void artdaq::MetricManager::do_start()
 void artdaq::MetricManager::do_stop()
 {
 	std::unique_lock<std::mutex> lk(metric_mutex_);
-	TLOG(TLVL_DEBUG + 32) << "Stopping Metrics";
+	// TLOG(TLVL_DEBUG + 32) << "Stopping Metrics";
 	running_ = false;
 	metric_cv_.notify_all();
-	TLOG(TLVL_DEBUG + 32) << "Joining Metric-Sending thread";
+	// TLOG(TLVL_DEBUG + 32) << "Joining Metric-Sending thread";
 	lk.unlock();
 	try
 	{
@@ -169,7 +171,7 @@ void artdaq::MetricManager::do_stop()
 	{
 		// IGNORED
 	}
-	TLOG(TLVL_DEBUG + 32) << "do_stop Complete";
+	// TLOG(TLVL_DEBUG + 32) << "do_stop Complete";
 }
 
 void artdaq::MetricManager::do_pause()
@@ -193,6 +195,7 @@ void artdaq::MetricManager::shutdown()
 	std::lock_guard<std::mutex> lk(metric_mutex_);
 	if (initialized_)
 	{
+		TRACE_STREAMER(TLVL_DEBUG + 32, TLOG2("MetricManager", 0), 0) << "MetricManager is initialized shutting down...";
 		initialized_ = false;
 		for (auto& i : metric_plugins_)
 		{
