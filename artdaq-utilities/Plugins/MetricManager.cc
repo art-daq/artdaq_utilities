@@ -187,7 +187,7 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 
 void artdaq::MetricManager::shutdown()
 {
-	TLOG(TLVL_DEBUG + 32) << "MetricManager is shutting down...";
+	TRACE_STREAMER(TLVL_DEBUG + 32, TLOG2("MetricManager", 0), 0) << "MetricManager is shutting down..."; // Using TRACE_STREAMER in case MessageFacility is already gone
 	do_stop();
 
 	std::lock_guard<std::mutex> lk(metric_mutex_);
@@ -200,11 +200,11 @@ void artdaq::MetricManager::shutdown()
 			{
 				std::string name = i->getLibName();
 				i.reset(nullptr);
-				TLOG(TLVL_DEBUG + 32) << "Metric Plugin " << name << " shutdown.";
+				TRACE_STREAMER(TLVL_DEBUG + 32, TLOG2("MetricManager", 0), 0) << "Metric Plugin " << name << " shutdown.";
 			}
 			catch (...)
 			{
-				TLOG(TLVL_ERROR) << "Exception caught in MetricManager::shutdown(), error shutting down metric with name "
+				TRACE_STREAMER(TLVL_ERROR, TLOG2("MetricManager", 0), 0) << "Exception caught in MetricManager::shutdown(), error shutting down metric with name "
 				                 << i->getLibName();
 			}
 		}
