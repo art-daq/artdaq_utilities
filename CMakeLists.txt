@@ -91,6 +91,6 @@ endif()
 
 # CMake module files used by artdaq-utilities packages
 FILE(COPY Modules DESTINATION .)
-INSTALL(DIRECTORY Modules DESTINATION ${product}/${version})
+INSTALL(DIRECTORY Modules DESTINATION .)
 
 cet_cmake_config()
