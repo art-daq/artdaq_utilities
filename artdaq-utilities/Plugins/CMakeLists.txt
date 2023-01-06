@@ -32,7 +32,7 @@ cet_make_library(SOURCE
   )
 
 include(BasicPlugin)
-cet_write_plugin_builder(artdaq::metric art::plugin Modules
+cet_write_plugin_builder(artdaq::metric artdaq::metric Modules
   SUFFIX metric
   INSTALL_BUILDER
   LIBRARIES CONDITIONAL artdaq_plugin_types::metric)

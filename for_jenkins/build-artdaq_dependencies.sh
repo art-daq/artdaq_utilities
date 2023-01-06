@@ -26,8 +26,8 @@ case ${qual_set} in
     c7)
        basequal=c7
        ;;
-    c2)
-		basequal=c2
+    c14)
+		basequal=c14
 		;;
     e20)
         basequal=e20
@@ -35,18 +35,9 @@ case ${qual_set} in
     e19)
         basequal=e19
         ;;
-	e17)
-		basequal=e17
+	e26)
+		basequal=e26
 		;;
-    e15)
-        basequal=e15
-        ;;
-	e14)
-		basequal=e14
-		;;
-    e10)
-        basequal=e10
-        ;;
     *)
 	echo "unexpected qualifier set ${qual_set}"
 	usage
