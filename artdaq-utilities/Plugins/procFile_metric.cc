@@ -213,7 +213,7 @@ public:
 			{
 				METLOG(TLVL_DEBUG + 35) << "writePipe open fd=" << fd << " name=" << value.first << " value=" << value.second;  // can't have args b/c name may have %
 				str += value.first + ": " + value.second + "\n";
-				//snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
+				// snprintf(buf, sizeof(buf), "%s: %lu\n", value.first.c_str(), value.second);
 			}
 			int sts = write(fd, str.c_str(), str.size());
 			METLOG(TLVL_DEBUG + 36) << "writePipe write complete sts=" << sts;
@@ -223,6 +223,6 @@ public:
 		}
 	}
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::ProcFileMetric)

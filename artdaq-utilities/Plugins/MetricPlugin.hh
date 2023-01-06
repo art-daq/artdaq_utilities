@@ -35,15 +35,15 @@
 
 namespace artdaq {
 /**
-	 * \brief The MetricPlugin class defines the interface that MetricManager uses to send metric data
-	 * to the various metric plugins.
-	 */
+ * \brief The MetricPlugin class defines the interface that MetricManager uses to send metric data
+ * to the various metric plugins.
+ */
 class MetricPlugin
 {
 public:
 	/**
-		* \brief The Config struct defines the accepted configuration parameters for this class
-		*/
+	 * \brief The Config struct defines the accepted configuration parameters for this class
+	 */
 	struct Config
 	{
 		/// The name of the metric plugin to load (may have additional configuration parameters
@@ -63,14 +63,14 @@ public:
 	using Parameters = fhicl::WrappedTable<Config>;
 
 	/**
-		 * \brief MetricPlugin Constructor
-		 * \param ps The ParameterSet used to configure this MetricPlugin instance
-		 * \param app_name The Application name which can be used by the Metric Plugin for identification
-		 * \param metric_name Name for this MetricPlugin instance
-		 *
-		 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
-		 *  metric. String metrics cannot be accumulated.
-		 */
+	 * \brief MetricPlugin Constructor
+	 * \param ps The ParameterSet used to configure this MetricPlugin instance
+	 * \param app_name The Application name which can be used by the Metric Plugin for identification
+	 * \param metric_name Name for this MetricPlugin instance
+	 *
+	 *  Calling sendMetric with the accumulate parameter set to false will bypass this accumulation and directly send the
+	 *  metric. String metrics cannot be accumulated.
+	 */
 	explicit MetricPlugin(fhicl::ParameterSet const& ps, std::string const& app_name, std::string const& metric_name)
 	    : pset(ps)
 	    , app_name_(app_name)
@@ -137,8 +137,8 @@ public:
 	}
 
 	/**
-		 * \brief Default virtual Desctructor
-		 */
+	 * \brief Default virtual Desctructor
+	 */
 	virtual ~MetricPlugin() = default;
 
 	///////////////////////////////////////////////////////////////////////////
@@ -148,78 +148,78 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 
 	/**
-		 * \brief Return the name of the current MetricPlugin instance
-		 */
+	 * \brief Return the name of the current MetricPlugin instance
+	 */
 	virtual std::string getLibName() const { return "ERROR"; }
 
 protected:
 	/**
-		 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
-		 * \param name Name of the metric
-		 * \param value Value of the metric
-		 * \param unit Units for the metric
-		 * \param interval_end End point of the aggregation interval
-		 *
-		 * Note this is a pure virtual function, it should be overridden by implementation plugins
-		 */
+	 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 * \param interval_end End point of the aggregation interval
+	 *
+	 * Note this is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
-		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units for the metric
-		 * \param interval_end End point of the aggregation interval
-		*
-		* Note this is a pure virtual function, it should be overridden by implementation plugins
-		*/
+	 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 * \param interval_end End point of the aggregation interval
+	 *
+	 * Note this is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
-		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units for the metric
-		 * \param interval_end End point of the aggregation interval
-		*
-		* Note this is a pure virtual function, it should be overridden by implementation plugins
-		*/
+	 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 * \param interval_end End point of the aggregation interval
+	 *
+	 * Note this is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
-		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units for the metric
-		 * \param interval_end End point of the aggregation interval
-		*
-		* Note this is a pure virtual function, it should be overridden by implementation plugins
-		*/
+	 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 * \param interval_end End point of the aggregation interval
+	 *
+	 * Note this is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
-		* \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
-		* \param name Name of the metric
-		* \param value Value of the metric
-		* \param unit Units for the metric
-		 * \param interval_end End point of the aggregation interval
-		*
-		* Note this is a pure virtual function, it should be overridden by implementation plugins
-		*/
+	 * \brief Send a metric to the underlying metric storage (file, Graphite, Ganglia, etc.)
+	 * \param name Name of the metric
+	 * \param value Value of the metric
+	 * \param unit Units for the metric
+	 * \param interval_end End point of the aggregation interval
+	 *
+	 * Note this is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& interval_end) = 0;
 
 	/**
-		 * \brief Perform any start-up actions necessary for the metric plugin
-		 *
-		 * This is a pure virtual function, it should be overridden by implementation plugins
-		 */
+	 * \brief Perform any start-up actions necessary for the metric plugin
+	 *
+	 * This is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void startMetrics_() = 0;
 
 	/**
-		* \brief Perform any shutdown actions necessary for the metric plugin
-		*
-		* This is a pure virtual function, it should be overridden by implementation plugins
-		*/
+	 * \brief Perform any shutdown actions necessary for the metric plugin
+	 *
+	 * This is a pure virtual function, it should be overridden by implementation plugins
+	 */
 	virtual void stopMetrics_() = 0;
 
 	/////////////////////////////////////////////////////////////////////////////////
@@ -229,9 +229,9 @@ protected:
 	/////////////////////////////////////////////////////////////////////////////////
 public:
 	/**
-		* \brief Send a metric value to the MetricPlugin
-		* \param data A MetricData struct containing the metric value
-		*/
+	 * \brief Send a metric value to the MetricPlugin
+	 * \param data A MetricData struct containing the metric value
+	 */
 	void addMetricData(std::unique_ptr<MetricData> const& data)
 	{
 		METLOG_P(TLVL_DEBUG + 42) << "Adding metric data for name " << data->Name;
@@ -247,18 +247,18 @@ public:
 			}
 			metricData_[data->Name].push_back(*data);
 			METLOG_P(TLVL_DEBUG + 42) << "Current list size: " << metricData_[data->Name].size();
-			//sendMetrics();
+			// sendMetrics();
 		}
 	}
 
 	/**
-   * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to
-   * the underlying metric storage 
-   * \param forceSend (Default = false): Force sending metrics, even if reporting interval
-   * has not elapsed 
-   * \param interval_end (Default = now): For calculating rates, when the current reporting interval
-   * ended (interval began at last value of interval_end)
-		 */
+	 * \brief For each known metric, determine whether the reporting interval has elapsed, and if so, report a value to
+	 * the underlying metric storage
+	 * \param forceSend (Default = false): Force sending metrics, even if reporting interval
+	 * has not elapsed
+	 * \param interval_end (Default = now): For calculating rates, when the current reporting interval
+	 * ended (interval began at last value of interval_end)
+	 */
 	void sendMetrics(bool forceSend = false,
 	                 std::chrono::steady_clock::time_point interval_end = std::chrono::steady_clock::now())
 	{
@@ -378,14 +378,14 @@ public:
 	}
 
 	/**
-		 * \brief Perform startup actions. Simply calls the virtual startMetrics_ function
-		 */
+	 * \brief Perform startup actions. Simply calls the virtual startMetrics_ function
+	 */
 	void startMetrics() { startMetrics_(); }
 
 	/**
-		 * \brief Perform shutdown actions. Zeroes out all accumulators, and sends zeros for each metric.
-		 * Calls stopMetrics_() for any plugin-defined shutdown actions.
-		 */
+	 * \brief Perform shutdown actions. Zeroes out all accumulators, and sends zeros for each metric.
+	 * Calls stopMetrics_() for any plugin-defined shutdown actions.
+	 */
 	void stopMetrics()
 	{
 		inhibit_ = true;
@@ -541,10 +541,10 @@ private:
 		}
 	}
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
 #ifdef TRACE_NAME_POP
 #pragma pop_macro("TRACE_NAME")
 #undef TRACE_NAME_POP
 #endif
-#endif  //End ifndef __METRIC_INTERFACE__
+#endif  // End ifndef __METRIC_INTERFACE__

@@ -37,7 +37,7 @@ public:
 	 * \param config ParameterSet used to configure PeriodicReportMetric
 	 * \param app_name Name of the application sending metrics
 	 * \param metric_name Name of this MetricPlugin instance
-	 * 
+	 *
 	 * \verbatim
 	 * PeriodicReportMetric accepts no parameters.
 	 * \endverbatim
@@ -59,9 +59,9 @@ public:
 	}
 
 	/**
-	* \brief Get the library name for the PeriodicReport metric
-	* \return The library name for the PeriodicReport metric, "report"
-	*/
+	 * \brief Get the library name for the PeriodicReport metric
+	 * \return The library name for the PeriodicReport metric, "report"
+	 */
 	std::string getLibName() const override { return "report"; }
 
 	/**
@@ -192,6 +192,6 @@ private:
 		}
 	}
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::PeriodicReportMetric)
