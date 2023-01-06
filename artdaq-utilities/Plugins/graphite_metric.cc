@@ -22,15 +22,15 @@ using boost::asio::ip::tcp;
 
 namespace artdaq {
 /**
-	 * \brief Send a metric to Graphite
-	 * 
-	 * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
-	 * artdaq/
-	 *   BoardReader/
-	 *     Fragment_Rate
-	 *     
-	 *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
-	 */
+ * \brief Send a metric to Graphite
+ *
+ * Graphite accepts metrics in a tree hiereachy, using '.' as a delimiter. Therefore, the metric artdaq.BoardReader.Fragment_Rate will appear in Graphite as:
+ * artdaq/
+ *   BoardReader/
+ *     Fragment_Rate
+ *
+ *  This plugin sends TCP messages with the following content: [name] [value] [timestamp], units are discarded
+ */
 class GraphiteMetric final : public MetricPlugin
 {
 private:
@@ -49,7 +49,7 @@ public:
 	 * \param config ParameterSet used to configure GraphiteMetric
 	 * \param app_name Name of the application sending metrics
 	 * \param metric_name Name of this MetricPlugin instance
-	 * 
+	 *
 	 * \verbatim
 	 * GraphiteMetric accepts the following Parameters:
 	 * "host" (Default: "localhost"): Destination host
@@ -86,7 +86,7 @@ public:
 	 * \brief Send a metric to Graphite
 	 * \param name Name of the metric. Will have the namespace prepended
 	 * \param value Value of the metric
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& time) override
 	{
@@ -115,7 +115,7 @@ public:
 	 * \param name Name of the metric. Will have the namespace prepended
 	 * \param value Value of the metric
 	 * \param unit Units of the metric (Not used)
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
@@ -127,7 +127,7 @@ public:
 	 * \param name Name of the metric. Will have the namespace prepended
 	 * \param value Value of the metric
 	 * \param unit Units of the metric (Not used)
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
@@ -135,12 +135,12 @@ public:
 	}
 
 	/**
-		* \brief Send a metric to Graphite
-		* \param name Name of the metric. Will have the namespace prepended
-		* \param value Value of the metric
-		 * \param unit Units of the metric (Not used)
-     * \param time Time the metric was sent
-		*/
+	 * \brief Send a metric to Graphite
+	 * \param name Name of the metric. Will have the namespace prepended
+	 * \param value Value of the metric
+	 * \param unit Units of the metric (Not used)
+	 * \param time Time the metric was sent
+	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
 		sendMetric_(name, std::to_string(value), unit, time);
@@ -151,7 +151,7 @@ public:
 	 * \param name Name of the metric. Will have the namespace prepended
 	 * \param value Value of the metric
 	 * \param unit Units of the metric (Not used)
-     * \param time Time the metric was sent
+	 * \param time Time the metric was sent
 	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
@@ -201,8 +201,8 @@ private:
 	GraphiteMetric& operator=(GraphiteMetric&&) = delete;
 
 	/**
-		 * \brief Reconnect to Graphite
-		 */
+	 * \brief Reconnect to Graphite
+	 */
 	void reconnect_()
 	{
 		if (errorCount_ < 5)
@@ -218,12 +218,12 @@ private:
 			}
 			waitStart_ = std::chrono::steady_clock::now();
 		}
-		else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)  //Seconds
+		else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)  // Seconds
 		{
 			errorCount_ = 0;
 		}
 	}
 };
-}  //End namespace artdaq
+}  // End namespace artdaq
 
 DEFINE_ARTDAQ_METRIC(artdaq::GraphiteMetric)

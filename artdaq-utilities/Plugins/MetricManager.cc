@@ -26,8 +26,9 @@ artdaq::MetricManager::MetricManager()
     , active_(false)
     , busy_(false)
     , missed_metric_calls_(0)
-    , metric_calls_(0) {
-TLOG(TLVL_INFO) << "MetricManager CONSTRUCTOR";
+    , metric_calls_(0)
+{
+	TLOG(TLVL_INFO) << "MetricManager CONSTRUCTOR";
 }
 
 artdaq::MetricManager::~MetricManager() noexcept { shutdown(); }
@@ -189,7 +190,7 @@ void artdaq::MetricManager::reinitialize(fhicl::ParameterSet const& pset, std::s
 
 void artdaq::MetricManager::shutdown()
 {
-	TRACE_STREAMER(TLVL_DEBUG + 32, TLOG2("MetricManager", 0), 0) << "MetricManager is shutting down..."; // Using TRACE_STREAMER in case MessageFacility is already gone
+	TRACE_STREAMER(TLVL_DEBUG + 32, TLOG2("MetricManager", 0), 0) << "MetricManager is shutting down...";  // Using TRACE_STREAMER in case MessageFacility is already gone
 	do_stop();
 
 	std::lock_guard<std::mutex> lk(metric_mutex_);
@@ -208,7 +209,7 @@ void artdaq::MetricManager::shutdown()
 			catch (...)
 			{
 				TRACE_STREAMER(TLVL_ERROR, TLOG2("MetricManager", 0), 0) << "Exception caught in MetricManager::shutdown(), error shutting down metric with name "
-				                 << i->getLibName();
+				                                                         << i->getLibName();
 			}
 		}
 		metric_plugins_.clear();
@@ -246,7 +247,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					if (mode == MetricMode::LastPoint)
 					{
@@ -300,7 +301,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -345,7 +346,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -390,7 +391,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -436,7 +437,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& 
 					if (size >= metric_cache_notify_size_)
 					{
 						TLOG(TLVL_DEBUG + 35) << "Metric cache is at size " << size << " of " << metric_cache_max_size_ << " for metric " << name
-						        << ".";
+						                      << ".";
 					}
 					cached->AddPoint(value);
 				}
@@ -603,7 +604,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 		    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 		TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-		                 << " missed)";
+		                      << " missed)";
 
 		if (system_metric_collector_ != nullptr)
 		{
@@ -684,7 +685,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 				q.second->Reset();
 			}
 		}
-		//metric_cache_.clear();
+		// metric_cache_.clear();
 	}
 
 	auto calls = metric_calls_.exchange(0);
@@ -696,7 +697,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 	    new MetricData("Missed Metric Calls", missed, "metrics", 4, MetricMode::Accumulate | MetricMode::Rate, "", false));
 
 	TLOG(TLVL_DEBUG + 33) << "There are " << temp_list.size() << " Metrics to process (" << calls << " calls, " << missed
-	                 << " missed)";
+	                      << " missed)";
 
 	while (!temp_list.empty())
 	{
