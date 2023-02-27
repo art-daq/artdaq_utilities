@@ -88,25 +88,25 @@ do_build hdf5 v1_12_2 ${basequal}
 #do_build mpich v3_3_2a ${basequal}
 
 
-#do_build caenvme v3_3_0
-#do_build caencomm v1_5_0
-#do_build caendigitizer v2_17_1
+do_build caenvme v3_4_0
+do_build caencomm v1_6_0
+do_build caendigitizer v2_17_3
 
 exit
 
 ####### Special ARTDAQ Versions #######
 # s112
-build_bundle art-3.09.03 ${basequal} || return $?
-build_bundle gallery-1.18.04 ${basequal} || return $?
-build_cet art_root_io v1_08_03 ${basequal}${build_label:+\:${build_label}}
+#build_bundle art-3.09.03 ${basequal} || return $?
+#build_bundle gallery-1.18.04 ${basequal} || return $?
+#build_cet art_root_io v1_08_03 ${basequal}${build_label:+\:${build_label}}
 
 
-build_cet -p artdaq-core artdaq_core v3_07_04 ${basequal}${build_label:+\:${build_label}}:s112
+#build_cet -p artdaq-core artdaq_core v3_07_04 ${basequal}${build_label:+\:${build_label}}:s112
 
-build_cet -p artdaq-utilities artdaq_utilities v1_07_02_01 ${basequal}${build_label:+\:${build_label}}:s112
+#build_cet -p artdaq-utilities artdaq_utilities v1_07_02_01 ${basequal}${build_label:+\:${build_label}}:s112
 
-do_build xmlrpc_c v1_51_06 ${basequal}
+#do_build xmlrpc_c v1_51_06 ${basequal}
 # prep_build -f NULL smc_compiler v7_1_0; add_to_manifest
-build_cet artdaq v3_11_02_01 ${basequal}${build_label:+\:${build_label}}:s112
+#build_cet artdaq v3_11_02_01 ${basequal}${build_label:+\:${build_label}}:s112
 
 return 0
