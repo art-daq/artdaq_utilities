@@ -22,27 +22,18 @@ build_type=${BUILDTYPE}
 # Remove shared memory segments which have 0 nattach
 for key in `ipcs|grep " $USER "|grep " 0 "|awk '{print $1}'`;do ipcrm -M $key;done
 
-case ${qual_set} in
-    c7)
-       basequal=c7
-       ;;
-    c14)
-		basequal=c14
-		;;
-    e20)
-        basequal=e20
-        ;;
-    e19)
-        basequal=e19
-        ;;
-	e26)
-		basequal=e26
-		;;
-    *)
-	echo "unexpected qualifier set ${qual_set}"
-	usage
-	exit 1
-esac
+IFS_save=$IFS
+IFS=":"
+read -a qualarray <<<"$qual_set"
+IFS=$IFS_save
+basequal=
+
+for qual in ${qualarray[@]};do
+	case ${qual} in
+        e*) basequal=$qual;;
+        c*) basequal=$qual;;
+	esac
+done
 
 case ${build_type} in
     debug) ;;
