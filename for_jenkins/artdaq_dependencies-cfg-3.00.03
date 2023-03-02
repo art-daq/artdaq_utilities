@@ -39,6 +39,10 @@ elif [ "${basequal}" = "c14" ]; then
      clangver=v14_0_6c
      gccver=v12_1_0
      new_py=1
+elif [ "${basequal}" = "c15" ]; then
+     clangver=v15_0_7
+     gccver=v12_1_0
+     new_py=1
 fi
 
 if [[ "x${gccver:-}" != "x" ]]; then
@@ -71,8 +75,8 @@ fi
 #  do_pull -n postgresql v14_5 p3913
 #  do_build pqxx v7_7_4 ${basequal}:p3913
 #fi
-#do_build qt v5_15_6 ${basequal}
-do_build hdf5 v1_12_2 ${basequal}
+do_build qt v5_15_6a ${basequal}
+#do_build hdf5 v1_12_2 ${basequal}
 
 #do_build git v2_20_1
 #setup git v2_20_1
@@ -88,9 +92,9 @@ do_build hdf5 v1_12_2 ${basequal}
 #do_build mpich v3_3_2a ${basequal}
 
 
-do_build caenvme v3_4_0
-do_build caencomm v1_6_0
-do_build caendigitizer v2_17_3
+#do_build caenvme v3_4_0
+#do_build caencomm v1_6_0
+#do_build caendigitizer v2_17_3
 
 exit
 
