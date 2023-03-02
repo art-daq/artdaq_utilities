@@ -66,14 +66,14 @@ fi
 if [ $old_py -eq 1 ];then
   do_build sqlite v3_34_01_00
   do_build python v3_9_2
-  do_pull -n postgresql v13_2 p392
-  do_build pqxx v7_7_4 ${basequal}:p392
+  #do_pull -n postgresql v13_2 p392
+  #do_build pqxx v7_7_4 ${basequal}:p392
 fi
 if [ $new_py -eq 1 ];then
   do_build sqlite v3_39_02_00
   do_build python v3_9_13
-  do_pull -n postgresql v14_5 p3913
-  do_build pqxx v7_7_4 ${basequal}:p3913
+  #do_pull -n postgresql v14_5 p3913
+  #do_build pqxx v7_7_4 ${basequal}:p3913
 fi
 do_build qt v5_15_6a ${basequal}
 #do_build hdf5 v1_12_2 ${basequal}
