@@ -44,7 +44,6 @@ elif [ "${basequal}" = "c14" ]; then
 elif [ "${basequal}" = "c15" ]; then
      clangver=v15_0_7
      gccver=v12_1_0
-     new_py=1
      newer_py=1
 fi
 
