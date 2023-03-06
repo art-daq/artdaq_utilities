@@ -78,7 +78,7 @@ if [ $new_py -eq 1 ];then
   do_pull -n postgresql v14_5 p3913
   do_build pqxx v7_7_4a ${basequal}:p3913
 fi
-if [ $new_py -eq 1 ];then
+if [ $newer_py -eq 1 ];then
   do_build sqlite v3_40_01_00
   do_build python v3_9_15
   do_pull -n postgresql v15_1a p3915
