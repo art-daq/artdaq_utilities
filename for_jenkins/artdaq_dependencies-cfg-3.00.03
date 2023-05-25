@@ -4,12 +4,12 @@ basequal=${1}
 # specify version to bootstrap and setup ups
 check_ups v6_1_0
 
-for cv in v3_13_1 v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1 v3_25_2; do
+for cv in v3_13_1 v3_14_3 v3_17_3 v3_18_2 v3_19_6 v3_20_0 v3_22_2 v3_23_1 v3_25_2 v3_26_4; do
   do_build cmake ${cv}
 done
 
 ensure_cetpkgsupport v1_14_01
-for _cps_cetmodules_ver in v1_04_00 v2_17_00 v2_17_01 v2_17_03 v2_26_00 v3_07_00 v3_08_00 v3_09_03 v3_10_00 v3_10_01 v3_12_00 v3_13_00 v3_16_00 v3_21_00; do
+for _cps_cetmodules_ver in v1_04_00 v2_17_00 v2_17_01 v2_17_03 v2_26_00 v3_07_00 v3_08_00 v3_09_03 v3_10_00 v3_10_01 v3_12_00 v3_13_00 v3_16_00 v3_21_00 v3_21_01 v3_21_02; do
   ensure_support_package -f NULL -- cetmodules ${_cps_cetmodules_ver}
 done
 ensure_cetbuildtools v8_07_00 v8_07_01 v8_07_02
@@ -30,6 +30,9 @@ elif [ "${basequal}" = "e20" ]; then
 elif [ "${basequal}" = "e26" ]; then
      gccver=v12_1_0
      new_py=1
+     newer_py=1
+elif [ "${basequal}" = "e28" ]; then
+     gccver=v13_1_0
      newer_py=1
 elif [ "${basequal}" = "c7" ]; then
      gccver=v8_2_0
@@ -57,45 +60,45 @@ fi
 ########## ARTDAQ Dependencies ############
 
 #build_cet -p trace-git TRACE v3_17_01 -nq-
-#do_build xmlrpc_c v1_54_06a ${basequal}
-#do_build swig v4_0_2b ${basequal}
+do_build xmlrpc_c v1_54_06b ${basequal}
+do_build swig v4_1_1 ${basequal}
 
 #exit
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-#do_build epics v7_0_7a ${basequal}
+do_build epics v7_0_7b ${basequal}
 if [ $old_py -eq 1 ];then
   do_build sqlite v3_34_01_00
   do_build python v3_9_2
   do_pull -n postgresql v13_2 p392
-  do_build pqxx v7_7_4a ${basequal}:p392
+  do_build pqxx v7_7_4b ${basequal}:p392
 fi
 if [ $new_py -eq 1 ];then
   do_build sqlite v3_39_02_00
   do_build python v3_9_13
   do_pull -n postgresql v14_5 p3913
-  do_build pqxx v7_7_4a ${basequal}:p3913
+  do_build pqxx v7_7_4b ${basequal}:p3913
 fi
 if [ $newer_py -eq 1 ];then
   do_build sqlite v3_40_01_00
   do_build python v3_9_15
   do_pull -n postgresql v15_1a p3915
-  do_build pqxx v7_7_4a ${basequal}:p3915
+  do_build pqxx v7_7_4b ${basequal}:p3915
 fi
 #do_build qt v5_15_6a ${basequal}
 #do_build hdf5 v1_12_2a ${basequal}
 
-#do_build git v2_39_1
-#setup git v2_39_1
-#do_build mongodb v6_0_2a ${basequal}
-#unsetup git
+do_build git v2_39_1
+setup git v2_39_1
+do_build mongodb v6_0_2b ${basequal}
+unsetup git
 
 #build_noarch nodejs v4_5_0
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v16_20_0_1a ${basequal}
+#do_build xdaq v16_20_0_1a ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
@@ -104,7 +107,7 @@ do_build xdaq v16_20_0_1a ${basequal}
 #do_build caencomm v1_6_0
 #do_build caendigitizer v2_17_3
 
-exit
+return 0
 
 ####### Special ARTDAQ Versions #######
 # s112
