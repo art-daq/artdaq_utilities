@@ -60,14 +60,14 @@ fi
 ########## ARTDAQ Dependencies ############
 
 #build_cet -p trace-git TRACE v3_17_01 -nq-
-do_build xmlrpc_c v1_54_06b ${basequal}
-do_build swig v4_1_1 ${basequal}
+#do_build xmlrpc_c v1_54_06b ${basequal}
+#do_build swig v4_1_1 ${basequal}
 
 #exit
 
 ########## ARTDAQ_DEMO Dependencies #######
 
-do_build epics v7_0_7b ${basequal}
+#do_build epics v7_0_7b ${basequal}
 if [ $old_py -eq 1 ];then
   do_build sqlite v3_34_01_00
   do_build python v3_9_2
@@ -89,16 +89,16 @@ fi
 #do_build qt v5_15_6a ${basequal}
 #do_build hdf5 v1_12_2a ${basequal}
 
-do_build git v2_39_1
-setup git v2_39_1
-do_build mongodb v6_0_2b ${basequal}
-unsetup git
+#do_build git v2_39_1
+#setup git v2_39_1
+#do_build mongodb v6_0_2b ${basequal}
+#unsetup git
 
 #build_noarch nodejs v4_5_0
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-#do_build xdaq v16_20_0_1a ${basequal}
+do_build xdaq v16_20_0_1b ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
