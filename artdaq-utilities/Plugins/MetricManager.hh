@@ -306,6 +306,8 @@ private:
 	std::atomic<size_t> metric_calls_;
 	size_t metric_cache_max_size_{1000};
 	size_t metric_cache_notify_size_{10};
+
+	std::chrono::steady_clock::time_point last_failure_;
 };
 
 #endif /* artdaq_DAQrate_MetricManager_hh */
