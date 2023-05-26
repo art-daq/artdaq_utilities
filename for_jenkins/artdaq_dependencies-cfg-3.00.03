@@ -86,7 +86,7 @@ if [ $newer_py -eq 1 ];then
   do_pull -n postgresql v15_1a p3915
   do_build pqxx v7_7_4b ${basequal}:p3915
 fi
-#do_build qt v5_15_6a ${basequal}
+do_build qt v5_15_9 ${basequal}
 #do_build hdf5 v1_12_2a ${basequal}
 
 #do_build git v2_39_1
@@ -98,7 +98,7 @@ fi
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v16_20_0_1b ${basequal}
+#do_build xdaq v16_20_0_1b ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
