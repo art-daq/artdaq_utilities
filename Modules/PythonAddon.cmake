@@ -34,13 +34,6 @@ macro (create_python_addon)
             message(FATAL_ERROR  " undefined arguments ${CNA_DEFAULT_ARGS} \n ${create_python_addon_usage}")
         endif()
 		
-		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
-		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
-            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter -Wno-register -Wno-deprecated-declarations")
-		else()
-            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter -Wno-register")
-		endif()
-
     file(GLOB PIA_SOURCES  *_python.i)
     file(GLOB LIB_SOURCES  *.cpp)
 
@@ -53,6 +46,13 @@ macro (create_python_addon)
     #swig_add_module (${PIA_ADDON_NAME} python ${PIA_SOURCES} ${LIB_SOURCES})
 	swig_add_library(${PIA_ADDON_NAME} LANGUAGE python SOURCES ${PIA_SOURCES} ${LIB_SOURCES})
     swig_link_libraries (${PIA_ADDON_NAME} ${PIA_LIBRARIES} ${PYTHON_LIBRARIES})
+    
+		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
+		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
+            target_compile_options(${PIA_ADDON_NAME} PUBLIC -Wno-bad-function-cast -Wno-unused-parameter -Wno-register -Wno-deprecated-declarations)
+		else()
+            target_compile_options(${PIA_ADDON_NAME} PUBLIC -Wno-cast-function-type -Wno-unused-parameter -Wno-register)
+		endif()
 
     set(PIA_ADDON_LIBNAME _${PIA_ADDON_NAME})
 
