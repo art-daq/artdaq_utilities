@@ -18,7 +18,7 @@ cmake_minimum_required (VERSION 3.19)
 
 find_package(cetmodules 3.16.00 REQUIRED)
 
-project(artdaq_utilities VERSION 1.08.01)
+project(artdaq_utilities VERSION 1.08.04)
 			  
 include(CetCMakeEnv)
 cet_cmake_env()
@@ -65,10 +65,10 @@ endif()
 
 #cet_report_compiler_flags()
 
-find_package(messagefacility REQUIRED EXPORT)
-find_package(fhiclcpp REQUIRED EXPORT)
-find_package(cetlib REQUIRED EXPORT)
-find_package(Boost COMPONENTS filesystem thread REQUIRED EXPORT)
+find_package(messagefacility REQUIRED EXPORT QUIET)
+find_package(fhiclcpp REQUIRED EXPORT QUIET)
+find_package(cetlib REQUIRED EXPORT QUIET)
+find_package(Boost QUIET COMPONENTS filesystem thread REQUIRED EXPORT)
 find_package(TRACE REQUIRED EXPORT)
 
 # Debug streamer.

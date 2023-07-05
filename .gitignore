@@ -15,4 +15,3 @@ NONE
 bin/*
 obj/*
 *.vcxproj*
-CMakePresets.json
