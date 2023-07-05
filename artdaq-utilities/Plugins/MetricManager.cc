@@ -224,7 +224,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
+			TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -232,7 +232,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, std::string cons
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
+			TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -286,7 +286,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
+			TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -294,7 +294,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, int const& value
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
+			TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -339,7 +339,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
+			TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -347,7 +347,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, double const& va
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
+			TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -392,7 +392,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
+			TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -400,7 +400,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, float const& val
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
+			TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -446,7 +446,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& 
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
+			TLOG(TLVL_WARNING) << "Attempted to send metric " << name << " when MetricManager has not yet been initialized!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
@@ -454,7 +454,7 @@ void artdaq::MetricManager::sendMetric(std::string const& name, uint64_t const& 
 	{
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_failure_).count() > 1000)
 		{
-		TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
+			TLOG(TLVL_INFO) << "Attempted to send metric when MetricManager stopped!";
 			last_failure_ = std::chrono::steady_clock::now();
 		}
 	}
