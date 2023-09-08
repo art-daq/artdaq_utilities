@@ -18,17 +18,21 @@
 #define METLOG(lvl) TLOG(lvl) << metric_name_ << ": "
 #define METLOG_P(lvl) TLOG(lvl, "MetricPlugin") << metric_name_ << ": "
 
-#include <bitset>
-#include <chrono>
-#include <string>
-#include <unordered_map>
+#include "artdaq-utilities/Plugins/MetricData.hh"
+
 #include "fhiclcpp/ParameterSet.h"
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/ConfigurationTable.h"
 #include "fhiclcpp/types/Sequence.h"
-
-#include "artdaq-utilities/Plugins/MetricData.hh"
 #include "cetlib/compiler_macros.h"
+
+#include <bitset>
+#include <chrono>
+#include <string>
+#include <regex>
+#include <set>
+#include <unordered_map>
+
 #ifndef FALLTHROUGH
 #define FALLTHROUGH while (0)
 #endif
@@ -52,6 +56,8 @@ public:
 		fhicl::Atom<size_t> level{fhicl::Name{"level"}, fhicl::Comment{"The verbosity level threshold for this plugin. sendMetric calls with verbosity level greater than this will not be sent to the plugin. OPTIONAL"}, 0};
 		/// "metric_levels" (OPTIONAL): A list of levels that should be enabled for this plugin.
 		fhicl::Sequence<size_t> metric_levels{fhicl::Name{"metric_levels"}, fhicl::Comment{"A list of levels that should be enabled for this plugin. OPTIONAL"}, std::vector<size_t>()};
+		/// "metric_filters" (OPTIONAL): A list of regular expressions for metric names to filter.
+		fhicl::Sequence<std::string> metric_filters{fhicl::Name{"metric_filters"}, fhicl::Comment{"A list of regular expressions for metric names to filter. OPTIONAL"}, std::vector<std::string>()};
 		/// "level_string" (OPTIONAL): A string containing a comma-separated list of levels to enable. Ranges are supported. Example: "1,2,4-10,11"
 		fhicl::Atom<std::string> level_string{fhicl::Name{"level_string"}, fhicl::Comment{"A string containing a comma-separated list of levels to enable. Ranges are supported. Example: \"1,2,4-10,11\" OPTIONAL"}, ""};
 		/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
@@ -232,8 +238,14 @@ public:
 	 * \brief Send a metric value to the MetricPlugin
 	 * \param data A MetricData struct containing the metric value
 	 */
-	void addMetricData(std::unique_ptr<MetricData> const& data)
+	bool addMetricData(std::unique_ptr<MetricData> const& data)
 	{
+		METLOG_P(TLVL_DEBUG + 43) << "Checking if metric " << data->Name << " is filtered for this plugin";
+
+		if(!IsLevelEnabled(data->Level) || IsNameFiltered(data->Name)) {
+			return false;
+		}
+
 		METLOG_P(TLVL_DEBUG + 42) << "Adding metric data for name " << data->Name;
 		if (data->Type == MetricType::StringMetric)
 		{
@@ -249,6 +261,8 @@ public:
 			METLOG_P(TLVL_DEBUG + 42) << "Current list size: " << metricData_[data->Name].size();
 			// sendMetrics();
 		}
+
+		return true;
 	}
 
 	/**
@@ -410,6 +424,30 @@ public:
 		return level_mask_[level];
 	}
 
+	bool IsNameFiltered(std::string const& name)
+	{
+		if (unfiltered_metric_names_.count(name))
+		{
+			return false;
+		}
+		if (filtered_metric_names_.count(name))
+		{
+			return true;
+		}
+
+		for (auto& filter : metric_filters_)
+		{
+			if (std::regex_match(name, filter))
+			{
+				filtered_metric_names_.insert(name);
+				return true;
+			}
+		}
+
+		unfiltered_metric_names_.insert(name);
+		return false;
+	}
+
 	/**
 	 * \brief Determine if metrics are waiting to be sent.
 	 * \return True if metrics have been queued for sending by this MetricPlugin instance
@@ -429,13 +467,16 @@ public:
 	}
 
 protected:
-	fhicl::ParameterSet pset;     ///< The ParameterSet used to configure the MetricPlugin
-	double accumulationTime_;     ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
-	std::string app_name_;        ///< Name of the application which is sending metrics to this plugin
-	std::string metric_name_;     ///< Name of this MetricPlugin instance
-	bool inhibit_;                ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
-	std::bitset<64> level_mask_;  ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
-	bool sendZeros_;              ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run
+	fhicl::ParameterSet pset;                        ///< The ParameterSet used to configure the MetricPlugin
+	double accumulationTime_;                        ///< The amount of time to average metric values; except for accumulate=false metrics, will be the interval at which each metric is sent.
+	std::string app_name_;                           ///< Name of the application which is sending metrics to this plugin
+	std::string metric_name_;                        ///< Name of this MetricPlugin instance
+	bool inhibit_;                                   ///< Flag to indicate that the MetricPlugin is being stopped, and any metric back-ends which do not have a persistent state (i.e. file) should not report further metrics
+	std::bitset<64> level_mask_;                     ///< Bitset indicating for each possible metric level, whether this plugin will receive those metrics
+	bool sendZeros_;                                 ///< Whether zeros should be sent to this metric backend when metric instances are missing or at the end of the run
+	std::set<std::string> unfiltered_metric_names_;  ///< Names of metrics that have passed the regular expression check
+	std::set<std::string> filtered_metric_names_;    ///< Names of metrics that have failed the regular expression check
+	std::vector<std::regex> metric_filters_;         ///< Filters to apply to metric names
 
 private:
 	MetricPlugin(const MetricPlugin&) = delete;
