@@ -134,6 +134,15 @@ public:
 				}
 			}
 		}
+
+		if (pset.has_key("metric_filters"))
+		{
+			auto filters = pset.get<std::vector<std::string>>("metric_filters");
+			for(auto& f : filters) {
+				metric_filters_.emplace_back("(?:" + app_name_ + "\\.)?" + f);
+			}
+		}
+
 		if (level_mask_.to_ullong() == 0)
 		{
 			throw cet::exception("Configuration Error")  // NOLINT(cert-err60-cpp)

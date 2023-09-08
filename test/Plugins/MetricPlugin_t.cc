@@ -145,6 +145,27 @@ BOOST_AUTO_TEST_CASE(IsLevelEnabled)
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case IsLevelEnabled END";
 }
 
+BOOST_AUTO_TEST_CASE(IsNameFiltered)
+{
+	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case IsNameFiltered BEGIN";
+	
+	std::string testConfig = "reporting_interval: 0 level: 4 metric_levels: [7,9,11] level_string: \"13-15,17,19-21,7-9\" metric_filters: [\"test_filter_exact\", \"test_filter_inexact.*\", \"test_filter_number_[0-9]+\"]";
+	fhicl::ParameterSet pset = fhicl::ParameterSet::make(testConfig);
+	artdaqtest::MetricPluginTestAdapter mpta(pset);
+
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_exact"), true);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_exact_smith"), false);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_exact_001"), false);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_inexact"), true);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_inexact_smith"), true);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_inexact_001"), true);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_number"), false);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_number_smith"), false);
+	BOOST_REQUIRE_EQUAL(mpta.IsNameFiltered("test_filter_number_001"), true);
+
+	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case IsNameFiltered END";
+}
+
 BOOST_AUTO_TEST_CASE(LibraryName)
 {
 	TLOG(TLVL_INFO, "MetricPlugin_t") << "Test Case LibraryName BEGIN";
