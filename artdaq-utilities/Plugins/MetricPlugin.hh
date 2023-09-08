@@ -58,6 +58,8 @@ public:
 		fhicl::Sequence<size_t> metric_levels{fhicl::Name{"metric_levels"}, fhicl::Comment{"A list of levels that should be enabled for this plugin. OPTIONAL"}, std::vector<size_t>()};
 		/// "metric_filters" (OPTIONAL): A list of regular expressions for metric names to filter.
 		fhicl::Sequence<std::string> metric_filters{fhicl::Name{"metric_filters"}, fhicl::Comment{"A list of regular expressions for metric names to filter. OPTIONAL"}, std::vector<std::string>()};
+		/// "filters_match_all_apps" (Default: true): Whether to prepend "app_name." as an optional match to the filter strings
+		fhicl::Atom<bool> filters_match_all_apps{fhicl::Name{"filters_match_all_apps"}, fhicl::Comment{"Whether to prepend \"app_name.\" as an optional match to the filter strings"}, true};
 		/// "level_string" (OPTIONAL): A string containing a comma-separated list of levels to enable. Ranges are supported. Example: "1,2,4-10,11"
 		fhicl::Atom<std::string> level_string{fhicl::Name{"level_string"}, fhicl::Comment{"A string containing a comma-separated list of levels to enable. Ranges are supported. Example: \"1,2,4-10,11\" OPTIONAL"}, ""};
 		/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
@@ -139,7 +141,8 @@ public:
 		{
 			auto filters = pset.get<std::vector<std::string>>("metric_filters");
 			for(auto& f : filters) {
-				metric_filters_.emplace_back("(?:" + app_name_ + "\\.)?" + f);
+				auto prefix = pset.get<bool>("filters_match_all_apps", true) ? "(?:" + app_name_ + "\\.)?" : "";
+				metric_filters_.emplace_back(prefix + f);
 			}
 		}
 
