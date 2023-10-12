@@ -50,12 +50,12 @@ elif [ "${basequal}" = "c15" ]; then
      newer_py=1
 fi
 
-#if [[ "x${gccver:-}" != "x" ]]; then
-#    do_build gcc ${gccver}
-#fi
-#if [[ "x${clangver:-}" != "x" ]];then
-#    do_build clang ${clangver}
-#fi
+if [[ "x${gccver:-}" != "x" ]]; then
+    do_build gcc ${gccver}
+fi
+if [[ "x${clangver:-}" != "x" ]];then
+    do_build clang ${clangver}
+fi
 
 ########## ARTDAQ Dependencies ############
 
