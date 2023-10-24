@@ -52,6 +52,11 @@ cet_build_plugin(graphite artdaq::metric
   fhiclcpp::fhiclcpp
   TRACE::MF
 )
+cet_build_plugin(websocket artdaq::metric
+  LIBRARIES PRIVATE
+  fhiclcpp::fhiclcpp
+  TRACE::MF
+)
 cet_build_plugin(msgFacility artdaq::metric
   LIBRARIES PRIVATE
   messagefacility::MF_MessageLogger
