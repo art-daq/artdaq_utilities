@@ -27,7 +27,7 @@ messagefacility	v2_09_00	s120a
 messagefacility	v2_09_00	s120
 messagefacility	v2_08_04	s112
 TRACE			v3_17_09
-cetmodules		v3_21_02	-	only_for_build
+cetmodules		v3_22_02	-	only_for_build
 end_product_list
 
 # See https://cdcvs.fnal.gov/redmine/projects/cet-is-public/wiki/AboutQualifiers for information about the qualifiers used
