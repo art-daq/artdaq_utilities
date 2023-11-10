@@ -6,10 +6,12 @@ cet_make_library(LIBRARY_NAME metric INTERFACE
 	EXPORT_SET PluginTypes
 	SOURCE MetricPlugin.hh
 	LIBRARIES INTERFACE
-  fhiclcpp::types
   fhiclcpp::fhiclcpp
   cetlib::compiler_macros
   TRACE::TRACE
+  TRACE::MF
+  Threads::Threads
+  Boost::thread
 )
 
 cet_make_library(SOURCE
@@ -20,15 +22,8 @@ cet_make_library(SOURCE
   LIBRARIES
   PUBLIC
   artdaq_plugin_types::metric
-  fhiclcpp::types
-  Boost::thread
-  Threads::Threads
-  TRACE::TRACE
   PRIVATE
-  fhiclcpp::fhiclcpp
   cetlib::cetlib
-  cetlib::compiler_macros
-  TRACE::MF
 )
 
 include(BasicPlugin)
@@ -42,15 +37,10 @@ include(MetricPlugins)
 
 cet_build_plugin(file artdaq::metric
   LIBRARIES PRIVATE
-  fhiclcpp::fhiclcpp
   Boost::filesystem
-  TRACE::MF
-  TRACE::TRACE
 )
 cet_build_plugin(graphite artdaq::metric
   LIBRARIES PRIVATE
-  fhiclcpp::fhiclcpp
-  TRACE::MF
 )
 cet_build_plugin(websocket artdaq::metric
   LIBRARIES PRIVATE
@@ -60,24 +50,16 @@ cet_build_plugin(websocket artdaq::metric
 cet_build_plugin(msgFacility artdaq::metric
   LIBRARIES PRIVATE
   messagefacility::MF_MessageLogger
-  fhiclcpp::fhiclcpp
-  TRACE::MF
 )
 cet_build_plugin(procFile artdaq::metric
   LIBRARIES PRIVATE
-  fhiclcpp::fhiclcpp
-  Boost::thread
-  TRACE::MF
 )
 cet_build_plugin(report artdaq::metric
   LIBRARIES PRIVATE
-  Threads::Threads
-  TRACE::MF
 )
 cet_build_plugin(test artdaq::metric
   LIBRARIES PRIVATE
   artdaq_utilities::artdaq-utilities_Plugins
-  TRACE::MF
 )
 
 install_headers()

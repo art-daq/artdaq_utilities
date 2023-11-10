@@ -1,27 +1,17 @@
 
 set(CAN_BUILD true)
 
-if(NOT EXISTS "$ENV{PYTHON_DIR}")
-    message("Directory \"$ENV{PYTHON_DIR}\" does not exist, can't build Python addons!")
-  set(CAN_BUILD false)
-endif(NOT EXISTS "$ENV{PYTHON_DIR}")
-
-if(NOT EXISTS "$ENV{SWIG_DIR}")
-    message("Directory \"$ENV{SWIG_DIR}\" does not exist, can't build Python addons!")
-  set(CAN_BUILD false)
-endif(NOT EXISTS "$ENV{SWIG_DIR}")
-
-
-if(CAN_BUILD)
-  #find_ups_product(swig v3)
-  #include(FindSWIG)
-
-  FIND_PACKAGE(SWIG REQUIRED) 
-  INCLUDE(${SWIG_USE_FILE})
   
-  FIND_PACKAGE(PythonLibs)  
-  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-endif(CAN_BUILD)
+FIND_PACKAGE(SWIG) 
+INCLUDE(${SWIG_USE_FILE})
+if ( NOT ${SWIG_FOUND} )
+  set(CAN_BUILD false)
+endif()
+  
+FIND_PACKAGE(Python3 COMPONENTS Python)
+if ( NOT ${Python3_FOUND})
+  set(CAN_BUILD false)
+endif()
 
 macro (create_python_addon)
     if(CAN_BUILD)
@@ -45,7 +35,7 @@ macro (create_python_addon)
 
     #swig_add_module (${PIA_ADDON_NAME} python ${PIA_SOURCES} ${LIB_SOURCES})
 	swig_add_library(${PIA_ADDON_NAME} LANGUAGE python SOURCES ${PIA_SOURCES} ${LIB_SOURCES})
-    swig_link_libraries (${PIA_ADDON_NAME} ${PIA_LIBRARIES} ${PYTHON_LIBRARIES})
+    swig_link_libraries (${PIA_ADDON_NAME} ${PIA_LIBRARIES} Python3::Python)
     
 		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
 		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
