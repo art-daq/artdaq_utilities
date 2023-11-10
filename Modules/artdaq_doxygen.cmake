@@ -1,4 +1,3 @@
-cmake_policy(VERSION 3.0.1)
 include(FindDoxygen)
 include(FindLATEX)
 

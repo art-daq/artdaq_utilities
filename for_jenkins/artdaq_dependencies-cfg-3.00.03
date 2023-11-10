@@ -50,12 +50,12 @@ elif [ "${basequal}" = "c15" ]; then
      newer_py=1
 fi
 
-#if [[ "x${gccver:-}" != "x" ]]; then
-#    do_build gcc ${gccver}
-#fi
-#if [[ "x${clangver:-}" != "x" ]];then
-#    do_build clang ${clangver}
-#fi
+if [[ "x${gccver:-}" != "x" ]]; then
+    do_build gcc ${gccver}
+fi
+if [[ "x${clangver:-}" != "x" ]];then
+    do_build clang ${clangver}
+fi
 
 ########## ARTDAQ Dependencies ############
 
@@ -94,18 +94,16 @@ fi
 #do_build mongodb v6_0_2b ${basequal}
 #unsetup git
 
-#build_noarch nodejs v4_5_0
-
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-#do_build xdaq v16_20_0_1b ${basequal}
+do_build xdaq v16_28_0_3 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
 
-do_build caenvme v3_4_4
-do_build caencomm v1_6_0a
-do_build caendigitizer v2_17_3a
+#do_build caenvme v3_4_4
+#do_build caencomm v1_6_0a
+#do_build caendigitizer v2_17_3a
 
 return 0
 
