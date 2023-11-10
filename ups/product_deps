@@ -20,19 +20,29 @@ old_style_config_vars
 
 #
 product			version		optional
+messagefacility	v2_10_03	s126
 messagefacility	v2_10_02	s124
 messagefacility	v2_10_01	s123
 messagefacility	v2_09_00	s120a
 messagefacility	v2_09_00	s120
 messagefacility	v2_08_04	s112
 TRACE			v3_17_09
-cetmodules		v3_21_02	-	only_for_build
+cetmodules		v3_22_02	-	only_for_build
 end_product_list
 
 # See https://cdcvs.fnal.gov/redmine/projects/cet-is-public/wiki/AboutQualifiers for information about the qualifiers used
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
 qualifier		messagefacility	TRACE	notes
+c14:s126:debug	c14:debug		-nq-	-std=c++17
+c14:s126:prof	c14:prof		-nq-	-std=c++17
+e20:s126:debug	e20:debug		-nq-	-std=c++17
+e20:s126:prof	e20:prof		-nq-	-std=c++17
+e26:s126:debug	e26:debug		-nq-	-std=c++17
+e26:s126:prof	e26:prof		-nq-	-std=c++17
+e28:s126:debug	e28:debug		-nq-	-std=c++20
+e28:s126:prof	e28:prof		-nq-	-std=c++20
+
 c14:s124:debug	c14:debug		-nq-	-std=c++17
 c14:s124:prof	c14:prof		-nq-	-std=c++17
 c15:s124:debug	c15:debug		-nq-	-std=c++17
