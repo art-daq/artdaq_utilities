@@ -189,7 +189,7 @@ uint64_t artdaq::SystemMetricCollector::GetNetworkTCPRetransSegs()
 		}
 	TRACE(TLVL_DEBUG + 10, "retranssegs=%lu", retranssegs);
 	fclose(filp);
-	return 0;
+	return retranssegs;
 }
 
 uint64_t artdaq::SystemMetricCollector::GetNetworkSendErrors(std::string ifname)
