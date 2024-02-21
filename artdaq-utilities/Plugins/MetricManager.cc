@@ -680,19 +680,16 @@ void artdaq::MetricManager::sendMetricLoop_()
 				{
 					continue;
 				}
-				if (metric->IsLevelEnabled(data_->Level))
-				{
 					try
 					{
-						metric->addMetricData(data_);
-						last_send_time = std::chrono::steady_clock::now();
+						auto result = metric->addMetricData(data_);
+						if(result) last_send_time = std::chrono::steady_clock::now();
 					}
 					catch (...)
 					{
 						TLOG(TLVL_ERROR) << "Error in MetricManager::sendMetric: error sending value to metric plugin with name "
 						                 << metric->getLibName();
 					}
-				}
 			}
 		}
 
