@@ -410,6 +410,12 @@ public:
 		return level_mask_[level];
 	}
 
+	uint64_t GetLevelMask() {
+		return level_mask_.to_ulong();
+	}
+
+
+
 	/**
 	 * \brief Determine if metrics are waiting to be sent.
 	 * \return True if metrics have been queued for sending by this MetricPlugin instance
