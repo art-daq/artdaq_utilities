@@ -52,6 +52,11 @@ cet_build_plugin(procFile artdaq::metric
 cet_build_plugin(report artdaq::metric
   LIBRARIES PRIVATE
 )
+cet_build_plugin(trace artdaq::metric
+  LIBRARIES PRIVATE
+  TRACE::MF
+  TRACE::TRACE
+)
 cet_build_plugin(test artdaq::metric
   LIBRARIES PRIVATE
   artdaq_utilities::artdaq-utilities_Plugins
