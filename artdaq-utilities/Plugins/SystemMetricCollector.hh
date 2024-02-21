@@ -33,33 +33,33 @@ public:
 	/// Get the amount of available RAM in the system
 	/// </summary>
 	/// <returns>The amount of available (free) RAM in bytes</returns>
-	uint64_t GetAvailableRAM();
+	static uint64_t GetAvailableRAM();
 	/// <summary>
 	/// Get the amount of RAM currently being used for cache
 	/// </summary>
 	/// <returns>The amount of RAM used in cache in bytes</returns>
-	uint64_t GetBufferedRAM();
+	static uint64_t GetBufferedRAM();
 	/// <summary>
 	/// Get the total amount of RAM in the system
 	/// </summary>
 	/// <returns>The total amount of RAM in the system, in bytes</returns>
-	uint64_t GetTotalRAM();
+	static uint64_t GetTotalRAM();
 	/// <summary>
 	/// Get the percentage of available RAM
 	/// </summary>
 	/// <param name="buffers">Whether cache RAM should be counted as available</param>
 	/// <returns>The amount of available RAM, in %</returns>
-	double GetAvailableRAMPercent(bool buffers);
+	static double GetAvailableRAMPercent(bool buffers);
 	/// <summary>
 	/// Get the amount of RAM being used by this process
 	/// </summary>
 	/// <returns>The amount of RAM being used by this process, in bytes</returns>
-	uint64_t GetProcessMemUsage();
+	static uint64_t GetProcessMemUsage();
 	/// <summary>
 	/// Get the amount of RAM being used by this process
 	/// </summary>
 	/// <returns>The amount of RAM used by this process, as a percentage of the total RAM in the system</returns>
-	double GetProcessMemUsagePercent();
+	static double GetProcessMemUsagePercent();
 
 	/// <summary>
 	/// Get the amount of data received from the network in the last network collection interval (1.0 s)
@@ -89,7 +89,7 @@ public:
 	/// Return the current number of TCP (total) segments retransmitted, segments
 	/// </summary>
 	/// <returns>the current number of TCP (total) segments retransmitted, segments</returns>
-	uint64_t GetNetworkTCPRetransSegs();
+	static uint64_t GetNetworkTCPRetransSegs();
 
 	/**
 	 * @brief Get the names of the local network interfaces

@@ -96,14 +96,14 @@ fi
 
 ################## Others #################
 #do_build zmq v4_3_1 ${basequal}
-do_build xdaq v16_28_0_3 ${basequal}
+#do_build xdaq v16_28_0_3 ${basequal}
 #do_build ganglia v3_7_1
 #do_build mpich v3_3_2a ${basequal}
 
 
-#do_build caenvme v3_4_4
-#do_build caencomm v1_6_0a
-#do_build caendigitizer v2_17_3a
+do_build caenvme v4_0_1
+do_build caencomm v1_7_0
+do_build caendigitizer v2_17_3b
 
 return 0
 
