@@ -20,8 +20,9 @@ old_style_config_vars
 
 #
 product			version		optional
-messagefacility	v2_10_04	s129
+messagefacility	v2_10_05	s130
 messagefacility	v2_10_04	s128
+messagefacility	v2_09_01	s120b
 messagefacility	v2_09_00	s120a
 TRACE			v3_17_10
 cetmodules		v3_24_01	-	only_for_build
@@ -31,14 +32,14 @@ end_product_list
 # -nq- means there is no qualifier
 # a "-" means the dependent product is not required by the parent and will not be setup
 qualifier		messagefacility	TRACE	notes
-c14:s129:debug	c14:debug		-nq-	-std=c++17
-c14:s129:prof	c14:prof		-nq-	-std=c++17
-e20:s129:debug	e20:debug		-nq-	-std=c++17
-e20:s129:prof	e20:prof		-nq-	-std=c++17
-e26:s129:debug	e26:debug		-nq-	-std=c++17
-e26:s129:prof	e26:prof		-nq-	-std=c++17
-e28:s129:debug	e28:debug		-nq-	-std=c++20
-e28:s129:prof	e28:prof		-nq-	-std=c++20
+c14:s130:debug	c14:debug		-nq-	-std=c++17
+c14:s130:prof	c14:prof		-nq-	-std=c++17
+e20:s130:debug	e20:debug		-nq-	-std=c++17
+e20:s130:prof	e20:prof		-nq-	-std=c++17
+e26:s130:debug	e26:debug		-nq-	-std=c++17
+e26:s130:prof	e26:prof		-nq-	-std=c++17
+e28:s130:debug	e28:debug		-nq-	-std=c++20
+e28:s130:prof	e28:prof		-nq-	-std=c++20
 
 c14:s128:debug	c14:debug		-nq-	-std=c++17
 c14:s128:prof	c14:prof		-nq-	-std=c++17
@@ -48,6 +49,15 @@ e26:s128:debug	e26:debug		-nq-	-std=c++17
 e26:s128:prof	e26:prof		-nq-	-std=c++17
 e28:s128:debug	e28:debug		-nq-	-std=c++20
 e28:s128:prof	e28:prof		-nq-	-std=c++20
+
+c7:s120b:debug	c7:debug		-nq-	-std=c++17
+c7:s120b:prof	c7:prof			-nq-	-std=c++17
+c14:s120b:debug	c14:debug		-nq-	-std=c++17
+c14:s120b:prof	c14:prof		-nq-	-std=c++17
+e20:s120b:debug	e20:debug		-nq-	-std=c++17
+e20:s120b:prof	e20:prof		-nq-	-std=c++17
+e26:s120b:debug	e26:debug		-nq-	-std=c++17
+e26:s120b:prof	e26:prof		-nq-	-std=c++17
 
 c7:s120a:debug	c7:debug		-nq-	-std=c++17
 c7:s120a:prof	c7:prof			-nq-	-std=c++17
