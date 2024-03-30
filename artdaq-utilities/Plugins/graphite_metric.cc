@@ -37,6 +37,7 @@ private:
 	std::string host_;
 	int port_;
 	std::string namespace_;
+	std::vector<std::string> delimiters_;
 	boost::asio::io_service io_service_;
 	tcp::socket socket_;
 	bool stopped_;
@@ -49,6 +50,7 @@ public:
 	 * \param config ParameterSet used to configure GraphiteMetric
 	 * \param app_name Name of the application sending metrics
 	 * \param metric_name Name of this MetricPlugin instance
+	 * \param delimiters List of metri name delimiters that will be replaced by "." for graphite
 	 *
 	 * \verbatim
 	 * GraphiteMetric accepts the following Parameters:
@@ -62,6 +64,7 @@ public:
 	    , host_(pset.get<std::string>("host", "localhost"))
 	    , port_(pset.get<int>("port", 2003))
 	    , namespace_(pset.get<std::string>("namespace", "artdaq."))
+		, delimiters_(pset.get<std::vector<std::string>>("delimiters", std::vector<std::string>()))
 	    , io_service_()
 	    , socket_(io_service_)
 	    , stopped_(true)
@@ -95,6 +98,9 @@ public:
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
+			for (auto delimiter : delimiters_) {
+				std::replace(nameTemp.begin(), nameTemp.end(), delimiter[0], '.');
+            }
 			std::ostream out(&data);
 			out << namespace_ << nameTemp << " "
 			    << value << " "

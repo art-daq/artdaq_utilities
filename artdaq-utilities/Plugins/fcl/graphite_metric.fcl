@@ -24,4 +24,5 @@ daq.metrics.graphite: { # Can be named anything.
   port: 2003           # The port number for metric data
   namespace: "artdaq." # The Graphite "namespace" for the metrics used. Namespaces are used for
                        # organizing metrics, and may be hierarchical, e.g., artdaq.evb., artdaq.br., etc.
+  #defaults: [":"]     # list of delimiters that are replaced by "." (the graphite delimiter) in the metrics name sent to graphite
 }
