@@ -100,7 +100,7 @@ public:
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
 			for (auto delimiter : delimiters_)
 			{
-				if (delimeter == "") continue;
+				if (delimiter == "") continue;
 				std::replace(nameTemp.begin(), nameTemp.end(), delimiter[0], '.');
 			}
 			std::ostream out(&data);
