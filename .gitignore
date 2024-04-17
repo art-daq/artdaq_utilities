@@ -16,3 +16,4 @@ bin/*
 obj/*
 *.vcxproj*
 spack-build-*
+build-linux-*
