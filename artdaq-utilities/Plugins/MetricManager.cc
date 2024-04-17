@@ -587,6 +587,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			std::unique_lock<std::mutex> lk(metric_mutex_);
 			auto cv_status = metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
 			if (cv_status == std::cv_status::no_timeout)
+			{
 				continue;  // at this point metricQueueEmpty() == false so the loop should break (if not, cv may have been woken spuriously)
 			}
 			// else: no metrics recieved, check if it is time to report "zero" metrics
