@@ -585,27 +585,16 @@ void artdaq::MetricManager::sendMetricLoop_()
 		while (metricQueueEmpty() && running_)
 		{
 			std::unique_lock<std::mutex> lk(metric_mutex_);
-			auto cv_status = metric_cv_.wait_for(lk, std::chrono::milliseconds(100)); 
-			if(cv_status == std::cv_status::no_timeout) { // if metrics were recieved in the meantime, leave the loop
-			    break; // at this point metricQueueEmpty() == false
-			} 
+			auto cv_status = metric_cv_.wait_for(lk, std::chrono::milliseconds(100));
+			if (cv_status == std::cv_status::no_timeout)
+				continue;  // at this point metricQueueEmpty() == false so the loop should break (if not, cv may have been woken spuriously)
+			}
 			// else: no metrics recieved, check if it is time to report "zero" metrics
 			auto now = std::chrono::steady_clock::now();
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() >
 			    metric_send_interval_ms_)
 			{
 				TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: Metric send interval exceeded: Sending metrics";
-				{
-					// no longer needed, since if there was a metric recieved we'll not reach this point in the loop
-					//std::unique_lock<std::mutex> lk(metric_cache_mutex_);  // last_metric_received_ is protected by metric_cache_mutex_
-					//auto time_since_last_metric_received_us = std::chrono::duration_cast<std::chrono::microseconds>(now - last_metric_received_).count();
-					//lk.unlock();
-					//if (time_since_last_metric_received_us < metric_holdoff_us_)
-					//{
-					//	//lk.unlock();
-					//	usleep(metric_holdoff_us_-time_since_last_metric_received_us);
-					//}
-				}
 				for (auto& metric : metric_plugins_)
 				{
 					if (metric)
@@ -616,6 +605,12 @@ void artdaq::MetricManager::sendMetricLoop_()
 				last_send_time = now;
 			}
 		}
+
+		if (!running_)
+		{
+			break;
+		}
+
 		{
 			// if NOT metricQueueEmpty(), at this point we have metrics to process
 			// make sure we wait at least metric_holdoff_us_ before we process
@@ -624,11 +619,11 @@ void artdaq::MetricManager::sendMetricLoop_()
 			if (time_since_last_metric_received_us < metric_holdoff_us_)
 			{
 				lk.unlock();
-				usleep(metric_holdoff_us_-time_since_last_metric_received_us);
+				usleep(metric_holdoff_us_ - time_since_last_metric_received_us);
 			}
 		}
 
-        // at this point, metrics were recieved and we waited at least metric_holdoff_us_, lets process them
+		// at this point, metrics were recieved and we waited at least metric_holdoff_us_, lets process them
 		TLOG(TLVL_DEBUG + 34) << "sendMetricLoop_: After Metric input wait loop";
 		busy_ = true;
 		auto processing_start = std::chrono::steady_clock::now();
@@ -714,7 +709,7 @@ void artdaq::MetricManager::sendMetricLoop_()
 			{
 				continue;
 			}
-			metric->sendMetrics(false, processing_start); // force send, interval_end
+			metric->sendMetrics(false, processing_start);  // force send, interval_end
 		}
 
 		// Limit rate of metrics going to plugins
