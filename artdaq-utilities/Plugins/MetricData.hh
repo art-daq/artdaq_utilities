@@ -2,6 +2,7 @@
 #define ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH
 
 #include <atomic>
+#include <bitset>
 #include <condition_variable>
 #include <limits>
 #include <list>
@@ -30,12 +31,14 @@ enum class MetricMode : uint32_t
 	LastPoint = 0x1,   ///< Report only the last value recorded. Useful for event counters, run numbers, etc.
 	Accumulate = 0x2,  ///< Report the sum of all values. Use for counters to report accurate results.
 	Average = 0x4,     ///< Report the average of all values. Use for rates to report accurate results.
-	Rate = 0x8,        ///< Reports the sum of all values, divided by the length of the time interval they were accumulated
-	///< over. Use to create rates from counters.
-	Minimum = 0x10,  ///< Reports the minimum value recorded.
-	Maximum = 0x20,  ///< Repots the maximum value recorded.
-	Persist = 0x40,  ///< Keep previous metric value in memory
+	Rate = 0x8,        ///< Reports the sum of all values, divided by the length of the time interval they were accumulated over. Use to create rates from counters.
+	Minimum = 0x10,    ///< Reports the minimum value recorded.
+	Maximum = 0x20,    ///< Repots the maximum value recorded.
+	Persist = 0x40,    ///< Keep previous metric value in memory
+	RunningSum = 0x80,    ///< Report the sum of all values, not resetting each time
 };
+
+
 /// <summary>
 /// Bitwise OR operator for MetricMode
 /// </summary>
@@ -430,6 +433,43 @@ struct MetricData
 		DataPointCount = 0;
 	}
 };
+
+static bool UseSuffix(MetricMode mode)
+{
+	std::bitset<32> modeSet(static_cast<uint32_t>(mode));
+	if (modeSet.count() <= 1) return false;
+
+	auto count = modeSet.count();
+	if ((mode & MetricMode::Persist) != MetricMode::None) count--;
+
+	return count > 1;
+}
+
+static std::string GetSuffix(MetricMode mode)
+{
+	if (UseSuffix(mode))
+	{
+		switch (mode)
+		{
+			case MetricMode::LastPoint:
+				return " - Last";
+			case MetricMode::Accumulate:
+				return " - Sum";
+			case MetricMode::Average:
+				return " - Average";
+			case MetricMode::Rate:
+				return " - Rate";
+			case MetricMode::Minimum:
+				return " - Min";
+			case MetricMode::Maximum:
+				return " - Max";
+			case MetricMode::RunningSum:
+				return " - Total";
+		}
+	}
+
+	return "";
+}
 }  // namespace artdaq
 
 #endif /* ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH */
