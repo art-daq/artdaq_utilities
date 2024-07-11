@@ -432,44 +432,45 @@ struct MetricData
 		}
 		DataPointCount = 0;
 	}
-};
 
-static bool UseSuffix(MetricMode mode)
-{
-	std::bitset<32> modeSet(static_cast<uint32_t>(mode));
-	if (modeSet.count() <= 1) return false;
-
-	auto count = modeSet.count();
-	if ((mode & MetricMode::Persist) != MetricMode::None) count--;
-
-	return count > 1;
-}
-
-static std::string GetSuffix(MetricMode mode)
-{
-	if (UseSuffix(mode))
+	bool UseSuffix()
 	{
-		switch (mode)
-		{
-			case MetricMode::LastPoint:
-				return " - Last";
-			case MetricMode::Accumulate:
-				return " - Sum";
-			case MetricMode::Average:
-				return " - Average";
-			case MetricMode::Rate:
-				return " - Rate";
-			case MetricMode::Minimum:
-				return " - Min";
-			case MetricMode::Maximum:
-				return " - Max";
-			case MetricMode::RunningSum:
-				return " - Total";
-		}
+		std::bitset<32> modeSet(static_cast<uint32_t>(Mode));
+		if (modeSet.count() <= 1) return false;
+
+		auto count = modeSet.count();
+		if ((Mode & MetricMode::Persist) != MetricMode::None) count--;
+
+		return count > 1;
 	}
 
-	return "";
-}
+	std::string GetSuffix(MetricMode mode)
+	{
+		if (UseSuffix())
+		{
+			switch (mode)
+			{
+				case MetricMode::LastPoint:
+					return " - Last";
+				case MetricMode::Accumulate:
+					return " - Sum";
+				case MetricMode::Average:
+					return " - Average";
+				case MetricMode::Rate:
+					return " - Rate";
+				case MetricMode::Minimum:
+					return " - Min";
+				case MetricMode::Maximum:
+					return " - Max";
+				case MetricMode::RunningSum:
+					return " - Total";
+			}
+		}
+
+		return "";
+	}
+};
+
 }  // namespace artdaq
 
 #endif /* ARTDAQ_UTILITIES_PLUGINS_METRICDATA_HH */
