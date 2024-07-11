@@ -295,15 +295,15 @@ public:
 
 					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
-						sendMetric_(data.Name + GetSuffix(data.Mode), data.Last, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::LastPoint), data.Last, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
 					{
-						sendMetric_(data.Name + GetSuffix(data.Mode), data.Value, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::Accumulate), data.Value, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::RunningSum) != MetricMode::None)
 					{
-						sendMetric_(data.Name + GetSuffix(data.Mode), metricRegistry_[metric.first].Value, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::RunningSum), metricRegistry_[metric.first].Value, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Average) != MetricMode::None)
 					{
@@ -325,7 +325,7 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + GetSuffix(data.Mode), average, data.Unit, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::Average), average, data.Unit, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 					{
@@ -350,15 +350,15 @@ public:
 							default:
 								break;
 						}
-						sendMetric_(data.Name + GetSuffix(data.Mode), rate, data.Unit + "/s", to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::Rate), rate, data.Unit + "/s", to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
 					{
-						sendMetric_(data.Name + GetSuffix(data.Mode), data.Min, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::Minimum), data.Min, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 					{
-						sendMetric_(data.Name + GetSuffix(data.Mode), data.Max, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + GetSuffix(MetricMode::Maximum), data.Max, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 
 					if ((data.Mode & MetricMode::Persist) != MetricMode::None)
@@ -492,31 +492,31 @@ private:
 
 			if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), zero, data.Unit, data.Type, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::LastPoint), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), zero, data.Unit, data.Type, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::Accumulate), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::RunningSum) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), zero, data.Unit, data.Type, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::RunningSum), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Average) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), 0.0, data.Unit, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::Average), 0.0, data.Unit, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Rate) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), 0.0, data.Unit + "/s", std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::Rate), 0.0, data.Unit + "/s", std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Minimum) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), zero, data.Unit, data.Type, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::Minimum), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 			if ((data.Mode & MetricMode::Maximum) != MetricMode::None)
 			{
-				sendMetric_(data.Name + GetSuffix(data.Mode), zero, data.Unit, data.Type, std::chrono::system_clock::now());
+				sendMetric_(data.Name + GetSuffix(MetricMode::Maximum), zero, data.Unit, data.Type, std::chrono::system_clock::now());
 			}
 		}
 	}
