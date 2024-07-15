@@ -74,7 +74,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
-		if (!inhibit_)
+		if (!inhibit_ || value != "0")
 		{
 			metrics_[name] = value + " " + unit;
 			writeReportMessage_(false);
