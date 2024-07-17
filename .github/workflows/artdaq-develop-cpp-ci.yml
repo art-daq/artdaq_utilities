@@ -20,6 +20,6 @@ on:
 
 jobs:
   build_against_dev_release:
-    uses: art-daq/.github/workflows/artdaq-build-develop.yml@stable
+    uses: art-daq/.github/.github/workflows/artdaq-build-develop.yml@stable
     secrets: inherit
     
