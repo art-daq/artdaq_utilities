@@ -139,9 +139,13 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		if (!stopped_ && !inhibit_)
+		if (!stopped_ && (!inhibit_ || value != "0"))
 		{
 			getTime_(outputStream_, time) << "FileMetric: " << name << ": " << value << " " << unit << "." << std::endl;
+		}
+		else
+		{
+			METLOG(TLVL_DEBUG + 33) << "FileMetric not sending " << name << ", value: " << value << ", stopped: " << std::boolalpha << stopped_ << ", inhibit: " << inhibit_;
 		}
 	}
 
