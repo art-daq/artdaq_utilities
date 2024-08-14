@@ -57,7 +57,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		if (!inhibit_)
+		if (!inhibit_ || value != "0")
 		{
 			TestMetric::LockReceivedMetricMutex();
 			METLOG(TLVL_DEBUG + 32) << "TestMetric: Adding MetricPoint name=" << name << ", value=" << value << ", unit=" << unit;
