@@ -30,6 +30,23 @@ public:
 		std::string unit;                                 ///< Units for the metric
 	};
 
+	static std::list<MetricPoint> get_received_metrics()
+	{
+		TLOG(TLVL_DEBUG + 39) << "Locking TestMetric::received_metrics_mutex";
+		while (!received_metrics_mutex.try_lock()) usleep(10000);
+		TLOG(TLVL_DEBUG + 39) << "Locked TestMetric::received_metrics_mutex";
+
+		std::list<MetricPoint> output(received_metrics.begin(), received_metrics.end());
+
+		received_metrics.clear();
+
+		TLOG(TLVL_DEBUG + 39) << "Unlocking TestMetric::received_metrics_mutex";
+		received_metrics_mutex.unlock();
+		TLOG(TLVL_DEBUG + 39) << "Unlocked TestMetric::received_metrics_mutex";
+
+		return output;
+	}
+
 	/// <summary>
 	/// Lock the ReceivedMetricMutex
 	/// </summary>
