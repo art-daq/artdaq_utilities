@@ -186,9 +186,9 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
+		auto points = artdaq::TestMetric::get_received_metrics();
 		bool present = false;
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		for (auto& point : points)
 		{
 			TLOG(TLVL_DEBUG) << "Metric: " << point.metric << ", Value: " << point.value << ", Units: " << point.unit;
 			if (point.metric == "Test Metric LastPoint")
@@ -199,8 +199,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 			}
 		}
 		BOOST_REQUIRE(present);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.sendMetric("Test Metric Accumulate", 4, "Units", 2, artdaq::MetricMode::Accumulate, "", true);
@@ -211,9 +209,9 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
+		auto points = artdaq::TestMetric::get_received_metrics();
 		bool present = false;
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		for (auto& point : points)
 		{
 			if (point.metric == "Test Metric Accumulate")
 			{
@@ -223,8 +221,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 			}
 		}
 		BOOST_REQUIRE(present);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.sendMetric("Test Metric Average", 1, "Units", 2, artdaq::MetricMode::Average, "", true);
@@ -235,9 +231,9 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
+		auto points = artdaq::TestMetric::get_received_metrics();
 		bool present = false;
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		for (auto& point : points)
 		{
 			if (point.metric == "Test Metric Average")
 			{
@@ -247,8 +243,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 			}
 		}
 		BOOST_REQUIRE(present);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.sendMetric("Test Metric Rate", 4, "Units", 2, artdaq::MetricMode::Rate, "", true);
@@ -259,9 +253,9 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
+		auto points = artdaq::TestMetric::get_received_metrics();
 		bool present = false;
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		for (auto& point : points)
 		{
 			if (point.metric == "Test Metric Rate")
 			{
@@ -270,8 +264,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 			}
 		}
 		BOOST_REQUIRE(present);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.sendMetric("Test Metric AccumulateAndRate", 4, "Units", 2, artdaq::MetricMode::Accumulate | artdaq::MetricMode::Rate, "", true);
@@ -282,11 +274,11 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
+		auto points = artdaq::TestMetric::get_received_metrics();
 		int present = 0;
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		for (auto& point : points)
 		{
-			if (point.metric == "Test Metric AccumulateAndRate - Total")
+			if (point.metric == "Test Metric AccumulateAndRate - Sum")
 			{
 				TRACE_REQUIRE_EQUAL(point.value, "9");
 				TRACE_REQUIRE_EQUAL(point.unit, "Units");
@@ -299,8 +291,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics)  // NOLINT(readability-function-size)
 			}
 		}
 		TRACE_REQUIRE_EQUAL(present, 2);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.do_stop();
@@ -353,8 +343,8 @@ BOOST_AUTO_TEST_CASE(SendMetrics_Levels)  // NOLINT(readability-function-size)
 	}
 
 	{
-		artdaq::TestMetric::LockReceivedMetricMutex();
-		for (auto& point : artdaq::TestMetric::received_metrics)
+		auto points = artdaq::TestMetric::get_received_metrics();
+		for (auto& point : points)
 		{
 			if (point.metric == "Test Metric 0")
 			{
@@ -421,8 +411,6 @@ BOOST_AUTO_TEST_CASE(SendMetrics_Levels)  // NOLINT(readability-function-size)
 			}
 		}
 		TRACE_REQUIRE_EQUAL(received_metrics_.to_ulong(), 0x2BF);
-		artdaq::TestMetric::received_metrics.clear();
-		artdaq::TestMetric::UnlockReceivedMetricMutex();
 	}
 
 	mm.do_stop();
