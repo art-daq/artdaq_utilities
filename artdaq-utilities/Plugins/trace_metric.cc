@@ -31,10 +31,10 @@ public:
 	 * "trace_level" (Default: TLVL_TRACE): Level to use for metric TRACEs
 	 * \endverbatim
 	 */
-	explicit TRACEMetric(fhicl::ParameterSet const& config, std::string const& app_name)
-	    : MetricPlugin(config, app_name)
+	explicit TRACEMetric(fhicl::ParameterSet const& config, std::string const& app_name, std::string const& metric_name)
+	    : MetricPlugin(config, app_name, metric_name)
 	    , stopped_(true)
-	    , name_(config.get<std::string>("trace_name", app_name + "_TRACEMetric"))
+	    , name_(config.get<std::string>("trace_name", metric_name))
 	    , lvl_(config.get<int>("trace_level", TLVL_TRACE))
 	{
 		startMetrics();
@@ -60,7 +60,7 @@ public:
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
 	 */
-	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const std::string& value, const std::string& unit, const std::chrono::system_clock::time_point& ) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
@@ -74,7 +74,7 @@ public:
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
 	 */
-	void sendMetric_(const std::string& name, const int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
@@ -88,7 +88,7 @@ public:
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
 	 */
-	void sendMetric_(const std::string& name, const double& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
@@ -102,7 +102,7 @@ public:
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
 	 */
-	void sendMetric_(const std::string& name, const float& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
@@ -116,7 +116,7 @@ public:
 	 * \param value Value of the metric
 	 * \param unit Units of the metric
 	 */
-	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit) override
+	void sendMetric_(const std::string& name, const unsigned long int& value, const std::string& unit, const std::chrono::system_clock::time_point&) override
 	{
 		if (!stopped_ && !inhibit_)
 		{
