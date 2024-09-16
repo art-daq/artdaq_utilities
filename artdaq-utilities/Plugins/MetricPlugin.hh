@@ -461,6 +461,9 @@ public:
 		unfiltered_metric_names_.insert(name);
 		return false;
 	}
+	uint64_t GetLevelMask() {
+		return level_mask_.to_ulong();
+	}
 
 	/**
 	 * \brief Determine if metrics are waiting to be sent.
