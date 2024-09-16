@@ -464,6 +464,8 @@ struct MetricData
 					return " - Max";
 				case MetricMode::RunningSum:
 					return " - Total";
+				default:
+					break;
 			}
 		}
 
