@@ -54,8 +54,8 @@ public:
 		fhicl::Sequence<size_t> metric_levels{fhicl::Name{"metric_levels"}, fhicl::Comment{"A list of levels that should be enabled for this plugin. OPTIONAL"}, std::vector<size_t>()};
 		/// "level_string" (OPTIONAL): A string containing a comma-separated list of levels to enable. Ranges are supported. Example: "1,2,4-10,11"
 		fhicl::Atom<std::string> level_string{fhicl::Name{"level_string"}, fhicl::Comment{"A string containing a comma-separated list of levels to enable. Ranges are supported. Example: \"1,2,4-10,11\" OPTIONAL"}, ""};
-		/// "reporting_interval" (Default: 15.0): The interval, in seconds, which the metric plugin will accumulate values for.
-		fhicl::Atom<double> reporting_interval{fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 15.0};
+		/// "reporting_interval" (Default: 10.0): The interval, in seconds, which the metric plugin will accumulate values for.
+		fhicl::Atom<double> reporting_interval{fhicl::Name{"reporting_interval"}, fhicl::Comment{"How often recorded metrics are sent to the underlying metric storage"}, 10.0};
 		/// "send_zeros" (Default: true): Whether zeros should be sent to the metric back-end when metrics are not reported in an interval and during shutdown
 		fhicl::Atom<bool> send_zeros{fhicl::Name{"send_zeros"}, fhicl::Comment{"Whether zeros should be sent to the metric back-end when metrics are not reported in an interval and during shutdown"}, true};
 	};
