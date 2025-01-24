@@ -244,7 +244,7 @@ public:
 			if (metricRegistry_.count(data->Name) == 0)
 			{
 				metricRegistry_[data->Name] = *data;
-				metricRegistry_[data->Name].Value = 0; // Will be added to later
+				metricRegistry_[data->Name].Value = 0;  // Will be added to later
 			}
 			metricData_[data->Name].push_back(*data);
 			METLOG_P(TLVL_DEBUG + 42) << "Current list size: " << metricData_[data->Name].size();
@@ -412,11 +412,10 @@ public:
 		return level_mask_[level];
 	}
 
-	uint64_t GetLevelMask() {
+	uint64_t GetLevelMask()
+	{
 		return level_mask_.to_ulong();
 	}
-
-
 
 	/**
 	 * \brief Determine if metrics are waiting to be sent.

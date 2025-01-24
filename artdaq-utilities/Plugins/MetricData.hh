@@ -28,16 +28,15 @@ enum class MetricType
 enum class MetricMode : uint32_t
 {
 	None = 0x0,
-	LastPoint = 0x1,   ///< Report only the last value recorded. Useful for event counters, run numbers, etc.
-	Accumulate = 0x2,  ///< Report the sum of all values. Use for counters to report accurate results.
-	Average = 0x4,     ///< Report the average of all values. Use for rates to report accurate results.
-	Rate = 0x8,        ///< Reports the sum of all values, divided by the length of the time interval they were accumulated over. Use to create rates from counters.
-	Minimum = 0x10,    ///< Reports the minimum value recorded.
-	Maximum = 0x20,    ///< Repots the maximum value recorded.
-	Persist = 0x40,    ///< Keep previous metric value in memory
-	RunningSum = 0x80,    ///< Report the sum of all values, not resetting each time
+	LastPoint = 0x1,    ///< Report only the last value recorded. Useful for event counters, run numbers, etc.
+	Accumulate = 0x2,   ///< Report the sum of all values. Use for counters to report accurate results.
+	Average = 0x4,      ///< Report the average of all values. Use for rates to report accurate results.
+	Rate = 0x8,         ///< Reports the sum of all values, divided by the length of the time interval they were accumulated over. Use to create rates from counters.
+	Minimum = 0x10,     ///< Reports the minimum value recorded.
+	Maximum = 0x20,     ///< Repots the maximum value recorded.
+	Persist = 0x40,     ///< Keep previous metric value in memory
+	RunningSum = 0x80,  ///< Report the sum of all values, not resetting each time
 };
-
 
 /// <summary>
 /// Bitwise OR operator for MetricMode
