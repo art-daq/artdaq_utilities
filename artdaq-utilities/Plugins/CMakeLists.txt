@@ -80,7 +80,7 @@ cet_build_plugin(trace artdaq::metric
 )
 cet_build_plugin(test artdaq::metric
   LIBRARIES PRIVATE
-  artdaq_utilities::artdaq-utilities_Plugins
+  artdaq-utilities::Plugins
 )
 
 install_headers()
