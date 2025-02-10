@@ -78,7 +78,7 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-cet_register_export_set(SET_NAME artdaq_utilities NAMESPACE artdaq_utilities)
+cet_register_export_set(SET_NAME artdaq-utilities NAMESPACE artdaq-utilities)
 
 # source
 add_subdirectory(artdaq-utilities)
