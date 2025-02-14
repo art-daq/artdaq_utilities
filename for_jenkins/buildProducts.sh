@@ -102,7 +102,7 @@ function maybe_calculate_coverage() {
 	sourcedir=$1
 	btype=$2
 	quals=$3
-	
+
 	do_coverage=0
 	if [[ $quals =~ e20 ]] && [[ $btype == "d" ]];then
 		do_coverage=1
@@ -110,7 +110,7 @@ function maybe_calculate_coverage() {
 	fi
 
 	setup_build $@
-	
+
 
 	clean_build $@
 
@@ -119,9 +119,9 @@ function maybe_calculate_coverage() {
 		lcov -d . --zerocounters &>>$TOP_DIR/${buildname}.log
 		lcov -c -i -d . -o ${sourcedir}.base &>>$TOP_DIR/${buildname}.log
 	fi
-	
+
 	do_build_impl $@
-		
+
 	if [ $do_coverage -eq 1 ];then
 		lcov -d . --capture --output-file ${sourcedir}.info &>>$TOP_DIR/${buildname}.log 2>&1
 		lcov -a ${sourcedir}.base -a ${sourcedir}.info --output-file ${sourcedir}.total &>>$TOP_DIR/${buildname}.log 2>&1
@@ -137,7 +137,7 @@ function do_build() {
 	sourcedir=$1
 	versiontag=$2
 	shift;shift
-	
+
 	if [ $exit_script -eq 1 ];then exit;fi
 	if [ ! -d $sourcedir ];then
 		git clone git@github.com:art-daq/$sourcedir
@@ -201,11 +201,11 @@ wait
 #do_build artdaq_demo ${build_tag:-v3_12_00}
 #do_build_nq artdaq_daqinterface ${build_tag:-v3_12_00}
 #do_build artdaq_demo_hdf5 ${build_tag:-v1_04_00}
-wait 
+wait
 #exit
 
 #do_build artdaq_database ${build_tag:-v1_07_00}
-wait 
+wait
 #exit
 
 do_build otsdaq ${build_tag:-v2_06_06}
@@ -224,5 +224,3 @@ wait
 do_build otsdaq_prepmodernization ${build_tag:-v2_06_06}
 do_build otsdaq_demo ${build_tag:-v2_06_06}
 wait
-
-

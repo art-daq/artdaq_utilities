@@ -28,8 +28,8 @@ exec 2> >(tee $stderr_file)
 if [[ ! -e $packagename ]]; then
     echo "I don't see $packagename so I'll git clone it"
     git clone ssh://p-${packagename}@cdcvs.fnal.gov/cvs/projects/${packagename} || \
-	errmsg "Error: problem cloning $packagename" 
-    
+	errmsg "Error: problem cloning $packagename"
+
     cd $packagename
     git checkout $packageversion || \
 	errmsg "Error: problem with checkout of $packageversion in $packagename ; could it be the tag doesn't exist?"

@@ -50,7 +50,7 @@ fi
 if [[ ! -e $scriptdir/parse_product_deps.py ]]; then
     errmsg "Expected to find \"parse_product_deps.py\" in same directory as this script (${scriptdir})"
 fi
-    
+
 
 function package_dep() {
 
@@ -118,18 +118,18 @@ function package_dep() {
     git checkout $version || \
 	errmsg "Problem performing git checkout on (possibly nonexistent) tag $version"
     cd ..
-    
+
     cmd="${scriptdir}/parse_product_deps.py ${no_underscore_package}/ups/product_deps $package $version $qualifiers"
 
     while read packageinfo; do
-	
+
 	packagename=$(echo $packageinfo | sed -r 's/^(\S+):.*/\1/' )
 	packageversion=$(echo $packageinfo | sed -r 's/^\S+:\s*(\S+).*/\1/' )
 	packagequals=$(echo $packageinfo | sed -r 's/^\S+:\s*\S+\s+(\S+).*/\1/' )
 
 	package_dep $packagename $packageversion $packagequals
     done < <( $cmd )
-    
+
     if [[ -e $tmpdir ]]; then
 	rm -rf $tmpdir
     fi
@@ -145,4 +145,3 @@ echo "Final packagearray is: "
 # line, similar to "ups depend" or "ups active"
 
 echo $packagearray | tr " " "\n" | sed -r -n '{N;s/(.*)\n(.*)/\1 \2/p}'
-

@@ -54,7 +54,7 @@ then
 elif [ "${OS}" = "Darwin" ]
 then
   flvr=d`uname -r | cut -f1 -d"."`
-else 
+else
   echo "ERROR: unrecognized operating system ${OS}"
   exit 1
 fi
@@ -70,7 +70,7 @@ blddir=${working_dir}/build
 # start with clean directories
 rm -rf ${blddir}
 rm -rf ${srcdir}
-rm -rf $WORKSPACE/copyBack 
+rm -rf $WORKSPACE/copyBack
 # now make the dfirectories
 mkdir -p ${srcdir} || exit 1
 mkdir -p ${blddir} || exit 1
@@ -90,7 +90,7 @@ echo
 cp ${WORKSPACE}/artdaq-utilities/for_jenkins/artdaq_dependencies-cfg-* .
 ./buildFW -t -b ${basequal} ${blddir} ${build_type} artdaq_dependencies-v3_00_03 || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
+   exit 1
  }
 
 echo

@@ -9,7 +9,7 @@
 import sys, os, re
 
 if not len(sys.argv) == 5:
-    sys.exit("Usage: " + sys.argv[0] + " <filename> <package> <version> <colon-delimited qualifiers>") 
+    sys.exit("Usage: " + sys.argv[0] + " <filename> <package> <version> <colon-delimited qualifiers>")
 
 
 def standardize_quals(qualstring):
@@ -22,7 +22,7 @@ target_package = sys.argv[2]
 target_version = sys.argv[3]
 target_quals = standardize_quals(sys.argv[4])
 
-    
+
 package_version_dict = {}
 package_column_dict = {}
 
@@ -34,7 +34,7 @@ in_qualifier_list = False
 found_quals = False
 
 for line in inf.readlines():
-    
+
     res = re.search(r"^product[ \t]+version[ \t]+optional", line)
 
     if res:
@@ -57,7 +57,7 @@ for line in inf.readlines():
         continue
 
     res = re.search(r"end_qualifier_list", line)
-    
+
     if res:
         in_qualifier_list = False
         continue
@@ -85,14 +85,14 @@ for line in inf.readlines():
 
             if skip_package:
                 continue
-            
+
         package, version = tokens[0:2]
-    
+
         # Since we don't yet know the qualifier set, assign it a "-"
 
         if package not in package_version_dict:
             package_version_dict[ package ] = [version, "-"]
-    
+
         continue
 
     if in_qualifier_list:
@@ -117,7 +117,7 @@ for line in inf.readlines():
 
                     possible_quals = standardize_quals( tokens[ package_column_dict[ package ] ] )
 
-                    if possible_quals == "-": 
+                    if possible_quals == "-":
                         del package_version_dict[ package ]
                     elif possible_quals != "-nq-":
                         package_version_dict[ package ][1] = possible_quals
@@ -130,6 +130,3 @@ if not found_quals:
 for package, info in package_version_dict.items():
     version, qualifier = info
     print "%s: %s %s" % (package, version, qualifier)
-
-
-
