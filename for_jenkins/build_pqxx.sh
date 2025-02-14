@@ -61,7 +61,7 @@ then
 elif [ "${OS}" = "Darwin" ]
 then
   flvr=d`uname -r | cut -f1 -d"."`
-else 
+else
   echo "ERROR: unrecognized operating system ${OS}"
   exit 1
 fi
@@ -77,7 +77,7 @@ blddir=${working_dir}/build
 # start with clean directories
 rm -rf ${blddir}
 rm -rf ${srcdir}
-rm -rf $WORKSPACE/copyBack 
+rm -rf $WORKSPACE/copyBack
 # now make the dfirectories
 mkdir -p ${srcdir} || exit 1
 mkdir -p ${blddir} || exit 1
@@ -109,7 +109,7 @@ export CTEST_OUTPUT_ON_FAILURE=1
 
 ./buildFW -t -b ${basequal} -l ${pyqual} ${blddir} ${build_type} pqxx-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
+   exit 1
  }
 
  for file in ${blddir}/*.bz2;do
