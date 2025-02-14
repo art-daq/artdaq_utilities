@@ -14,7 +14,7 @@ cet_make_library(LIBRARY_NAME metric INTERFACE
   Boost::thread
 )
 
-cet_make_library(LIBRARY_NAME gpm INTERFACE EXPORT_SET PluginTypes SOURCE GPMPublisher.hh GPMSubscriber.hh LIBRARIES INTERFACE 
+cet_make_library(LIBRARY_NAME gpm INTERFACE EXPORT_SET PluginTypes SOURCE GPMPublisher.hh GPMSubscriber.hh LIBRARIES INTERFACE
   fhiclcpp::fhiclcpp
   cetlib::compiler_macros
   TRACE::TRACE

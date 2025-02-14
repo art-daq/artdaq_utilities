@@ -387,7 +387,7 @@ retrans()
     else { printf "%d\n", $rt_general; }'"'"'
 }
 markRetrans() { retrans0=`retrans`; }
-deltaRetrans() 
+deltaRetrans()
 {   retrans1=`retrans`
     perl -e '"'"'
     @retrans0 = split " ","'"'"'"$retrans0"'"'"'"; # tricky shell quoting
@@ -451,7 +451,7 @@ fi
 test $format = g && fmt=Gb || fmt=Mb
 printf "$hdr" $fmt |tee $data_file
 #____________date____________ _%s/s_ errs drop ovrun frame __rmt_retrans__ flows inflight(K) rcv(K) snd(K) rcalc(K)\n
-#un Mar 20 15:06:21 CDT 2016  16.70  283    0     0   283 16598 16375 223     5     488.0    85.3  
+#un Mar 20 15:06:21 CDT 2016  16.70  283    0     0   283 16598 16375 223     5     488.0    85.3
 for nfile in $files;do  # for when opt_permutate
 
     num_nodes=`cat $nfile | wc -l`

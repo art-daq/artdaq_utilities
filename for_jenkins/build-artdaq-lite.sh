@@ -77,7 +77,7 @@ then
 elif [ "${OS}" = "Darwin" ]
 then
   flvr=d`uname -r | cut -f1 -d"."`
-else 
+else
   echo "ERROR: unrecognized operating system ${OS}"
   exit 1
 fi
@@ -93,7 +93,7 @@ blddir=${working_dir}/build
 # start with clean directories
 rm -rf ${blddir}
 rm -rf ${srcdir}
-rm -rf $WORKSPACE/copyBack 
+rm -rf $WORKSPACE/copyBack
 # now make the dfirectories
 mkdir -p ${srcdir} || exit 1
 mkdir -p ${blddir} || exit 1
@@ -118,12 +118,12 @@ echo
 export CTEST_OUTPUT_ON_FAILURE=1
 ./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
+   exit 1
  }
  if [[ "${demo_build}" != "false" ]]; then
 ./buildFW -t -b ${basequal} ${pyflag:+-l ${pyflag}} -s ${squal} ${blddir} ${build_type} artdaq_demo-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
-   exit 1 
+   exit 1
  }
  fi
 source ${blddir}/setups

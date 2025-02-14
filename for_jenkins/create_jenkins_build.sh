@@ -1,7 +1,7 @@
 #!/bin/env bash
 
 if [[ "$#" != "3" ]]; then
-    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <colon-separated qualifier list>" 
+    echo "Usage: ./"$(basename $0)" <packagename> <packageversion> <colon-separated qualifier list>"
     exit 0
 fi
 
@@ -47,7 +47,7 @@ function main() {
 
 package_e_qual=$( echo $package_all_quals_colondelim | sed -r 's/.*(e[0-9]+).*/\1/' )
 package_s_qual=$( echo $package_all_quals_colondelim | sed -r 's/.*(s[0-9]+).*/\1/' )
-    
+
 echo "I think you want a Jenkins build of $packagename $packageversion," \
     "build qualifiers $package_all_quals_colondelim"
 
@@ -79,7 +79,7 @@ cmd="$scriptdir/package_deps.sh $packagename $packageversion $package_all_quals_
 tmpfile=$(uuidgen)
 $cmd 2>&1 > $tmpfile
 
-if [[ "$?" == "0" ]]; then 
+if [[ "$?" == "0" ]]; then
     cat $tmpfile | \
 	grep -v cetbuildtools | \
 	grep -v artdaq_ganglia_plugin | \
@@ -151,13 +151,13 @@ git checkout $build_framework_branch || \
 
 commits_ago="-1"
 
-for i in {0..100}; do 
+for i in {0..100}; do
     res=$( git show HEAD~${i}:CMakeLists.txt | grep -E "\(\s*art\s+${full_art_version}" )
-    
-    if [[ -n $res ]]; then 
-	commits_ago=$i; 
-	break; 
-    fi; 
+
+    if [[ -n $res ]]; then
+	commits_ago=$i;
+	break;
+    fi;
 done
 
 [[ "$commits_ago" != "-1" ]] || \
@@ -176,7 +176,7 @@ while read line ; do
     version=$( echo $line | awk '{print $2}' )
 
     echo $package $version
-    
+
     underscored_package=$( echo $package | tr "-" "_" )
 
     if [[ "${underscored_package}" != "$upspackagename" ]]; then
@@ -225,15 +225,15 @@ function cleanup() {
 }
 
 function edit_buildfile() {
-    
+
     # I'll need to give some careful thought to the possible permutations
     # of the build qualifiers
-    
+
     possible_qualifiers="${package_e_qual} ${package_e_qual}:${package_s_qual} ${package_s_qual}:${package_e_qual}"
 
     for qual in $possible_qualifiers; do
 	res=$( grep -r '^\s*'$qual'\s*)\s*$' $buildfile )
-	
+
 	if [[ "$res" != "" ]]; then
 	    break
 	fi
@@ -265,12 +265,12 @@ function edit_buildfile() {
     wget http://scisoft.fnal.gov/scisoft/bundles/nu/
 
     nutools_versions=$basedir/$(uuidgen)
-    
+
     grep "v._.._.." index.html | sed -r 's/.*(v[0-9]_[0-9][0-9]_[0-9][0-9]).*/\1/' > $nutools_versions
 
     while read nutools_version ; do
 	nutools_art_version=$( get_art_from_nutools $nutools_version )
-	
+
 	if [[ $nutools_art_version == $art_version ]]; then
 	    found_nutools="1"
 	    break
