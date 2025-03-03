@@ -18,7 +18,7 @@ cmake_minimum_required (VERSION 3.19)
 
 find_package(cetmodules 3.16.00 REQUIRED)
 
-project(artdaq_utilities VERSION 1.11.00)
+project(artdaq-utilities VERSION 1.11.00)
 
 include(CetCMakeEnv)
 cet_cmake_env()
@@ -78,7 +78,7 @@ if(BTYPE_UC STREQUAL DEBUG)
   add_definitions(-DDEBUGME)
 endif()
 
-cet_register_export_set(SET_NAME artdaq_utilities NAMESPACE artdaq_utilities)
+cet_register_export_set(SET_NAME artdaq-utilities NAMESPACE artdaq-utilities)
 
 # source
 add_subdirectory(artdaq-utilities)
