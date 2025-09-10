@@ -328,7 +328,7 @@ OPTIMIZE_OUTPUT_SLICE  = NO
 #
 # Note see also the list of default file extension mappings.
 
-EXTENSION_MAPPING      =
+EXTENSION_MAPPING      = js=JavaScript html=JavaScript
 
 # If the MARKDOWN_SUPPORT tag is enabled then doxygen pre-processes all comments
 # according to the Markdown format, which allows for more readable
@@ -913,6 +913,8 @@ FILE_PATTERNS          = *.c \
                          *.hpp \
                          *.h++ \
                          *.cs \
+                         *.html \
+                         *.js \
                          *.d \
                          *.php \
                          *.php4 \
