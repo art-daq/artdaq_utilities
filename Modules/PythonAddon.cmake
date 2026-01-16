@@ -1,6 +1,7 @@
 
 set(CAN_BUILD true)
 
+include(GNUInstallDirs)
 
 FIND_PACKAGE(SWIG)
 INCLUDE(${SWIG_USE_FILE})
@@ -8,7 +9,7 @@ if ( NOT ${SWIG_FOUND} )
   set(CAN_BUILD false)
 endif()
 
-FIND_PACKAGE(Python3 COMPONENTS Python)
+FIND_PACKAGE(Python3 COMPONENTS Development.Embed)
 if ( NOT ${Python3_FOUND})
   set(CAN_BUILD false)
 endif()
@@ -46,15 +47,10 @@ macro (create_python_addon)
 
     set(PIA_ADDON_LIBNAME _${PIA_ADDON_NAME})
 
-    set( mrb_build_dir $ENV{MRB_BUILDDIR} )
-    if( mrb_build_dir )
-        set( this_build_path ${mrb_build_dir}/${product} )
-    else()
-        set( this_build_path $ENV{CETPKG_BUILD} )
-    endif()
-
-     add_custom_command(TARGET ${PIA_ADDON_NAME} POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py ${this_build_path}/${artdaq_LIBRARY_DIR}
+    get_target_property(PIA_LIB_DIR ${PIA_ADDON_NAME} LIBRARY_OUTPUT_DIRECTORY)
+    add_custom_command(TARGET ${PIA_ADDON_NAME} POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/${PIA_ADDON_NAME}.py
+                        COMMAND ${CMAKE_COMMAND} -E copy ${PIA_LIB_DIR}/${PIA_ADDON_LIBNAME}.so ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/${PIA_ADDON_LIBNAME}.so
      )
 
     else(CAN_BUILD)
