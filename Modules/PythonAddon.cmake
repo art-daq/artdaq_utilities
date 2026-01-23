@@ -48,10 +48,9 @@ macro (create_python_addon)
     set(PIA_ADDON_LIBNAME _${PIA_ADDON_NAME})
 
     get_target_property(PIA_LIB_DIR ${PIA_ADDON_NAME} LIBRARY_OUTPUT_DIRECTORY)
-    add_custom_command(TARGET ${PIA_ADDON_NAME} POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/${PIA_ADDON_NAME}.py
-                        COMMAND ${CMAKE_COMMAND} -E copy ${PIA_LIB_DIR}/${PIA_ADDON_LIBNAME}.so ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/${PIA_ADDON_LIBNAME}.so
-     )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PIA_ADDON_NAME}.py
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/)
+    install(FILES ${PIA_LIB_DIR}/${PIA_ADDON_LIBNAME}.so DESTINATION ${CMAKE_INSTALL_LIBDIR}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/)
 
     else(CAN_BUILD)
         message("Compatible version of Swig found. NOT building ${PIA_ADDON_NAME}")
