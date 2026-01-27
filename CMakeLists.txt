@@ -21,6 +21,11 @@ find_package(cetmodules 3.16.00 REQUIRED)
 project(artdaq-utilities VERSION 2.01.01)
 
 include(CetCMakeEnv)
+include(SetCompilerFlags)
+include(InstallHeaders)
+include(InstallSource)
+include(InstallFhicl)
+
 cet_cmake_env()
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
