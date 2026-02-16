@@ -94,9 +94,6 @@ add_subdirectory(script)
 # testing
 add_subdirectory(test)
 
-# Useful tools and scripts for building ARTDAQ on Jenkins
-add_subdirectory(for_jenkins)
-
 # doc - Documentation
 if ( NOT DEFINED ENV{DISABLE_DOXYGEN} )
 add_subdirectory(doc)
