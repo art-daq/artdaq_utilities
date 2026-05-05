@@ -5,8 +5,9 @@ import html
 import re
 import sys
 from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     import plotly.graph_objects as go
@@ -22,20 +23,29 @@ VALUE_REGEX = re.compile(
 )
 
 
+@dataclass
+class MetricSeries:
+    time: List[datetime] = field(default_factory=list)
+    value: List[float] = field(default_factory=list)
+    units: Set[str] = field(default_factory=set)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Convert FileMetric output into an HTML page with Plotly plots."
     )
-    parser.add_argument("input_pos", nargs="?", help="Input FileMetric output file")
-    parser.add_argument("output_pos", nargs="?", help="Output HTML file")
-    parser.add_argument("--input", dest="input_opt", help="Input FileMetric output file")
+    parser.add_argument("input_file", nargs="?", help="Input FileMetric output file")
+    parser.add_argument("output_file", nargs="?", help="Output HTML file")
+    parser.add_argument(
+        "--input", dest="input_opt", help="Input FileMetric output file"
+    )
     parser.add_argument("--output", dest="output_opt", help="Output HTML file")
     return parser.parse_args()
 
 
 def resolve_paths(args: argparse.Namespace) -> Tuple[str, str]:
-    input_path = args.input_opt or args.input_pos
-    output_path = args.output_opt or args.output_pos
+    input_path = args.input_opt or args.input_file
+    output_path = args.output_opt or args.output_file
 
     if input_path is None or output_path is None:
         raise SystemExit(
@@ -43,10 +53,12 @@ def resolve_paths(args: argparse.Namespace) -> Tuple[str, str]:
             "(input output.html) or flags (--input ... --output ...)."
         )
 
-    if args.input_opt and args.input_pos and args.input_opt != args.input_pos:
+    if args.input_opt and args.input_file and args.input_opt != args.input_file:
         raise SystemExit("Conflicting input paths provided by positional and --input.")
-    if args.output_opt and args.output_pos and args.output_opt != args.output_pos:
-        raise SystemExit("Conflicting output paths provided by positional and --output.")
+    if args.output_opt and args.output_file and args.output_opt != args.output_file:
+        raise SystemExit(
+            "Conflicting output paths provided by positional and --output."
+        )
 
     return input_path, output_path
 
@@ -95,7 +107,7 @@ def metric_group(metric_name: str) -> str:
 
 
 def build_html(
-    grouped_series: Dict[str, Dict[str, Dict[str, List]]], total_points: int
+    grouped_series: Dict[str, Dict[str, MetricSeries]], total_points: int
 ) -> str:
     if total_points == 0:
         return (
@@ -119,14 +131,18 @@ def build_html(
         traces = grouped_series[group_name]
         for metric_name in sorted(traces):
             metric_data = traces[metric_name]
-            unit = metric_data["unit"][0] if metric_data["unit"] else ""
+            unit = ""
+            if len(metric_data.units) == 1:
+                unit = next(iter(metric_data.units))
+            elif len(metric_data.units) > 1:
+                unit = "mixed units"
             trace_label = metric_name
             if unit:
                 trace_label = f"{metric_name} [{unit}]"
             fig.add_trace(
                 go.Scatter(
-                    x=metric_data["time"],
-                    y=metric_data["value"],
+                    x=metric_data.time,
+                    y=metric_data.value,
                     mode="lines+markers",
                     name=trace_label,
                 )
@@ -157,8 +173,8 @@ def main() -> int:
     args = parse_args()
     input_path, output_path = resolve_paths(args)
 
-    grouped_series: Dict[str, Dict[str, Dict[str, List]]] = defaultdict(
-        lambda: defaultdict(lambda: {"time": [], "value": [], "unit": []})
+    grouped_series: Dict[str, Dict[str, MetricSeries]] = defaultdict(
+        lambda: defaultdict(MetricSeries)
     )
     parseable_points = 0
 
@@ -169,9 +185,9 @@ def main() -> int:
                 continue
             timestamp, metric_name, value, unit = parsed
             group_name = metric_group(metric_name)
-            grouped_series[group_name][metric_name]["time"].append(timestamp)
-            grouped_series[group_name][metric_name]["value"].append(value)
-            grouped_series[group_name][metric_name]["unit"].append(unit)
+            grouped_series[group_name][metric_name].time.append(timestamp)
+            grouped_series[group_name][metric_name].value.append(value)
+            grouped_series[group_name][metric_name].units.add(unit)
             parseable_points += 1
 
     html_doc = build_html(grouped_series, parseable_points)
