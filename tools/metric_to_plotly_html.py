@@ -3,7 +3,6 @@
 import argparse
 import html
 import re
-import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -189,26 +188,30 @@ def main() -> int:
     )
     parseable_points = 0
 
-    with open(input_path, "r", encoding="utf-8") as metric_file:
-        for raw_line in metric_file:
-            parsed = parse_line(raw_line.strip())
-            if parsed is None:
-                continue
-            timestamp, metric_name, value, unit = parsed
-            group_name = metric_group(metric_name)
-            grouped_series[group_name][metric_name].time.append(timestamp)
-            grouped_series[group_name][metric_name].value.append(value)
-            grouped_series[group_name][metric_name].units.add(unit)
-            parseable_points += 1
+    try:
+        with open(input_path, "r", encoding="utf-8") as metric_file:
+            for raw_line in metric_file:
+                parsed = parse_line(raw_line.strip())
+                if parsed is None:
+                    continue
+                timestamp, metric_name, value, unit = parsed
+                group_name = metric_group(metric_name)
+                grouped_series[group_name][metric_name].time.append(timestamp)
+                grouped_series[group_name][metric_name].value.append(value)
+                grouped_series[group_name][metric_name].units.add(unit)
+                parseable_points += 1
+    except OSError as exc:
+        raise SystemExit(f"Unable to read input file '{input_path}': {exc}") from exc
 
     html_doc = build_html(grouped_series, parseable_points)
 
-    with open(output_path, "w", encoding="utf-8") as output_file:
-        output_file.write(html_doc)
+    try:
+        with open(output_path, "w", encoding="utf-8") as output_file:
+            output_file.write(html_doc)
+    except OSError as exc:
+        raise SystemExit(f"Unable to write output file '{output_path}': {exc}") from exc
 
-    sys.stdout.write(html_doc)
-    if not html_doc.endswith("\n"):
-        sys.stdout.write("\n")
+    print(html_doc)
     return 0
 
 
