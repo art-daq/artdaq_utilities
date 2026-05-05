@@ -32,14 +32,25 @@ class MetricSeries:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert FileMetric output into an HTML page with Plotly plots."
+        description=(
+            "Convert FileMetric output into an HTML page with Plotly plots. "
+            "The generated HTML is always written to the output file and stdout."
+        )
     )
     parser.add_argument("input_file", nargs="?", help="Input FileMetric output file")
-    parser.add_argument("output_file", nargs="?", help="Output HTML file")
+    parser.add_argument(
+        "output_file",
+        nargs="?",
+        help="Output HTML file (HTML is also emitted to stdout)",
+    )
     parser.add_argument(
         "--input", dest="input_opt", help="Input FileMetric output file"
     )
-    parser.add_argument("--output", dest="output_opt", help="Output HTML file")
+    parser.add_argument(
+        "--output",
+        dest="output_opt",
+        help="Output HTML file (HTML is also emitted to stdout)",
+    )
     return parser.parse_args()
 
 
