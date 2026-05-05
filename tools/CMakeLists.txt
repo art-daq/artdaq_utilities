@@ -1,0 +1,1 @@
+cet_script(ALWAYS_COPY metric_to_plotly_html.py)
