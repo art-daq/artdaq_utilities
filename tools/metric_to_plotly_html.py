@@ -33,7 +33,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Convert FileMetric output into an HTML page with Plotly plots. "
-            "The generated HTML is always written to the output file and stdout."
+            "The generated HTML is always written to the output file and stdout. "
+            "Use either positional arguments (input output.html) or flags "
+            "(--input ... --output ...); if both styles are supplied, values must match."
         )
     )
     parser.add_argument("input_file", nargs="?", help="Input FileMetric output file")
@@ -186,7 +188,7 @@ def main() -> int:
     grouped_series: Dict[str, Dict[str, MetricSeries]] = defaultdict(
         lambda: defaultdict(MetricSeries)
     )
-    parseable_points = 0
+    total_points = 0
 
     try:
         with open(input_path, "r", encoding="utf-8") as metric_file:
@@ -199,11 +201,11 @@ def main() -> int:
                 grouped_series[group_name][metric_name].time.append(timestamp)
                 grouped_series[group_name][metric_name].value.append(value)
                 grouped_series[group_name][metric_name].units.add(unit)
-                parseable_points += 1
+                total_points += 1
     except OSError as exc:
         raise SystemExit(f"Unable to read input file '{input_path}': {exc}") from exc
 
-    html_doc = build_html(grouped_series, parseable_points)
+    html_doc = build_html(grouped_series, total_points)
 
     try:
         with open(output_path, "w", encoding="utf-8") as output_file:
