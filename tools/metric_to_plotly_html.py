@@ -207,6 +207,8 @@ def main() -> int:
         output_file.write(html_doc)
 
     sys.stdout.write(html_doc)
+    if not html_doc.endswith("\n"):
+        sys.stdout.write("\n")
     return 0
 
 
