@@ -245,7 +245,8 @@ def read_new_lines(states: List[FollowState], from_start: bool) -> List[str]:
 
 def update_series(
     grouped_series: Dict[str, Dict[str, MetricSeries]], lines: Iterable[str], max_points: int
-) -> None:
+) -> int:
+    added_points = 0
     for line in lines:
         parsed = parse_line(line.strip())
         if parsed is None:
@@ -257,6 +258,8 @@ def update_series(
         if metric_name not in grouped_series[group_name]:
             grouped_series[group_name][metric_name] = MetricSeries()
         grouped_series[group_name][metric_name].append(timestamp, value, unit, max_points)
+        added_points += 1
+    return added_points
 
 
 def select_groups(
@@ -346,7 +349,7 @@ def main() -> int:
 
     try:
         initial_lines = read_new_lines(states, args.from_start or args.list_plots)
-        update_series(grouped_series, initial_lines, args.max_points)
+        initial_points = update_series(grouped_series, initial_lines, args.max_points)
 
         if args.list_plots:
             groups = select_groups(grouped_series, selected_groups, plot_regex)
@@ -354,9 +357,16 @@ def main() -> int:
                 print(group)
             return 0
 
+        if initial_points > 0:
+            groups = select_groups(grouped_series, selected_groups, plot_regex)
+            render_dashboard(grouped_series, groups, args.columns, args.x_ticks)
+
         while True:
             new_lines = read_new_lines(states, args.from_start)
-            update_series(grouped_series, new_lines, args.max_points)
+            added_points = update_series(grouped_series, new_lines, args.max_points)
+            if added_points == 0:
+                time.sleep(args.refresh_seconds)
+                continue
             groups = select_groups(grouped_series, selected_groups, plot_regex)
             render_dashboard(grouped_series, groups, args.columns, args.x_ticks)
             time.sleep(args.refresh_seconds)
