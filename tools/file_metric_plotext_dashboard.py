@@ -233,7 +233,8 @@ def read_new_lines(states: List[FollowState], from_start: bool) -> List[str]:
     for state in states:
         if not ensure_stream(state, from_start):
             continue
-        assert state.stream is not None
+        if state.stream is None:
+            continue
         while True:
             raw_line = state.stream.readline()
             if not raw_line:
