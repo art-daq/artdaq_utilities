@@ -21,6 +21,7 @@ TIMESTAMP_FORMAT = "%a %b %d %H:%M:%S %Y"
 VALUE_REGEX = re.compile(
     r"^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*(.*?)\s*$"
 )
+RANK_REGEX = re.compile("Rank ?[0-9]+")
 
 
 @dataclass
@@ -139,9 +140,11 @@ def parse_line(line: str) -> Optional[Tuple[datetime, str, float, str]]:
 
 
 def metric_group(metric_name: str) -> str:
-    if "." in metric_name:
-        return metric_name.rsplit(".", 1)[-1]
-    return metric_name
+    name_temp = RANK_REGEX.sub("Rank N", metric_name)
+
+    if "." in name_temp:
+        return name_temp.rsplit(".", 1)[-1]
+    return name_temp
 
 
 def build_html(
@@ -191,6 +194,7 @@ def build_html(
             xaxis_title="Timestamp",
             yaxis_title="Value",
             hovermode="x unified",
+            showlegend=True,
         )
 
         page_parts.append(f"<h2>{html.escape(group_name)}</h2>")
