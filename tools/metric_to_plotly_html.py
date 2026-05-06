@@ -2,10 +2,10 @@
 
 import argparse
 import html
-import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 try:
@@ -80,20 +80,25 @@ def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
     input_paths: List[str] = []
     seen = set()
     for input_spec in input_specs:
-        if os.path.isdir(input_spec):
-            for entry in sorted(os.listdir(input_spec)):
-                full_path = os.path.join(input_spec, entry)
-                if not os.path.isfile(full_path):
+        resolved_input = Path(input_spec).resolve()
+        if resolved_input.is_dir():
+            for entry in sorted(resolved_input.iterdir()):
+                resolved_entry = entry.resolve()
+                if entry.is_symlink() or not resolved_entry.is_file():
                     continue
-                if full_path in seen:
+                if resolved_entry.parent != resolved_input:
                     continue
-                input_paths.append(full_path)
-                seen.add(full_path)
-        elif os.path.isfile(input_spec):
-            if input_spec in seen:
+                resolved_entry_text = str(resolved_entry)
+                if resolved_entry_text in seen:
+                    continue
+                input_paths.append(resolved_entry_text)
+                seen.add(resolved_entry_text)
+        elif resolved_input.is_file():
+            resolved_input_text = str(resolved_input)
+            if resolved_input_text in seen:
                 continue
-            input_paths.append(input_spec)
-            seen.add(input_spec)
+            input_paths.append(resolved_input_text)
+            seen.add(resolved_input_text)
     return input_paths
 
 
