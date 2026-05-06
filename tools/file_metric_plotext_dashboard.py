@@ -244,7 +244,9 @@ def read_new_lines(states: List[FollowState], from_start: bool = False) -> List[
 
 
 def update_series(
-    grouped_series: Dict[str, Dict[str, MetricSeries]], lines: Iterable[str], max_points: int
+    grouped_series: Dict[str, Dict[str, MetricSeries]],
+    lines: Iterable[str],
+    max_points: int,
 ) -> int:
     added_points = 0
     for line in lines:
@@ -257,7 +259,9 @@ def update_series(
             grouped_series[group_name] = {}
         if metric_name not in grouped_series[group_name]:
             grouped_series[group_name][metric_name] = MetricSeries()
-        grouped_series[group_name][metric_name].append(timestamp, value, unit, max_points)
+        grouped_series[group_name][metric_name].append(
+            timestamp, value, unit, max_points
+        )
         added_points += 1
     return added_points
 
@@ -301,7 +305,9 @@ def render_dashboard(
             metric_data = traces[metric_name]
             if not metric_data.time:
                 continue
-            x_labels = [timestamp.strftime("%H:%M:%S") for timestamp in metric_data.time]
+            x_labels = [
+                timestamp.strftime("%H:%M:%S") for timestamp in metric_data.time
+            ]
             unit = ""
             if len(metric_data.units) == 1:
                 unit = next(iter(metric_data.units))
@@ -313,7 +319,9 @@ def render_dashboard(
         plt.xlabel("Time")
         plt.ylabel("Value")
         plt.grid(True, True)
-        max_trace_points = max((len(series.time) for series in traces.values()), default=0)
+        max_trace_points = max(
+            (len(series.time) for series in traces.values()), default=0
+        )
         tick_step = 1
         if max_trace_points > x_tick_count:
             tick_step = math.ceil(max_trace_points / x_tick_count)
