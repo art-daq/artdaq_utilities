@@ -86,8 +86,6 @@ def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
                 resolved_entry = entry.resolve()
                 if entry.is_symlink() or not resolved_entry.is_file():
                     continue
-                if resolved_entry.parent != resolved_input:
-                    continue
                 resolved_entry_text = str(resolved_entry)
                 if resolved_entry_text in seen:
                     continue
