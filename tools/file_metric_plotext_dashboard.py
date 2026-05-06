@@ -278,7 +278,8 @@ def render_dashboard(
     columns: int,
     x_tick_count: int,
 ) -> None:
-    plt.clf()
+    plt.clt()
+    plt.cld()
     if not groups:
         plt.clear_terminal()
         print("No selected plots available yet.")
@@ -287,6 +288,7 @@ def render_dashboard(
     subplot_columns = columns
     subplot_rows = math.ceil(len(groups) / subplot_columns)
     plt.subplots(subplot_rows, subplot_columns)
+    plt.date_form("H:M:S")
 
     for index, group_name in enumerate(groups):
         row = index // subplot_columns + 1
@@ -314,8 +316,6 @@ def render_dashboard(
         if max_trace_points > x_tick_count:
             tick_step = math.ceil(max_trace_points / x_tick_count)
         plt.xfrequency(tick_step)
-        if len(traces) > 1:
-            plt.legend(True)
     plt.show()
 
 
@@ -345,7 +345,7 @@ def main() -> int:
     grouped_series: Dict[str, Dict[str, MetricSeries]] = {}
 
     try:
-        initial_lines = read_new_lines(states, args.from_start)
+        initial_lines = read_new_lines(states, args.from_start or args.list_plots)
         update_series(grouped_series, initial_lines, args.max_points)
 
         if args.list_plots:
