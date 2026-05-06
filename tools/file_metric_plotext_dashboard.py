@@ -228,7 +228,7 @@ def ensure_stream(state: FollowState, from_start: bool) -> bool:
     return True
 
 
-def read_new_lines(states: List[FollowState], from_start: bool) -> List[str]:
+def read_new_lines(states: List[FollowState], from_start: bool = False) -> List[str]:
     lines: List[str] = []
     for state in states:
         if not ensure_stream(state, from_start):
@@ -281,10 +281,9 @@ def render_dashboard(
     columns: int,
     x_tick_count: int,
 ) -> None:
-    plt.clt()
-    plt.cld()
+    plt.clf()
+    plt.clear_terminal()
     if not groups:
-        plt.clear_terminal()
         print("No selected plots available yet.")
         return
 
@@ -362,7 +361,7 @@ def main() -> int:
             render_dashboard(grouped_series, groups, args.columns, args.x_ticks)
 
         while True:
-            new_lines = read_new_lines(states, args.from_start)
+            new_lines = read_new_lines(states)
             added_points = update_series(grouped_series, new_lines, args.max_points)
             if added_points == 0:
                 time.sleep(args.refresh_seconds)
