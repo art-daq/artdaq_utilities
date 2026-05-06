@@ -32,12 +32,14 @@ class MetricSeries:
     value: List[float] = field(default_factory=list)
     units: Set[str] = field(default_factory=set)
 
-    def append(self, timestamp: datetime, value: float, unit: str, max_points: int) -> None:
+    def append(
+        self, timestamp: datetime, value: float, unit: str, data_retention_limit: int
+    ) -> None:
         self.time.append(timestamp)
         self.value.append(value)
         self.units.add(unit)
-        if max_points > 0 and len(self.time) > max_points:
-            keep_from = len(self.time) - max_points
+        if data_retention_limit > 0 and len(self.time) > data_retention_limit:
+            keep_from = len(self.time) - data_retention_limit
             self.time = self.time[keep_from:]
             self.value = self.value[keep_from:]
 
@@ -145,11 +147,11 @@ def parse_line(line: str) -> Optional[Tuple[datetime, str, float, str]]:
     return timestamp, metric_name, value, unit
 
 
-def metric_group(metric_name: str) -> str:
-    name_temp = RANK_REGEX.sub("Rank N", metric_name)
-    if "." in name_temp:
-        return name_temp.rsplit(".", 1)[-1]
-    return name_temp
+def extract_metric_group_name(metric_name: str) -> str:
+    rank_normalized_name = RANK_REGEX.sub("Rank N", metric_name)
+    if "." in rank_normalized_name:
+        return rank_normalized_name.rsplit(".", 1)[-1]
+    return rank_normalized_name
 
 
 def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
@@ -166,17 +168,17 @@ def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
             for entry in sorted(resolved_input.iterdir()):
                 if not entry.is_file():
                     continue
-                resolved_entry = str(entry.resolve())
-                if resolved_entry in seen:
+                resolved_entry_path = str(entry.resolve())
+                if resolved_entry_path in seen:
                     continue
-                input_paths.append(resolved_entry)
-                seen.add(resolved_entry)
+                input_paths.append(resolved_entry_path)
+                seen.add(resolved_entry_path)
         elif resolved_input.is_file():
-            resolved_text = str(resolved_input)
-            if resolved_text in seen:
+            resolved_path = str(resolved_input)
+            if resolved_path in seen:
                 continue
-            input_paths.append(resolved_text)
-            seen.add(resolved_text)
+            input_paths.append(resolved_path)
+            seen.add(resolved_path)
     return input_paths
 
 
@@ -242,7 +244,7 @@ def update_series(
         if parsed is None:
             continue
         timestamp, metric_name, value, unit = parsed
-        group_name = metric_group(metric_name)
+        group_name = extract_metric_group_name(metric_name)
         if group_name not in grouped_series:
             grouped_series[group_name] = {}
         if metric_name not in grouped_series[group_name]:
