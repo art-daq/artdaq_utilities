@@ -277,7 +277,7 @@ def render_dashboard(
         print("No selected plots available yet.")
         return
 
-    subplot_columns = max(1, columns)
+    subplot_columns = columns
     subplot_rows = math.ceil(len(groups) / subplot_columns)
     plt.subplots(subplot_rows, subplot_columns)
 
@@ -306,7 +306,7 @@ def render_dashboard(
         tick_step = 1
         if max_trace_points > x_tick_count:
             tick_step = math.ceil(max_trace_points / x_tick_count)
-        plt.xfrequency(max(1, tick_step))
+        plt.xfrequency(tick_step)
         if len(traces) > 1:
             plt.legend(True)
     plt.show()
