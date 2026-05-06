@@ -2,11 +2,11 @@
 
 import argparse
 import html
+import os
 import re
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 try:
     import plotly.graph_objects as go
@@ -31,48 +31,70 @@ class MetricSeries:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Convert FileMetric output into an HTML page with Plotly plots. "
-            "The generated HTML is always written to the output file and stdout. "
-            "Use either positional arguments (input output.html) or flags "
-            "(--input ... --output ...); if both styles are supplied, values must match."
-        )
-    )
-    parser.add_argument("input_file", nargs="?", help="Input FileMetric output file")
-    parser.add_argument(
-        "output_file",
-        nargs="?",
-        help="Output HTML file (HTML is also emitted to stdout)",
+        description="Convert FileMetric output into an HTML page with Plotly plots."
     )
     parser.add_argument(
-        "--input", dest="input_opt", help="Input FileMetric output file"
+        "paths",
+        nargs="*",
+        help="Positional usage: <input ...> <output.html>.",
     )
     parser.add_argument(
-        "--output",
-        dest="output_opt",
-        help="Output HTML file (HTML is also emitted to stdout)",
+        "--input",
+        dest="input_opt",
+        action="append",
+        help="Input FileMetric file or directory. May be specified multiple times.",
     )
+    parser.add_argument("--output", dest="output_opt", help="Output HTML file")
     return parser.parse_args()
 
 
-def resolve_paths(args: argparse.Namespace) -> Tuple[str, str]:
-    input_path = args.input_opt or args.input_file
-    output_path = args.output_opt or args.output_file
+def resolve_paths(args: argparse.Namespace) -> Tuple[List[str], str]:
+    input_specs: List[str] = list(args.input_opt or [])
+    output_path = args.output_opt
 
-    if input_path is None or output_path is None:
+    if args.paths:
+        if output_path is None:
+            if len(args.paths) < 2:
+                raise SystemExit(
+                    "Positional usage requires at least one input and one output path."
+                )
+            input_specs.extend(args.paths[:-1])
+            output_path = args.paths[-1]
+        else:
+            input_specs.extend(args.paths)
+
+    if not input_specs or output_path is None:
         raise SystemExit(
-            "Both input and output are required. Use either positional args "
-            "(input output.html) or flags (--input ... --output ...)."
+            "Provide input path(s) and output path using positional form "
+            "(input ... output.html), flags (--input ... --output ...), or both."
         )
 
-    if args.input_opt and args.input_file and args.input_opt != args.input_file:
-        raise SystemExit("Conflicting input paths provided by positional and --input.")
-    if args.output_opt and args.output_file and args.output_opt != args.output_file:
-        raise SystemExit(
-            "Conflicting output paths provided by positional and --output."
-        )
+    input_paths = expand_input_specs(input_specs)
+    if not input_paths:
+        raise SystemExit("No readable input files found from provided input path(s).")
 
-    return input_path, output_path
+    return input_paths, output_path
+
+
+def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
+    input_paths: List[str] = []
+    seen = set()
+    for input_spec in input_specs:
+        if os.path.isdir(input_spec):
+            for entry in sorted(os.listdir(input_spec)):
+                full_path = os.path.join(input_spec, entry)
+                if not os.path.isfile(full_path):
+                    continue
+                if full_path in seen:
+                    continue
+                input_paths.append(full_path)
+                seen.add(full_path)
+        elif os.path.isfile(input_spec):
+            if input_spec in seen:
+                continue
+            input_paths.append(input_spec)
+            seen.add(input_spec)
+    return input_paths
 
 
 def parse_line(line: str) -> Optional[Tuple[datetime, str, float, str]]:
@@ -107,20 +129,7 @@ def parse_line(line: str) -> Optional[Tuple[datetime, str, float, str]]:
     return timestamp, metric_name, value, unit
 
 
-def metric_group(metric_name: str) -> str:
-    if " - " in metric_name:
-        return metric_name.rsplit(" - ", 1)[0]
-    if "." in metric_name:
-        return metric_name.split(".", 1)[0]
-    parts = metric_name.split()
-    if len(parts) > 1:
-        return parts[0]
-    return metric_name
-
-
-def build_html(
-    grouped_series: Dict[str, Dict[str, MetricSeries]], total_points: int
-) -> str:
+def build_html(grouped_series: Dict[str, MetricSeries], total_points: int) -> str:
     if total_points == 0:
         return (
             "<!doctype html><html><head><meta charset='utf-8'>"
@@ -140,25 +149,23 @@ def build_html(
     include_plotly = True
     for group_name in sorted(grouped_series):
         fig = go.Figure()
-        traces = grouped_series[group_name]
-        for metric_name in sorted(traces):
-            metric_data = traces[metric_name]
-            unit = ""
-            if len(metric_data.units) == 1:
-                unit = next(iter(metric_data.units))
-            elif len(metric_data.units) > 1:
-                unit = "mixed units"
-            trace_label = metric_name
-            if unit:
-                trace_label = f"{metric_name} [{unit}]"
-            fig.add_trace(
-                go.Scatter(
-                    x=metric_data.time,
-                    y=metric_data.value,
-                    mode="lines+markers",
-                    name=trace_label,
-                )
+        metric_data = grouped_series[group_name]
+        unit = ""
+        if len(metric_data.units) == 1:
+            unit = next(iter(metric_data.units))
+        elif len(metric_data.units) > 1:
+            unit = "mixed units"
+        trace_label = group_name
+        if unit:
+            trace_label = f"{group_name} [{unit}]"
+        fig.add_trace(
+            go.Scatter(
+                x=metric_data.time,
+                y=metric_data.value,
+                mode="lines+markers",
+                name=trace_label,
             )
+        )
 
         fig.update_layout(
             title=group_name,
@@ -183,27 +190,29 @@ def build_html(
 
 def main() -> int:
     args = parse_args()
-    input_path, output_path = resolve_paths(args)
+    input_paths, output_path = resolve_paths(args)
 
-    grouped_series: Dict[str, Dict[str, MetricSeries]] = defaultdict(
-        lambda: defaultdict(MetricSeries)
-    )
+    grouped_series: Dict[str, MetricSeries] = {}
     total_points = 0
 
-    try:
-        with open(input_path, "r", encoding="utf-8") as metric_file:
-            for raw_line in metric_file:
-                parsed = parse_line(raw_line.strip())
-                if parsed is None:
-                    continue
-                timestamp, metric_name, value, unit = parsed
-                group_name = metric_group(metric_name)
-                grouped_series[group_name][metric_name].time.append(timestamp)
-                grouped_series[group_name][metric_name].value.append(value)
-                grouped_series[group_name][metric_name].units.add(unit)
-                total_points += 1
-    except OSError as exc:
-        raise SystemExit(f"Unable to read input file '{input_path}': {exc}") from exc
+    for input_path in input_paths:
+        try:
+            with open(input_path, "r", encoding="utf-8") as metric_file:
+                for raw_line in metric_file:
+                    parsed = parse_line(raw_line.strip())
+                    if parsed is None:
+                        continue
+                    timestamp, metric_name, value, unit = parsed
+                    if metric_name not in grouped_series:
+                        grouped_series[metric_name] = MetricSeries()
+                    grouped_series[metric_name].time.append(timestamp)
+                    grouped_series[metric_name].value.append(value)
+                    grouped_series[metric_name].units.add(unit)
+                    total_points += 1
+        except OSError as exc:
+            raise SystemExit(
+                f"Unable to read input file '{input_path}': {exc}"
+            ) from exc
 
     html_doc = build_html(grouped_series, total_points)
 
@@ -213,7 +222,6 @@ def main() -> int:
     except OSError as exc:
         raise SystemExit(f"Unable to write output file '{output_path}': {exc}") from exc
 
-    print(html_doc)
     return 0
 
 
