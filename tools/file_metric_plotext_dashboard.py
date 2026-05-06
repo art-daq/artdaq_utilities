@@ -73,8 +73,9 @@ def parse_args() -> argparse.Namespace:
         action="append",
         dest="plot_opt",
         help=(
-            "Grouped plot name to display (suffix after final '.', with 'Rank <n>' "
-            "normalized to 'Rank N'). May be specified multiple times."
+            "Grouped plot name to display (suffix after final '.', with "
+            "'Rank<number>' and 'Rank <number>' normalized to 'Rank N'). "
+            "May be specified multiple times."
         ),
     )
     parser.add_argument(
@@ -300,7 +301,7 @@ def render_dashboard(
             if len(metric_data.units) == 1:
                 unit = next(iter(metric_data.units))
             elif len(metric_data.units) > 1:
-                unit = "mixed units: " + ",".join(sorted(metric_data.units))
+                unit = f"mixed units ({len(metric_data.units)})"
             trace_label = metric_name if not unit else f"{metric_name} [{unit}]"
             plt.plot(x_labels, metric_data.value, label=trace_label)
         plt.title(group_name)
