@@ -138,7 +138,15 @@ def parse_line(line: str) -> Optional[Tuple[datetime, str, float, str]]:
     return timestamp, metric_name, value, unit
 
 
-def build_html(grouped_series: Dict[str, MetricSeries], total_points: int) -> str:
+def metric_group(metric_name: str) -> str:
+    if "." in metric_name:
+        return metric_name.rsplit(".", 1)[-1]
+    return metric_name
+
+
+def build_html(
+    grouped_series: Dict[str, Dict[str, MetricSeries]], total_points: int
+) -> str:
     if total_points == 0:
         return (
             "<!doctype html><html><head><meta charset='utf-8'>"
@@ -158,23 +166,25 @@ def build_html(grouped_series: Dict[str, MetricSeries], total_points: int) -> st
     include_plotly = True
     for group_name in sorted(grouped_series):
         fig = go.Figure()
-        metric_data = grouped_series[group_name]
-        unit = ""
-        if len(metric_data.units) == 1:
-            unit = next(iter(metric_data.units))
-        elif len(metric_data.units) > 1:
-            unit = "mixed units"
-        trace_label = group_name
-        if unit:
-            trace_label = f"{group_name} [{unit}]"
-        fig.add_trace(
-            go.Scatter(
-                x=metric_data.time,
-                y=metric_data.value,
-                mode="lines+markers",
-                name=trace_label,
+        traces = grouped_series[group_name]
+        for metric_name in sorted(traces):
+            metric_data = traces[metric_name]
+            unit = ""
+            if len(metric_data.units) == 1:
+                unit = next(iter(metric_data.units))
+            elif len(metric_data.units) > 1:
+                unit = "mixed units"
+            trace_label = metric_name
+            if unit:
+                trace_label = f"{metric_name} [{unit}]"
+            fig.add_trace(
+                go.Scatter(
+                    x=metric_data.time,
+                    y=metric_data.value,
+                    mode="lines+markers",
+                    name=trace_label,
+                )
             )
-        )
 
         fig.update_layout(
             title=group_name,
@@ -201,7 +211,7 @@ def main() -> int:
     args = parse_args()
     input_paths, output_path = resolve_paths(args)
 
-    grouped_series: Dict[str, MetricSeries] = {}
+    grouped_series: Dict[str, Dict[str, MetricSeries]] = {}
     total_points = 0
 
     for input_path in input_paths:
@@ -212,11 +222,14 @@ def main() -> int:
                     if parsed is None:
                         continue
                     timestamp, metric_name, value, unit = parsed
-                    if metric_name not in grouped_series:
-                        grouped_series[metric_name] = MetricSeries()
-                    grouped_series[metric_name].time.append(timestamp)
-                    grouped_series[metric_name].value.append(value)
-                    grouped_series[metric_name].units.add(unit)
+                    group_name = metric_group(metric_name)
+                    if group_name not in grouped_series:
+                        grouped_series[group_name] = {}
+                    if metric_name not in grouped_series[group_name]:
+                        grouped_series[group_name][metric_name] = MetricSeries()
+                    grouped_series[group_name][metric_name].time.append(timestamp)
+                    grouped_series[group_name][metric_name].value.append(value)
+                    grouped_series[group_name][metric_name].units.add(unit)
                     total_points += 1
         except OSError as exc:
             raise SystemExit(
