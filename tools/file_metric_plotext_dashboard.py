@@ -23,6 +23,7 @@ TIMESTAMP_FORMAT = "%a %b %d %H:%M:%S %Y"
 VALUE_REGEX = re.compile(
     r"^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*(.*?)\s*$"
 )
+# FileMetric lines provide "<numeric value><optional whitespace><unit text>".
 RANK_REGEX = re.compile("Rank ?[0-9]+")
 
 
@@ -71,7 +72,10 @@ def parse_args() -> argparse.Namespace:
         "--plot",
         action="append",
         dest="plot_opt",
-        help="Grouped plot name to display (suffix after final '.'). May be specified multiple times.",
+        help=(
+            "Grouped plot name to display (suffix after final '.', with 'Rank <n>' "
+            "normalized to 'Rank N'). May be specified multiple times."
+        ),
     )
     parser.add_argument(
         "--plot-regex",
@@ -209,6 +213,7 @@ def ensure_stream(state: FollowState, from_start: bool) -> bool:
             if state.stream.tell() > stat_result.st_size:
                 state.stream.seek(0)
         except OSError:
+            # If seeking fails temporarily, keep following from the current stream position.
             pass
         return True
 
@@ -295,7 +300,7 @@ def render_dashboard(
             if len(metric_data.units) == 1:
                 unit = next(iter(metric_data.units))
             elif len(metric_data.units) > 1:
-                unit = "mixed units"
+                unit = "mixed units: " + ",".join(sorted(metric_data.units))
             trace_label = metric_name if not unit else f"{metric_name} [{unit}]"
             plt.plot(x_labels, metric_data.value, label=trace_label)
         plt.title(group_name)
