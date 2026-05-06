@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, TextIO, Tuple
 
 try:
     import plotext as plt
@@ -45,7 +45,7 @@ class MetricSeries:
 @dataclass
 class FollowState:
     path: str
-    stream: Optional[object] = None
+    stream: Optional[TextIO] = None
     inode: Optional[int] = None
     initialized: bool = False
 
@@ -103,6 +103,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=2,
         help="Maximum subplot columns for dashboard layout (default: 2).",
+    )
+    parser.add_argument(
+        "--x-ticks",
+        type=int,
+        default=12,
+        help="Target number of x-axis tick labels per subplot (default: 12).",
     )
     return parser.parse_args()
 
@@ -261,6 +267,7 @@ def render_dashboard(
     grouped_series: Dict[str, Dict[str, MetricSeries]],
     groups: List[str],
     columns: int,
+    x_tick_count: int,
 ) -> None:
     plt.clf()
     if not groups:
@@ -293,7 +300,11 @@ def render_dashboard(
         plt.xlabel("Time")
         plt.ylabel("Value")
         plt.grid(True, True)
-        plt.xfrequency(max(1, 12))
+        max_trace_points = max((len(series.time) for series in traces.values()), default=0)
+        tick_step = 1
+        if max_trace_points > x_tick_count:
+            tick_step = math.ceil(max_trace_points / x_tick_count)
+        plt.xfrequency(max(1, tick_step))
         if len(traces) > 1:
             plt.legend(True)
     plt.show()
@@ -316,6 +327,10 @@ def main() -> int:
         raise SystemExit("--refresh-seconds must be greater than 0.")
     if args.max_points <= 0:
         raise SystemExit("--max-points must be greater than 0.")
+    if args.columns <= 0:
+        raise SystemExit("--columns must be greater than 0.")
+    if args.x_ticks <= 0:
+        raise SystemExit("--x-ticks must be greater than 0.")
 
     states = [FollowState(path) for path in input_paths]
     grouped_series: Dict[str, Dict[str, MetricSeries]] = {}
@@ -334,7 +349,7 @@ def main() -> int:
             new_lines = read_new_lines(states, args.from_start)
             update_series(grouped_series, new_lines, args.max_points)
             groups = select_groups(grouped_series, selected_groups, plot_regex)
-            render_dashboard(grouped_series, groups, args.columns)
+            render_dashboard(grouped_series, groups, args.columns, args.x_ticks)
             time.sleep(args.refresh_seconds)
     except KeyboardInterrupt:
         return 0
