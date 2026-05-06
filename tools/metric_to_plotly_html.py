@@ -3,6 +3,7 @@
 import argparse
 import html
 import re
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -80,7 +81,12 @@ def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
     input_paths: List[str] = []
     seen = set()
     for input_spec in input_specs:
-        resolved_input = Path(input_spec).resolve()
+        try:
+            resolved_input = Path(input_spec).resolve(strict=True)
+        except OSError as exc:
+            raise SystemExit(
+                f"Unable to access input path '{input_spec}': {exc}"
+            ) from exc
         if resolved_input.is_dir():
             for entry in sorted(resolved_input.iterdir()):
                 if not entry.is_file():
@@ -216,6 +222,12 @@ def main() -> int:
             raise SystemExit(
                 f"Unable to read input file '{input_path}': {exc}"
             ) from exc
+        except UnicodeDecodeError:
+            print(
+                f"Skipping non-text input file '{input_path}'",
+                file=sys.stderr,
+            )
+            continue
 
     html_doc = build_html(grouped_series, total_points)
 
