@@ -83,9 +83,9 @@ def expand_input_specs(input_specs: Iterable[str]) -> List[str]:
         resolved_input = Path(input_spec).resolve()
         if resolved_input.is_dir():
             for entry in sorted(resolved_input.iterdir()):
-                resolved_entry = entry.resolve()
-                if entry.is_symlink() or not resolved_entry.is_file():
+                if entry.is_symlink() or not entry.is_file():
                     continue
+                resolved_entry = entry.resolve()
                 resolved_entry_text = str(resolved_entry)
                 if resolved_entry_text in seen:
                     continue
