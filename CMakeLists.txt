@@ -90,6 +90,7 @@ add_subdirectory(artdaq-utilities)
 
 # utility scripts/tools
 add_subdirectory(script)
+add_subdirectory(tools)
 
 # testing
 add_subdirectory(test)
