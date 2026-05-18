@@ -36,6 +36,7 @@ enum class MetricMode : uint32_t
 	Maximum = 0x20,     ///< Repots the maximum value recorded.
 	Persist = 0x40,     ///< Keep previous metric value in memory
 	RunningSum = 0x80,  ///< Report the sum of all values, not resetting each time
+	Delta = 0x100,      ///< Report the change in value since the last report, for counters that are not reset
 };
 
 /// <summary>
@@ -439,6 +440,7 @@ struct MetricData
 
 		auto count = modeSet.count();
 		if ((Mode & MetricMode::Persist) != MetricMode::None) count--;
+		if ((Mode & MetricMode::Delta) != MetricMode::None) count--;
 
 		return count > 1;
 	}
@@ -463,6 +465,8 @@ struct MetricData
 					return " - Max";
 				case MetricMode::RunningSum:
 					return " - Total";
+				case MetricMode::Delta:
+					return " - Delta";
 				default:
 					break;
 			}

@@ -292,11 +292,36 @@ public:
 						data.Add(*it);
 						it = metric.second.erase(it);
 					}
+
+					auto prev = metricRegistry_[metric.first].Last;  // Fetch the last value before adding the new data, for delta calculations
 					metricRegistry_[metric.first].Add(data);
+
+					MetricData::MetricDataValue delta;
+					bool deltaMode = (data.Mode & MetricMode::Delta) != MetricMode::None;
+					if (deltaMode)
+					{
+						switch (data.Type)
+						{
+							case MetricType::DoubleMetric:
+								delta.d = data.Last.d - prev.d;
+								break;
+							case MetricType::FloatMetric:
+								delta.f = data.Last.f - prev.f;
+								break;
+							case MetricType::IntMetric:
+								delta.i = data.Last.i - prev.i;
+								break;
+							case MetricType::UnsignedMetric:
+								delta.u = data.Last.u - prev.u;
+								break;
+							default:
+								break;
+						}
+					}
 
 					if ((data.Mode & MetricMode::LastPoint) != MetricMode::None)
 					{
-						sendMetric_(data.Name + data.GetSuffix(MetricMode::LastPoint), data.Last, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
+						sendMetric_(data.Name + data.GetSuffix(MetricMode::LastPoint), deltaMode ? delta : data.Last, data.Unit, data.Type, to_system_clock(lastSendTime_[data.Name]));
 					}
 					if ((data.Mode & MetricMode::Accumulate) != MetricMode::None)
 					{
@@ -312,16 +337,16 @@ public:
 						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
-								average = data.Value.d / static_cast<double>(data.DataPointCount);
+								average = (deltaMode ? delta.d : data.Value.d) / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::FloatMetric:
-								average = data.Value.f / static_cast<double>(data.DataPointCount);
+								average = (deltaMode ? delta.f : data.Value.f) / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::IntMetric:
-								average = data.Value.i / static_cast<double>(data.DataPointCount);
+								average = (deltaMode ? delta.i : data.Value.i) / static_cast<double>(data.DataPointCount);
 								break;
 							case MetricType::UnsignedMetric:
-								average = data.Value.u / static_cast<double>(data.DataPointCount);
+								average = (deltaMode ? delta.u : data.Value.u) / static_cast<double>(data.DataPointCount);
 								break;
 							default:
 								break;
@@ -337,16 +362,16 @@ public:
 						switch (data.Type)
 						{
 							case MetricType::DoubleMetric:
-								rate = data.Value.d / duration;
+								rate = (deltaMode ? delta.d : data.Value.d) / duration;
 								break;
 							case MetricType::FloatMetric:
-								rate = data.Value.f / duration;
+								rate = (deltaMode ? delta.f : data.Value.f) / duration;
 								break;
 							case MetricType::IntMetric:
-								rate = data.Value.i / duration;
+								rate = (deltaMode ? delta.i : data.Value.i) / duration;
 								break;
 							case MetricType::UnsignedMetric:
-								rate = data.Value.u / duration;
+								rate = (deltaMode ? delta.u : data.Value.u) / duration;
 								break;
 							default:
 								break;
@@ -394,7 +419,12 @@ public:
 		sendMetrics(true);
 		for (auto const& metric : metricRegistry_)
 		{
-			sendZero_(metric.second);
+			METLOG_P(TLVL_DEBUG + 34) << metric.first << ": checking if level is enabled " << static_cast<int>(metric.second.Level) << ", mask=" << std::hex << std::showbase << GetLevelMask();
+			if (IsLevelEnabled(metric.second.Level) && metric.second.DataPointCount > 0)
+			{
+				METLOG_P(TLVL_DEBUG + 34) << "Sending zero for " << metric.first;
+				sendZero_(metric.second);
+			}
 		}
 		stopMetrics_();
 		inhibit_ = false;
