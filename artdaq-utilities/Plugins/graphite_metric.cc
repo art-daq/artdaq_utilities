@@ -95,6 +95,10 @@ public:
 	{
 		if (!stopped_)
 		{
+			// Graphite only accepts numeric values; silently drop non-numeric strings
+			try { std::stod(value); }
+			catch (...) { return; }
+
 			boost::asio::streambuf data;
 			auto nameTemp(name);
 			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
