@@ -212,7 +212,7 @@ private:
 		}
 	}
 
-    void sendToGraphite(const std::string& name, const std::string& value, const std::chrono::system_clock::time_point& time)
+	void sendToGraphite(const std::string& name, const std::string& value, const std::chrono::system_clock::time_point& time)
 	{
 		if (!stopped_)
 		{
