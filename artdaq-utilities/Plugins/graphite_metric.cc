@@ -93,33 +93,9 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const std::string& value, const std::string& /*unit*/, const std::chrono::system_clock::time_point& time) override
 	{
-		if (!stopped_)
-		{
-			// Graphite only accepts numeric values; silently drop non-numeric strings
-			try { std::stod(value); }
-			catch (...) { return; }
-
-			boost::asio::streambuf data;
-			auto nameTemp(name);
-			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
-			for (auto delimiter : delimiters_)
-			{
-				if (delimiter == "") continue;
-				std::replace(nameTemp.begin(), nameTemp.end(), delimiter[0], '.');
-			}
-			std::ostream out(&data);
-			out << namespace_ << nameTemp << " "
-			    << value << " "
-			    << std::chrono::system_clock::to_time_t(time) << std::endl;
-
-			boost::system::error_code error;
-			boost::asio::write(socket_, data, error);
-			if (error)
-			{
-				errorCount_++;
-				reconnect_();
-			}
-		}
+		// Coerce to number
+		std::string coercedValue = std::to_string(strtod(value.c_str(), NULL));
+		sendToGraphite(name, coercedValue, time);
 	}
 
 	/**
@@ -131,7 +107,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const int& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit, time);
+		sendToGraphite(name, std::to_string(value), time);
 	}
 
 	/**
@@ -143,7 +119,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const double& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit, time);
+		sendToGraphite(name, std::to_string(value), time);
 	}
 
 	/**
@@ -155,7 +131,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const float& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit, time);
+		sendToGraphite(name, std::to_string(value), time);
 	}
 
 	/**
@@ -167,7 +143,7 @@ public:
 	 */
 	void sendMetric_(const std::string& name, const uint64_t& value, const std::string& unit, const std::chrono::system_clock::time_point& time) override
 	{
-		sendMetric_(name, std::to_string(value), unit, time);
+		sendToGraphite(name, std::to_string(value), time);
 	}
 
 	/**
@@ -233,6 +209,33 @@ private:
 		else if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - waitStart_).count() >= 5)  // Seconds
 		{
 			errorCount_ = 0;
+		}
+	}
+
+    void sendToGraphite(const std::string& name, const std::string& value, const std::chrono::system_clock::time_point& time)
+	{
+		if (!stopped_)
+		{
+			boost::asio::streambuf data;
+			auto nameTemp(name);
+			std::replace(nameTemp.begin(), nameTemp.end(), ' ', '_');
+			for (auto delimiter : delimiters_)
+			{
+				if (delimiter == "") continue;
+				std::replace(nameTemp.begin(), nameTemp.end(), delimiter[0], '.');
+			}
+			std::ostream out(&data);
+			out << namespace_ << nameTemp << " "
+			    << value << " "
+			    << std::chrono::system_clock::to_time_t(time) << std::endl;
+
+			boost::system::error_code error;
+			boost::asio::write(socket_, data, error);
+			if (error)
+			{
+				errorCount_++;
+				reconnect_();
+			}
 		}
 	}
 };
